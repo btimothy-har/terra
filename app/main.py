@@ -1,12 +1,10 @@
-import os
-
 import streamlit as st
 from ai import AVAILABLE_MODELS
 from ai import MAX_TOKEN_VALUES
 from ai import get_client
+from googleauth import auth_flow
 from langchain_core.messages import ChatMessage
 from session import SessionHistory
-from googleauth import auth_flow
 from streamlit.delta_generator import DeltaGenerator
 
 
@@ -66,7 +64,7 @@ if "message_history" not in st.session_state:
 
 with st.sidebar:
     ai_model_select = st.selectbox(
-        label="My Chat Model",
+        label="Chat Model",
         options=AVAILABLE_MODELS,
         key="ai_model",
         on_change=reload_model
@@ -88,10 +86,6 @@ with st.sidebar:
 
 if __name__ == "__main__":
     if st.session_state.user_info and st.session_state.auth_code:
-        if st.session_state.user_info.email not in os.getenv("AUTH_USERS").split(","):
-            st.error("You are not authorized to access Terra.")
-            st.stop()
-
         st.chat_input(
             placeholder="Type a message...",
             key="user_message",
