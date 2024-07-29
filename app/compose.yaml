@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  streamlit:
+    build: .
+    network_mode: "host"
+    environment:
+      - ENV=${ENV}
