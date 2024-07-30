@@ -25,4 +25,4 @@ jobs:
           git pull origin main
           cd app
           docker-compose down
-          docker-compose up -d --build
+          docker-compose -f compose.prod.yaml up --build -d
