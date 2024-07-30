@@ -15,10 +15,9 @@ class OpenAIModels(Enum):
 
 class OllamaModels(Enum):
     LLAMA3_1 = "llama3.1:8b"
-    if os.getenv("ENV", "development") == "production":
-        CODE_LLAMA = "codellama:7b"
-        GEMMA2 = "gemma2:9b"
-        MISTRAL_NEMO = "mistral-nemo"
+    CODE_LLAMA = "codellama:7b"
+    GEMMA2 = "gemma2:9b"
+    MISTRAL_NEMO = "mistral-nemo"
 
 AVAILABLE_MODELS = [*[m.value for m in OllamaModels],*[m.value for m in OpenAIModels]]
 MAX_TOKEN_VALUES = [512, 1024, 2048, 4096, 8192]
@@ -38,4 +37,5 @@ def get_client(model:str, temp:float, max_tokens:int):
             model=model,
             temperature=temp,
             num_predict=max_tokens,
+            base_url="http://ollama:11434"
         )
