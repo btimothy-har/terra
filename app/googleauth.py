@@ -3,13 +3,10 @@ import os
 
 import google_auth_oauthlib.flow
 import streamlit as st
-from dotenv import load_dotenv
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from session import SessionUser
-
-load_dotenv()
+from models.session import SessionUser
 
 SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
@@ -35,11 +32,11 @@ def auth_flow():
     if auth_code:
         with st.spinner("Authorizing..."):
             try:
-                cred_json = get_credentials(auth_code)
+                cred_json = json.loads(get_credentials(auth_code))
             except Exception as e:
                 st.error(f"Authorization failed: {e}")
             else:
-                creds = Credentials.from_authorized_user_info(json.loads(cred_json))
+                creds = Credentials.from_authorized_user_info(cred_json)
                 creds.refresh(Request())
 
                 user_info_service = build(
@@ -50,10 +47,12 @@ def auth_flow():
                 user_info = user_info_service.userinfo().get().execute()
                 st.session_state.auth_code = auth_code
                 st.session_state.user_info = SessionUser(**user_info)
+                st.session_state.user_info._insert_to_database()
 
                 if st.session_state.user_info.email not in os.getenv("AUTH_USERS").split(","):
                     st.error("You have not been authorized to access Terra.")
                     st.stop()
+
                 st.rerun()
 
     st.markdown("Terra is a private, experimental app. Please authorize yourself to gain access.")

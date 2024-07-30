@@ -1,14 +1,11 @@
 services:
   streamlit:
     build: .
-    environment:
-      - AUTH_USERS=${AUTH_USERS}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIRECT_URI=${REDIRECT_URI}
     ports:
       - '8501:8501'
     depends_on:
       - ollama
+      - postgres
   
   ollama:
     image: ollama/ollama:latest
@@ -30,3 +27,16 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ${POSTGRES_PATH}:/var/lib/postgresql/data
+    restart: unless-stopped

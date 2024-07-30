@@ -2,11 +2,13 @@ import streamlit as st
 from ai import AVAILABLE_MODELS
 from ai import MAX_TOKEN_VALUES
 from ai import get_client
+from dotenv import load_dotenv
 from googleauth import auth_flow
 from langchain_core.messages import ChatMessage
-from session import SessionHistory
+from models.session import SessionHistory
 from streamlit.delta_generator import DeltaGenerator
 
+load_dotenv()
 
 def reload_model(toast=True):
     st.session_state.ai_client = get_client(
