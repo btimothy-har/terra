@@ -20,7 +20,7 @@ jobs:
         username: ${{ secrets.HOST_USERNAME }}
         key: ${{ secrets.HOST_SSH_KEY }}
         source: "app/*"
-        target: "terra/app"
+        target: "terra"
     
     - name: Execute commands
       uses: appleboy/ssh-action@v0.1.3
