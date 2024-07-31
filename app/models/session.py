@@ -12,7 +12,7 @@ from pydantic import Field
 class UserSession(BaseModel):
     id:str = Field(default_factory=lambda: str(uuid4()))
     user:Optional[SessionUser] = Field(default=None)
-    timestamp:datetime = Field(default=datetime.now(timezone.utc))
+    timestamp:datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     authorized:bool = Field(default=False)
 
     def _insert_to_database(self):
