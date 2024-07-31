@@ -43,25 +43,31 @@ def auth_flow():
             except Exception as e:
                 st.error(f"Authorization failed: {e}")
             else:
+                st.session_state.auth_code = auth_code
+
                 user_info_service = build(
                     serviceName="oauth2",
                     version="v2",
                     credentials=creds,
                 )
                 user_info = user_info_service.userinfo().get().execute()
-                st.session_state.auth_code = auth_code
-                st.session_state.user_info = SessionUser(**user_info)
+                session_user = SessionUser(**user_info)
 
-                st.session_state.user_info._insert_to_database()
-                creds._save_session(st.session_state.user_info, auth_code)
+                session_user._insert_to_database()
+                creds._save_session(session_user, auth_code)
 
-                if st.session_state.user_info.email not in os.getenv("AUTH_USERS").split(","):
+                if session_user.email not in os.getenv("AUTH_USERS").split(","):
                     st.error("You have not been authorized to access Terra.")
                     st.stop()
 
+                st.session_state.user_info = session_user
                 st.rerun()
 
     st.markdown("Terra is a private, experimental app. Please authorize yourself to gain access.")
+    st.caption("Granting access via Google will allow Terra to view AND collect your email address and \
+        profile information. This applies even if you are not authorized to use Terra. \
+        Please be aware of this before proceeding.")
+
     authorization_url, _ = st.session_state.auth_flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true",

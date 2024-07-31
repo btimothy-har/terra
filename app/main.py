@@ -1,14 +1,12 @@
+import config
 import streamlit as st
-from ai import AVAILABLE_MODELS
-from ai import MAX_TOKEN_VALUES
-from ai import get_client
-from dotenv import load_dotenv
+from clients.ai import AVAILABLE_MODELS
+from clients.ai import get_client
 from googleauth import auth_flow
 from langchain_core.messages import ChatMessage
 from models.chat_history import MessageHistory
 from streamlit.delta_generator import DeltaGenerator
 
-load_dotenv()
 
 def reload_model(toast=True):
     st.session_state.ai_client = get_client(
@@ -50,35 +48,13 @@ if "ai_model" not in st.session_state:
     st.session_state.ai_model = AVAILABLE_MODELS[0]
 
 if "ai_temp" not in st.session_state:
-    st.session_state.ai_temp = 0.2
+    st.session_state.ai_temp = config.DEFAULT_TEMP
 
 if "ai_max_tokens" not in st.session_state:
-    st.session_state.ai_max_tokens = 4096
+    st.session_state.ai_max_tokens = config.DEFAULT_MAX_TOKENS
 
 if "ai_client" not in st.session_state:
     reload_model(False)
-
-with st.sidebar:
-    ai_model_select = st.selectbox(
-        label="Chat Model",
-        options=AVAILABLE_MODELS,
-        key="ai_model",
-        on_change=reload_model
-        )
-    ai_temp_select = st.slider(
-        label="Temperature",
-        min_value=0.0,
-        max_value=1.0,
-        step=0.05,
-        key="ai_temp",
-        on_change=reload_model
-        )
-    ai_max_tokens_select = st.select_slider(
-        label="Max Tokens",
-        options=MAX_TOKEN_VALUES,
-        key="ai_max_tokens",
-        on_change=reload_model
-        )
 
 if __name__ == "__main__":
     if st.session_state.user_info and st.session_state.auth_code:
@@ -89,6 +65,28 @@ if __name__ == "__main__":
                     content=f"Hello, {st.session_state.user_info.given_name}! How may I help you?",
                     role="assistant"
                     )
+                )
+
+        with st.sidebar:
+            ai_model_select = st.selectbox(
+                label="Chat Model",
+                options=AVAILABLE_MODELS,
+                key="ai_model",
+                on_change=reload_model
+                )
+            ai_temp_select = st.slider(
+                label="Temperature",
+                min_value=0.0,
+                max_value=1.0,
+                step=0.05,
+                key="ai_temp",
+                on_change=reload_model
+                )
+            ai_max_tokens_select = st.select_slider(
+                label="Max Tokens",
+                options=config.MAX_TOKEN_VALUES,
+                key="ai_max_tokens",
+                on_change=reload_model
                 )
 
         st.chat_input(

@@ -18,7 +18,6 @@ class OllamaModels(Enum):
     MISTRAL_NEMO = "mistral-nemo"
 
 AVAILABLE_MODELS = [*[m.value for m in OllamaModels],*[m.value for m in OpenAIModels]]
-MAX_TOKEN_VALUES = [512, 1024, 2048, 4096, 8192]
 
 def get_client(model:str, temp:float, max_tokens:int):
     if model in set([m.value for m in OpenAIModels]):
