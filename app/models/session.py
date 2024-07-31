@@ -1,17 +1,19 @@
 from datetime import datetime
 from datetime import timezone
+from typing import Optional
 from uuid import uuid4
 
 from clients.postgres import get_pg_client
 from models.user import SessionUser
 from pydantic import BaseModel
+from pydantic import Field
 
 
 class UserSession(BaseModel):
-    id:str = str(uuid4())
-    user:SessionUser = None
-    timestamp:datetime = datetime.now(timezone.utc)
-    authorized:bool = False
+    id:str = Field(default_factory=lambda: str(uuid4()))
+    user:Optional[SessionUser] = Field(default=None)
+    timestamp:datetime = Field(default=datetime.now(timezone.utc))
+    authorized:bool = Field(default=False)
 
     def _insert_to_database(self):
         sql = """

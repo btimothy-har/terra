@@ -45,9 +45,6 @@ if "session" not in st.session_state:
 if "auth_code" not in st.session_state:
     st.session_state.auth_code = None
 
-if "user_info" not in st.session_state:
-    st.session_state.user_info = None
-
 if "ai_model" not in st.session_state:
     st.session_state.ai_model = AVAILABLE_MODELS[0]
 
