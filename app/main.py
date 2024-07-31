@@ -41,10 +41,10 @@ st.set_page_config(
     )
 
 if "auth_code" not in st.session_state:
-    st.session_state["auth_code"] = None
+    st.session_state.auth_code = None
 
 if "user_info" not in st.session_state:
-    st.session_state["user_info"] = None
+    st.session_state.user_info = None
 
 if "ai_model" not in st.session_state:
     st.session_state.ai_model = AVAILABLE_MODELS[0]
@@ -57,12 +57,6 @@ if "ai_max_tokens" not in st.session_state:
 
 if "ai_client" not in st.session_state:
     reload_model(False)
-
-if "message_history" not in st.session_state:
-    st.session_state.message_history = SessionHistory()
-    st.session_state.message_history.append(
-        ChatMessage(content="Hello, how may I help you?", role="assistant")
-        )
 
 with st.sidebar:
     ai_model_select = st.selectbox(
@@ -88,6 +82,15 @@ with st.sidebar:
 
 if __name__ == "__main__":
     if st.session_state.user_info and st.session_state.auth_code:
+        if "message_history" not in st.session_state:
+            st.session_state.message_history = SessionHistory()
+            st.session_state.message_history.append(
+                ChatMessage(
+                    content=f"Hello, {st.session_state.user_info.given_name}! How may I help you?",
+                    role="assistant"
+                    )
+                )
+
         st.chat_input(
             placeholder="Type a message...",
             key="user_message",

@@ -32,10 +32,14 @@ certifi==2024.7.4
     #   httpcore
     #   httpx
     #   requests
+cffi==1.16.0
+    # via cryptography
 charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via streamlit
+cryptography==43.0.0
+    # via -r requirements.in
 distro==1.9.0
     # via openai
 frozenlist==1.4.1
@@ -160,6 +164,8 @@ pyasn1==0.6.0
     #   rsa
 pyasn1-modules==0.4.0
     # via google-auth
+pycparser==2.22
+    # via cffi
 pydantic==2.8.0
     # via
     #   -r requirements.in
