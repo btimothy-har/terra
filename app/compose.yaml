@@ -8,28 +8,18 @@ services:
       - postgres
   
   ollama:
-    image: ollama/ollama:latest
-    hostname: ollama
-    ports:
-      - 11434:11434
     volumes:
       - ${MODELS_PATH}:/root/.ollama
-    container_name: ollama
-    pull_policy: always
-    tty: true
-    restart: unless-stopped
-    environment:
-      - OLLAMA_KEEP_ALIVE=24h
+    extends:
+      file: ../svc/services.${ENV}.yaml
+      service: ollama
     
   postgres:
-    image: postgres:latest
-    container_name: postgres
-    hostname: postgres
-    ports:
-      - 5432:5432
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - ${POSTGRES_PATH}:/var/lib/postgresql/data
-    restart: unless-stopped
+    extends:
+      file: ../svc/services.${ENV}.yaml
+      service: postgres
