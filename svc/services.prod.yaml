@@ -1,22 +1,9 @@
 services:
-  streamlit:
-    build: .
-    environment:
-      - AUTH_USERS=${AUTH_USERS}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIRECT_URI=${REDIRECT_URI}
-    ports:
-      - '8501:8501'
-    depends_on:
-      - ollama
-  
   ollama:
     image: ollama/ollama:latest
     hostname: ollama
     ports:
       - 11434:11434
-    volumes:
-      - ${MODELS_PATH}:/root/.ollama
     container_name: ollama
     pull_policy: always
     tty: true
@@ -30,3 +17,8 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+              
+  postgres:
+    extends:
+      file: services.common.yaml
+      service: postgres

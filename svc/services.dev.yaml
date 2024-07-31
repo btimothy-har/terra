@@ -1,0 +1,10 @@
+services:
+  ollama:
+    extends:
+      file: services.common.yaml
+      service: ollama
+  
+  postgres:
+    extends:
+      file: services.common.yaml
+      service: postgres

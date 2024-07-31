@@ -1,10 +1,11 @@
+import config
 import streamlit as st
-from ai import AVAILABLE_MODELS
-from ai import MAX_TOKEN_VALUES
-from ai import get_client
+from clients.ai import AVAILABLE_MODELS
+from clients.ai import get_client
 from googleauth import auth_flow
 from langchain_core.messages import ChatMessage
-from session import SessionHistory
+from models.chat_history import MessageHistory
+from models.session import UserSession
 from streamlit.delta_generator import DeltaGenerator
 
 
@@ -38,54 +39,60 @@ st.set_page_config(
     #menu_items=None
     )
 
+if "session" not in st.session_state:
+    st.session_state.session = UserSession()
+
 if "auth_code" not in st.session_state:
-    st.session_state["auth_code"] = None
+    st.session_state.auth_code = None
 
 if "user_info" not in st.session_state:
-    st.session_state["user_info"] = None
+    st.session_state.user_info = None
 
 if "ai_model" not in st.session_state:
     st.session_state.ai_model = AVAILABLE_MODELS[0]
 
 if "ai_temp" not in st.session_state:
-    st.session_state.ai_temp = 0.2
+    st.session_state.ai_temp = config.DEFAULT_TEMP
 
 if "ai_max_tokens" not in st.session_state:
-    st.session_state.ai_max_tokens = 4096
+    st.session_state.ai_max_tokens = config.DEFAULT_MAX_TOKENS
 
 if "ai_client" not in st.session_state:
     reload_model(False)
 
-if "message_history" not in st.session_state:
-    st.session_state.message_history = SessionHistory()
-    st.session_state.message_history.append(
-        ChatMessage(content="Hello, how may I help you?", role="assistant")
-        )
-
-with st.sidebar:
-    ai_model_select = st.selectbox(
-        label="Chat Model",
-        options=AVAILABLE_MODELS,
-        key="ai_model",
-        on_change=reload_model
-        )
-    ai_temp_select = st.slider(
-        label="Temperature",
-        min_value=0.0,
-        max_value=1.0,
-        step=0.05,
-        key="ai_temp",
-        on_change=reload_model
-        )
-    ai_max_tokens_select = st.select_slider(
-        label="Max Tokens",
-        options=MAX_TOKEN_VALUES,
-        key="ai_max_tokens",
-        on_change=reload_model
-        )
-
 if __name__ == "__main__":
-    if st.session_state.user_info and st.session_state.auth_code:
+    if st.session_state.session.authorized:
+        if "message_history" not in st.session_state:
+            st.session_state.message_history = MessageHistory(st.session_state.session.id)
+            st.session_state.message_history.append(
+                ChatMessage(
+                    content=f"Hello, {st.session_state.session.user.given_name}! How may I help you?",
+                    role="assistant"
+                    )
+                )
+
+        with st.sidebar:
+            ai_model_select = st.selectbox(
+                label="Chat Model",
+                options=AVAILABLE_MODELS,
+                key="ai_model",
+                on_change=reload_model
+                )
+            ai_temp_select = st.slider(
+                label="Temperature",
+                min_value=0.0,
+                max_value=1.0,
+                step=0.05,
+                key="ai_temp",
+                on_change=reload_model
+                )
+            ai_max_tokens_select = st.select_slider(
+                label="Max Tokens",
+                options=config.MAX_TOKEN_VALUES,
+                key="ai_max_tokens",
+                on_change=reload_model
+                )
+
         st.chat_input(
             placeholder="Type a message...",
             key="user_message",
