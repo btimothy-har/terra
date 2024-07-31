@@ -16,16 +16,16 @@ class UserSession(BaseModel):
     def _insert_to_database(self):
         sql = """
             INSERT INTO
-                users.sessions (id, timestamp, uid)
+                users.sessions (sid, uid, timestamp)
             VALUES
                 (%s, %s, %s)
-            ON CONFLICT (id) DO NOTHING
+            ON CONFLICT (sid) DO NOTHING
             """
 
         data = (
             self.id,
+            self.user.id,
             self.timestamp,
-            self.user.id
             )
 
         client = get_pg_client()

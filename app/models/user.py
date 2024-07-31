@@ -20,10 +20,10 @@ class SessionUser(BaseModel):
     def _insert_to_database(self) -> str:
         sql = """
             INSERT INTO
-                users.googleid (id, email, verified, name, given_name, family_name, hd, picture)
+                users.googleid (uid, email, verified, name, given_name, family_name, hd, picture)
             VALUES
                 (%s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (id) DO UPDATE SET
+            ON CONFLICT (uid) DO UPDATE SET
                 email = EXCLUDED.email,
                 verified = EXCLUDED.verified,
                 name = EXCLUDED.name,
