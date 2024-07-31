@@ -14,7 +14,7 @@ SCOPES = [
     "openid"
 ]
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_credentials(auth_code:str) -> SessionCredentials:
     credentials = SessionCredentials._find_credentials(auth_code)
     if not credentials:
@@ -42,6 +42,7 @@ def auth_flow():
                 creds = get_credentials(auth_code)
             except Exception as e:
                 st.error(f"Authorization failed: {e}")
+                print(e)
             else:
                 st.session_state.auth_code = auth_code
 
@@ -73,5 +74,6 @@ def auth_flow():
     authorization_url, _ = st.session_state.auth_flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true",
+        prompt="consent",
     )
     st.markdown(f'<a href="{authorization_url}" target="_self">Login with Google</a>',unsafe_allow_html=True)
