@@ -5,8 +5,8 @@ import google_auth_oauthlib.flow
 import streamlit as st
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-from models.session import SessionCredentials
-from models.session import SessionUser
+from models.credentials import SessionCredentials
+from models.credentials import SessionUser
 
 SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",

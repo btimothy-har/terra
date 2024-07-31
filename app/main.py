@@ -5,7 +5,7 @@ from ai import get_client
 from dotenv import load_dotenv
 from googleauth import auth_flow
 from langchain_core.messages import ChatMessage
-from models.session import SessionHistory
+from models.chat_history import MessageHistory
 from streamlit.delta_generator import DeltaGenerator
 
 load_dotenv()
@@ -83,7 +83,7 @@ with st.sidebar:
 if __name__ == "__main__":
     if st.session_state.user_info and st.session_state.auth_code:
         if "message_history" not in st.session_state:
-            st.session_state.message_history = SessionHistory()
+            st.session_state.message_history = MessageHistory()
             st.session_state.message_history.append(
                 ChatMessage(
                     content=f"Hello, {st.session_state.user_info.given_name}! How may I help you?",
