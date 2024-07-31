@@ -1,11 +1,9 @@
-from uuid import uuid4
-
 from langchain_core.messages import ChatMessage
 
 
 class MessageHistory:
-    def __init__(self):
-        self.session_id = str(uuid4())
+    def __init__(self, session_id:str):
+        self.session_id = session_id
         self.history = []
 
     def __iter__(self):

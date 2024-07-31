@@ -10,16 +10,16 @@ from models.user import SessionUser
 class SessionCredentials(Credentials):
 
     @classmethod
-    def _find_session(cls, auth_code:str):
+    def _find_credentials(cls, auth_code:str):
         sql = f"""
             SELECT
-                s.credentials
+                a.credentials
             FROM
-                users.sessions s
+                users.authentication a
             WHERE
-                s.auth_code = '{hashlib.sha256(auth_code.encode()).hexdigest()}'
+                a.auth_code = '{hashlib.sha256(auth_code.encode()).hexdigest()}'
             ORDER BY
-                s.timestamp DESC
+                a.timestamp DESC
             LIMIT 1;
             """
         client = get_pg_client()
@@ -34,12 +34,12 @@ class SessionCredentials(Credentials):
             return cls.from_authorized_user_info(json.loads(json_store))
         return None
 
-    def _save_session(self, user:SessionUser, auth_code:str):
+    def _save_credentials(self, user:SessionUser, auth_code:str):
         fernet = get_encryption_client()
 
         sql = """
             INSERT INTO
-                users.sessions (uid, timestamp, scopes, auth_code, credentials)
+                users.authentication (uid, timestamp, scopes, auth_code, credentials)
             VALUES
                 (%s, %s, %s, %s, %s)
             ON CONFLICT (auth_code) DO UPDATE SET

@@ -16,7 +16,7 @@ SCOPES = [
 
 @st.cache_data
 def get_credentials(auth_code:str) -> SessionCredentials:
-    credentials = SessionCredentials._find_session(auth_code)
+    credentials = SessionCredentials._find_credentials(auth_code)
     if not credentials:
         flow = st.session_state.auth_flow
         flow.fetch_token(code=auth_code)
@@ -51,16 +51,18 @@ def auth_flow():
                     credentials=creds,
                 )
                 user_info = user_info_service.userinfo().get().execute()
-                session_user = SessionUser(**user_info)
+                st.session_state.session.user = SessionUser(**user_info)
 
-                session_user._insert_to_database()
-                creds._save_session(session_user, auth_code)
+                st.session_state.session.user._insert_to_database()
+                st.session_state.session._insert_to_database()
 
-                if session_user.email not in os.getenv("AUTH_USERS").split(","):
+                creds._save_credentials(st.session_state.session.user, auth_code)
+
+                if st.session_state.session.user.email not in os.getenv("AUTH_USERS").split(","):
                     st.error("You have not been authorized to access Terra.")
                     st.stop()
 
-                st.session_state.user_info = session_user
+                st.session_state.session.authorized = True
                 st.rerun()
 
     st.markdown("Terra is a private, experimental app. Please authorize yourself to gain access.")

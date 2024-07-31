@@ -5,6 +5,7 @@ from clients.ai import get_client
 from googleauth import auth_flow
 from langchain_core.messages import ChatMessage
 from models.chat_history import MessageHistory
+from models.session import UserSession
 from streamlit.delta_generator import DeltaGenerator
 
 
@@ -38,6 +39,9 @@ st.set_page_config(
     #menu_items=None
     )
 
+if "session" not in st.session_state:
+    st.session_state.session = UserSession()
+
 if "auth_code" not in st.session_state:
     st.session_state.auth_code = None
 
@@ -57,12 +61,12 @@ if "ai_client" not in st.session_state:
     reload_model(False)
 
 if __name__ == "__main__":
-    if st.session_state.user_info and st.session_state.auth_code:
+    if st.session_state.session.authorized:
         if "message_history" not in st.session_state:
-            st.session_state.message_history = MessageHistory()
+            st.session_state.message_history = MessageHistory(st.session_state.session.id)
             st.session_state.message_history.append(
                 ChatMessage(
-                    content=f"Hello, {st.session_state.user_info.given_name}! How may I help you?",
+                    content=f"Hello, {st.session_state.session.user.given_name}! How may I help you?",
                     role="assistant"
                     )
                 )
