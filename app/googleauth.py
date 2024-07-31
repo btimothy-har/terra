@@ -14,7 +14,7 @@ SCOPES = [
     "openid"
 ]
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(ttl=3600,show_spinner=False)
 def get_credentials(auth_code:str) -> SessionCredentials:
     credentials = SessionCredentials._find_credentials(auth_code)
     if not credentials:
@@ -26,6 +26,16 @@ def get_credentials(auth_code:str) -> SessionCredentials:
     if not credentials.valid:
         credentials.refresh(Request())
     return credentials
+
+@st.cache_data(ttl=3600,show_spinner=False)
+def get_user_info(auth_code:str) -> SessionUser:
+    user_info_service = build(
+        serviceName="oauth2",
+        version="v2",
+        credentials=get_credentials(auth_code),
+    )
+    user_info = user_info_service.userinfo().get().execute()
+    return SessionUser(**user_info)
 
 @st.dialog("Log In to Terra",width="small")
 def auth_flow():
@@ -42,17 +52,9 @@ def auth_flow():
                 creds = get_credentials(auth_code)
             except Exception as e:
                 st.error(f"Authorization failed: {e}")
-                print(e)
             else:
                 st.session_state.auth_code = auth_code
-
-                user_info_service = build(
-                    serviceName="oauth2",
-                    version="v2",
-                    credentials=creds,
-                )
-                user_info = user_info_service.userinfo().get().execute()
-                st.session_state.session.user = SessionUser(**user_info)
+                st.session_state.session.user = get_user_info(auth_code)
 
                 st.session_state.session.user._insert_to_database()
                 st.session_state.session._insert_to_database()
