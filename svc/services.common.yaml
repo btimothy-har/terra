@@ -12,9 +12,18 @@ services:
       - OLLAMA_KEEP_ALIVE=24h
   
   postgres:
-    image: postgres:latest
+    image: postgres:16
     container_name: postgres
     hostname: postgres
     ports:
       - 5432:5432
     restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PGDATA=${POSTGRES_DATA_PATH}
+    volumes:
+      - ${POSTGRES_DATA_PATH}:${POSTGRES_DATA_PATH}
+      - ${POSTGRES_CONFIG_PATH}:${POSTGRES_CONFIG_PATH}
+    command: ["postgres", "-c", "config_file=${POSTGRES_CONFIG_PATH}/postgresql.conf"]

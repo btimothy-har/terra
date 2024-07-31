@@ -1,5 +1,5 @@
 services:
-  streamlit:
+  terrachat:
     build: .
     ports:
       - '8501:8501'
@@ -15,11 +15,6 @@ services:
       service: ollama
     
   postgres:
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    volumes:
-      - ${POSTGRES_PATH}:/var/lib/postgresql/data
     extends:
       file: ../svc/services.${ENV}.yaml
       service: postgres
