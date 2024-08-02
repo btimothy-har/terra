@@ -43,7 +43,7 @@ st.set_page_config(
     )
 
 if "ai_model" not in st.session_state:
-    st.session_state.ai_model = AVAILABLE_MODELS[0]
+    st.session_state.ai_model = config.DEFAULT_MODEL
 
 if "ai_temp" not in st.session_state:
     st.session_state.ai_temp = config.DEFAULT_TEMP

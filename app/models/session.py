@@ -1,16 +1,18 @@
-from datetime import datetime
-from datetime import timezone, timedelta
-from typing import Optional
 import json
 import os
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
+from typing import Optional
 
+import extra_streamlit_components as stx
+from clients.fernet import get_encryption_client
 from clients.postgres import get_pg_client
+from google.oauth2.credentials import Credentials
 from models.user import SessionUser
 from pydantic import BaseModel
 from pydantic import Field
-from google.oauth2.credentials import Credentials
-from clients.fernet import get_encryption_client
-import extra_streamlit_components as stx
+
 
 class UserSession(BaseModel):
     id:str = Field()

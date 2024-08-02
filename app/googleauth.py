@@ -1,15 +1,10 @@
-import json
 import os
-
-from datetime import timedelta
 
 import google_auth_oauthlib.flow
 import streamlit as st
-import extra_streamlit_components as stx
-from typing import Optional
 from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
 from models.user import SessionUser
 
 SCOPES = [

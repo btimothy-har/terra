@@ -14,7 +14,7 @@ class OpenAIModels(Enum):
 class OllamaModels(Enum):
     LLAMA3_1 = "llama3.1:8b"
     CODE_LLAMA = "codellama:7b"
-    GEMMA2 = "gemma2:9b"
+    GEMMA2 = "gemma2:27b"
     MISTRAL_NEMO = "mistral-nemo"
 
 AVAILABLE_MODELS = [*[m.value for m in OllamaModels],*[m.value for m in OpenAIModels]]
