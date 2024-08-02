@@ -3,6 +3,7 @@ langchain==0.2.11
 langchain-openai==0.1.19
 #langchain-ollama==0.1.0
 streamlit==1.37
+extra-streamlit-components>=0.1.71
 google-auth-oauthlib
 google-api-python-client
 psycopg>=3.2
