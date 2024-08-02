@@ -1,12 +1,16 @@
 import json
 import os
 
+from datetime import timedelta
+
 import google_auth_oauthlib.flow
 import streamlit as st
+import extra_streamlit_components as stx
+from typing import Optional
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-from models.credentials import SessionCredentials
-from models.credentials import SessionUser
+from google.oauth2.credentials import Credentials
+from models.user import SessionUser
 
 SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
@@ -15,67 +19,66 @@ SCOPES = [
 ]
 
 @st.cache_data(ttl=3600,show_spinner=False)
-def get_credentials(auth_code:str) -> SessionCredentials:
-    credentials = SessionCredentials._find_credentials(auth_code)
-    if not credentials:
-        flow = st.session_state.auth_flow
-        flow.fetch_token(code=auth_code)
-        json_credentials = flow.credentials.to_json()
-        credentials = SessionCredentials.from_authorized_user_info(json.loads(json_credentials))
-
-    if not credentials.valid:
-        credentials.refresh(Request())
-    return credentials
+def get_credentials(auth_code:str) -> Credentials:
+    flow = st.session_state.auth_flow
+    flow.fetch_token(code=auth_code)
+    return flow.credentials
 
 @st.cache_data(ttl=3600,show_spinner=False)
-def get_user_info(auth_code:str) -> SessionUser:
+def get_user_info(session_id:str) -> SessionUser:
     user_info_service = build(
         serviceName="oauth2",
         version="v2",
-        credentials=get_credentials(auth_code),
+        credentials=st.session_state.session.credentials,
     )
     user_info = user_info_service.userinfo().get().execute()
-    return SessionUser(**user_info)
+    user = SessionUser(**user_info)
+    user.save()
+    return user
 
-@st.dialog("Log In to Terra",width="small")
+@st.dialog("Log In",width="small")
 def auth_flow():
-    st.session_state.auth_flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-        ".oauth_client.json",
-        scopes=SCOPES,
-        redirect_uri=os.getenv("REDIRECT_URI"),
-    )
-    auth_code = st.session_state.auth_code or st.query_params.get("code")
+    if "auth_flow" not in st.session_state:
+        st.session_state.auth_flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+            ".oauth_client.json",
+            scopes=SCOPES,
+            redirect_uri=os.getenv("REDIRECT_URI"),
+        )
 
-    if auth_code:
-        with st.spinner("Authorizing..."):
-            try:
-                creds = get_credentials(auth_code)
-            except Exception as e:
-                st.error(f"Authorization failed: {e}")
-            else:
-                st.session_state.auth_code = auth_code
-                st.session_state.session.user = get_user_info(auth_code)
+    if not st.session_state.session.credentials:
+        auth_code = st.query_params.get("code")
+        if auth_code:
+            with st.spinner("Authenticating..."):
+                try:
+                    st.session_state.session.credentials = get_credentials(auth_code)
+                except Exception as e:
+                    st.error(f"Authorization failed: {e}")
+                    auth_code = None
+                else:
+                    if not st.session_state.session.credentials.valid:
+                        st.session_state.session.credentials.refresh(Request())
 
-                st.session_state.session.user._insert_to_database()
-                st.session_state.session._insert_to_database()
+        if not auth_code:
+            st.markdown("_terra_ is a private, experimental app. Please authenticate yourself to verify identity.")
+            st.caption("Authenticating via Google will allow _terra_ to view AND collect your email address and \
+                profile information. This applies even if you are not authorized to use _terra_. \
+                Please be aware of this before proceeding.")
+            st.caption("Session cookies are stored on your browser for 7 days.")
 
-                creds._save_credentials(st.session_state.session.user, auth_code)
+            authorization_url, _ = st.session_state.auth_flow.authorization_url(
+                access_type="offline",
+                include_granted_scopes="true",
+                prompt="consent",
+            )
+            st.markdown(f'<a href="{authorization_url}" target="_self">Login with Google</a>',unsafe_allow_html=True)
+            st.stop()
 
-                if st.session_state.session.user.email not in os.getenv("AUTH_USERS").split(","):
-                    st.error("You have not been authorized to access Terra.")
-                    st.stop()
+    st.session_state.session.user = get_user_info(st.session_state.session.id)
+    st.session_state.session.save_session()
 
-                st.session_state.session.authorized = True
-                st.rerun()
+    if st.session_state.session.user.email not in os.getenv("AUTH_USERS").split(","):
+        st.error("You are not authorized to access _terra_.")
+        st.stop()
 
-    st.markdown("Terra is a private, experimental app. Please authorize yourself to gain access.")
-    st.caption("Granting access via Google will allow Terra to view AND collect your email address and \
-        profile information. This applies even if you are not authorized to use Terra. \
-        Please be aware of this before proceeding.")
-
-    authorization_url, _ = st.session_state.auth_flow.authorization_url(
-        access_type="offline",
-        include_granted_scopes="true",
-        prompt="consent",
-    )
-    st.markdown(f'<a href="{authorization_url}" target="_self">Login with Google</a>',unsafe_allow_html=True)
+    st.session_state.session.authorized = True
+    st.rerun()

@@ -1,3 +1,6 @@
+import os
+from uuid import uuid4
+
 import config
 import streamlit as st
 from clients.ai import AVAILABLE_MODELS
@@ -32,18 +35,12 @@ def get_clean_render() -> DeltaGenerator:
     return slot.container()
 
 st.set_page_config(
-    page_title="Terra Chat",
+    page_title="terra Chat",
     page_icon=":coffee:",
     layout="centered",
     initial_sidebar_state="auto",
     #menu_items=None
     )
-
-if "session" not in st.session_state:
-    st.session_state.session = UserSession()
-
-if "auth_code" not in st.session_state:
-    st.session_state.auth_code = None
 
 if "ai_model" not in st.session_state:
     st.session_state.ai_model = AVAILABLE_MODELS[0]
@@ -56,6 +53,16 @@ if "ai_max_tokens" not in st.session_state:
 
 if "ai_client" not in st.session_state:
     reload_model(False)
+
+if not st.session_state.get("session", None):
+    cookie = st.context.cookies.get(os.environ.get("COOKIE_NAME"))
+    session = UserSession.resume_session(cookie) if cookie else None
+
+    if session:
+        st.session_state.session = session
+    else:
+        st.session_state.session = UserSession(id=cookie if cookie else str(uuid4()))
+        st.session_state.session.set_session()
 
 if __name__ == "__main__":
     if st.session_state.session.authorized:
