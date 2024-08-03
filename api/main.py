@@ -43,6 +43,20 @@ async def lifespan(app:FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
+@app.get("/users/find",
+    response_model=Optional[User],
+    summary="Finds a user by ID from memory. 1 hour cache.")
+async def find_user(user_id:str):
+    cached_user = await cache.get_user(app.cache, user_id)
+    if cached_user:
+        return cached_user
+    db_user = await db.fetch_user(app.database, user_id)
+    if db_user:
+        await cache.put_user(app.cache, db_user)
+        return db_user
+    return None
+
+
 @app.put("/users/save", summary="Saves a user to memory.")
 async def save_user(user:User):
     await cache.put_user(app.cache, user)
@@ -51,7 +65,7 @@ async def save_user(user:User):
 
 @app.get("/session/find",
     response_model=Optional[Session],
-    summary="Loads a session from the database by cookie value (session_id).")
+    summary="Loads a session from the database by cookie value (session_id). 1 hour cache.")
 async def resume_session(session_id:UUID):
     cached_session = await cache.get_session(app.cache, session_id)
     if cached_session:
