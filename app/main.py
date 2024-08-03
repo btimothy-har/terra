@@ -1,9 +1,9 @@
 import os
+from functools import partial
 from uuid import uuid4
 
 import config
 import streamlit as st
-from functools import partial
 from clients.ai import AVAILABLE_MODELS
 from clients.ai import get_client
 from googleauth import auth_flow
