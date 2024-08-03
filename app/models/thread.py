@@ -1,17 +1,22 @@
+from uuid import uuid4
+
 from langchain_core.messages import ChatMessage
 
+from shared.models.thread import ConversationThread
+from shared.models.thread import ThreadMessage
 
-class ConversationThread:
-    def __init__(self, session_id:str):
-        self.session_id = session_id
-        self.history = []
 
-    def __iter__(self):
-        return iter(self.history)
+class AppThread(ConversationThread):
+
+    @classmethod
+    def create(cls, session_id) -> "AppThread":
+        return cls(
+            sid=session_id,
+            thread_id=uuid4(),
+            messages=[]
+            )
 
     def append(self, message:ChatMessage) -> list[ChatMessage]:
-        self.history.append(message)
-        return self.history
-
-    def message_dict(self) -> dict:
-        return [m.dict() for m in self.history]
+        thread_msg = ThreadMessage.from_chat_message(message)
+        self.messages.append(thread_msg)
+        return self.messages

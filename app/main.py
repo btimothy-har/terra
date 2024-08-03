@@ -9,7 +9,7 @@ from clients.ai import get_client
 from googleauth import auth_flow
 from langchain_core.messages import ChatMessage
 from models.session import AppSession
-from models.thread import ConversationThread
+from models.thread import AppThread as ConversationThread
 from streamlit.delta_generator import DeltaGenerator
 
 
@@ -68,7 +68,7 @@ if not st.session_state.get("session", None):
 if __name__ == "__main__":
     if st.session_state.session.authorized:
         if "message_history" not in st.session_state:
-            st.session_state.message_history = ConversationThread(st.session_state.session.id)
+            st.session_state.message_history = ConversationThread.create(st.session_state.session.id)
             st.session_state.message_history.append(
                 ChatMessage(
                     content=f"Hello, {st.session_state.session.user.given_name}! How may I help you?",

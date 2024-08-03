@@ -47,7 +47,7 @@ class AppSession(Session):
     @classmethod
     def resume(cls, session_id:UUID) -> Optional["AppSession"]:
         find_session = requests.get(
-            url=f"{API_ENDPOINT}/session/find",
+            url=f"{API_ENDPOINT}/sessions/find",
             params={
                 "session_id": session_id
                 }
@@ -77,7 +77,7 @@ class AppSession(Session):
         copy_session.credentials = fernet.encrypt(copy_session.credentials.to_json().encode())
 
         put_save = requests.put(
-            url=f"{API_ENDPOINT}/session/save",
+            url=f"{API_ENDPOINT}/sessions/save",
             data=copy_session.model_dump_json(),
             )
         put_save.raise_for_status()
