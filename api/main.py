@@ -36,36 +36,22 @@ async def lifespan(app:FastAPI):
 
     yield
 
-    app.database.close()
-    app.cache.close()
+    await app.database.close()
+    await app.cache.close()
 
 
 app = FastAPI(lifespan=lifespan)
 
-@app.get("/")
-async def main():
-    sql = """
-        SELECT *
-        FROM
-            users.sessions as ts
-        ORDER BY
-            ts.timestamp DESC
-        LIMIT 1;
-        """
 
-    with app.database.connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(sql)
-            raw_data = cursor.fetchone()
-    return raw_data
-
-@app.put("/users/save")
+@app.put("/users/save", summary="Saves a user to memory.")
 async def save_user(user:User):
     await cache.put_user(app.cache, user)
     await db.insert_user(app.database, user)
 
 
-@app.get("/session/find", response_model=Optional[Session])
+@app.get("/session/find",
+    response_model=Optional[Session],
+    summary="Loads a session from the database by cookie value (session_id).")
 async def resume_session(session_id:UUID):
     cached_session = await cache.get_session(app.cache, session_id)
     if cached_session:
@@ -73,14 +59,13 @@ async def resume_session(session_id:UUID):
 
     db_session = await db.fetch_session(app.database, session_id)
     if db_session:
-        asyncio.create_task(
-            cache.add_session(app.cache, db_session)
-            )
+        await cache.add_session(app.cache, db_session)
         return db_session
     return None
 
 
-@app.put("/session/save")
+@app.put("/session/save",
+    summary="Saves a session to memory.")
 async def save_session(session:Session):
     await cache.add_session(app.cache, session)
     await db.insert_session(app.database, session)
