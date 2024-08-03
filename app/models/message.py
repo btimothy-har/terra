@@ -1,8 +1,9 @@
-from shared.models.message import ThreadMessage
-from datetime import timezone
 from datetime import datetime
+from datetime import timezone
 
 from langchain_core.messages import ChatMessage
+
+from shared.models.message import ThreadMessage
 
 
 class AppMessage(ThreadMessage):

@@ -11,7 +11,8 @@ from psycopg_pool import AsyncConnectionPool
 from redis.asyncio import Redis
 
 from shared.models.session import Session
-from shared.models.thread import ConversationThread, ThreadMessage
+from shared.models.thread import ConversationThread
+from shared.models.thread import ThreadMessage
 from shared.models.user import User
 
 POSTGRES_URL = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/terra"
