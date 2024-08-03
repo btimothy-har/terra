@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import config
 import streamlit as st
+from functools import partial
 from clients.ai import AVAILABLE_MODELS
 from clients.ai import get_client
 from googleauth import auth_flow
@@ -80,7 +81,7 @@ if __name__ == "__main__":
                 label="Chat Model",
                 options=AVAILABLE_MODELS,
                 key="ai_model",
-                on_change=reload_model
+                on_change=partial(reload_model, toast=True)
                 )
             ai_temp_select = st.slider(
                 label="Temperature",
@@ -88,13 +89,13 @@ if __name__ == "__main__":
                 max_value=1.0,
                 step=0.05,
                 key="ai_temp",
-                on_change=reload_model
+                on_change=partial(reload_model, toast=True)
                 )
             ai_max_tokens_select = st.select_slider(
                 label="Max Tokens",
                 options=config.MAX_TOKEN_VALUES,
                 key="ai_max_tokens",
-                on_change=reload_model
+                on_change=partial(reload_model, toast=True)
                 )
 
         st.chat_input(
