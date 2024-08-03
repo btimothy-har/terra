@@ -7,8 +7,8 @@ from clients.ai import AVAILABLE_MODELS
 from clients.ai import get_client
 from googleauth import auth_flow
 from langchain_core.messages import ChatMessage
-from models.chat_history import MessageHistory
-from models.session import UserSession
+from models.session import AppSession
+from models.thread import ConversationThread
 from streamlit.delta_generator import DeltaGenerator
 
 
@@ -56,18 +56,18 @@ if "ai_client" not in st.session_state:
 
 if not st.session_state.get("session", None):
     cookie = st.context.cookies.get(os.environ.get("COOKIE_NAME"))
-    session = UserSession.resume_session(cookie) if cookie else None
+    session = AppSession.resume(cookie) if cookie else None
 
     if session:
         st.session_state.session = session
     else:
-        st.session_state.session = UserSession(id=cookie if cookie else str(uuid4()))
-        st.session_state.session.set_session()
+        st.session_state.session = AppSession.create(cookie if cookie else str(uuid4()))
+        st.session_state.session.set_cookie()
 
 if __name__ == "__main__":
     if st.session_state.session.authorized:
         if "message_history" not in st.session_state:
-            st.session_state.message_history = MessageHistory(st.session_state.session.id)
+            st.session_state.message_history = ConversationThread(st.session_state.session.id)
             st.session_state.message_history.append(
                 ChatMessage(
                     content=f"Hello, {st.session_state.session.user.given_name}! How may I help you?",

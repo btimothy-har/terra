@@ -5,7 +5,7 @@ import streamlit as st
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from models.user import SessionUser
+from models.user import AppUser
 
 SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
@@ -20,14 +20,14 @@ def get_credentials(auth_code:str) -> Credentials:
     return flow.credentials
 
 @st.cache_data(ttl=3600,show_spinner=False)
-def get_user_info(session_id:str) -> SessionUser:
+def get_user_info(session_id:str) -> AppUser:
     user_info_service = build(
         serviceName="oauth2",
         version="v2",
         credentials=st.session_state.session.credentials,
     )
     user_info = user_info_service.userinfo().get().execute()
-    user = SessionUser(**user_info)
+    user = AppUser.create(**user_info)
     user.save()
     return user
 
@@ -69,11 +69,10 @@ def auth_flow():
             st.stop()
 
     st.session_state.session.user = get_user_info(st.session_state.session.id)
-    st.session_state.session.save_session()
+    st.session_state.session.save()
 
-    if st.session_state.session.user.email not in os.getenv("AUTH_USERS").split(","):
+    if not st.session_state.session.authorized:
         st.error("You are not authorized to access _terra_.")
         st.stop()
 
-    st.session_state.session.authorized = True
     st.rerun()
