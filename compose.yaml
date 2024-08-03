@@ -9,6 +9,9 @@ services:
     depends_on:
       - ollama
       - postgres
+    volumes:
+      - ./app:/app
+      - ./shared:/app/shared
   
   terraapi:
     container_name: api
@@ -20,6 +23,9 @@ services:
     depends_on:
       - postgres
       - redis
+    volumes:
+      - ./api:/api
+      - ./shared:/api/shared
   
   ollama:
     image: ollama/ollama:latest

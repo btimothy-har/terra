@@ -154,10 +154,6 @@ protobuf==4.25.4
     #   googleapis-common-protos
     #   proto-plus
     #   streamlit
-psycopg==3.2.1
-    # via -r requirements.in
-psycopg-pool==3.2.2
-    # via -r requirements.in
 pyarrow==17.0.0
     # via streamlit
 pyasn1==0.6.0
@@ -250,8 +246,6 @@ tqdm==4.66.4
 typing-extensions==4.12.2
     # via
     #   openai
-    #   psycopg
-    #   psycopg-pool
     #   pydantic
     #   pydantic-core
     #   sqlalchemy
