@@ -97,6 +97,10 @@ async def put_thread(cache:Redis, user_id:str, thread:ConversationThread):
     if await cache.exists(f"user:{user_id}:threads"):
         await put_user_threads(cache, user_id, [str(thread.thread_id)])
 
+async def delete_thread(cache:Redis, user_id:str, thread_id:str):
+    await cache.delete(f"thread:{thread_id}")
+    await cache.srem(f"user:{user_id}:threads", *[thread_id])
+
 async def get_thread_messages(cache:Redis, thread_id:str) -> Optional[list[str]]:
     message_ids = await cache.smembers(f"thread:{thread_id}:messages")
     if not message_ids:

@@ -104,6 +104,21 @@ class AppThread(ConversationThread):
             self.messages = msgs
             return msgs
 
+    def delete(self, user_id:str):
+        put_del_thread = requests.put(
+            url=f"{API_ENDPOINT}/chat/thread/delete",
+            params={
+                "user_id": user_id,
+                "thread_id": self.thread_id
+                }
+            )
+        try:
+            put_del_thread.raise_for_status()
+        except requests.exceptions.HTTPError:
+            return None
+        except json.JSONDecodeError:
+            return None
+
     def append(self, message:ChatMessage) -> ThreadMessage:
         thread_msg = ThreadMessage.from_chat_message(message)
         self.messages.append(thread_msg)
