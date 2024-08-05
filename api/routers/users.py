@@ -7,7 +7,6 @@ from fastapi import BackgroundTasks
 from fastapi import Request
 
 from shared.models.session import Session
-from shared.models.thread import ConversationThread
 from shared.models.user import User
 
 router = APIRouter(

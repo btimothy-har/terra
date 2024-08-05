@@ -1,8 +1,8 @@
+import json
 from datetime import datetime
 from datetime import timezone
 from typing import Optional
 from uuid import uuid4
-import json
 
 import requests
 from clients.ai import get_client
@@ -17,9 +17,11 @@ SUMMARY_PROMPT = {
     "role":"system",
     "content": """
         You are an AI Summarization Agent.
-        Given the conversation between the user and the assistant, suggest a Title that best summarizes the conversation.
+        Given the conversation between the user and the assistant, \
+        suggest a Title that best summarizes the conversation.
         - The title should be no longer than 5 words.
-        - The title should be a sentence.
+        - The title should be a phrase.
+        - The title should only contain alphanumeric characters with NO punctuation or symbols.
     """
     }
 
@@ -99,6 +101,7 @@ class AppThread(ConversationThread):
         else:
             msgs = [ThreadMessage(**m) for m in thread_messages]
             msgs.sort(key=lambda x: x.timestamp)
+            self.messages = msgs
             return msgs
 
     def append(self, message:ChatMessage) -> ThreadMessage:
