@@ -8,6 +8,7 @@ from shared.models.session import Session
 from shared.models.thread import ConversationThread
 from shared.models.user import User
 
+from .sql import DELETE_THREAD
 from .sql import FETCH_MESSAGE
 from .sql import FETCH_SESSION
 from .sql import FETCH_THREAD_ID
@@ -137,6 +138,14 @@ async def insert_thread(database:AsyncConnectionPool, thread:ConversationThread)
                     thread.last_used
                     )
                 )
+
+async def delete_thread(database:AsyncConnectionPool, thread_id:str):
+    async with database.connection() as conn:
+        async with conn.cursor() as cursor:
+            await cursor.execute(
+                DELETE_THREAD,
+                (thread_id,)
+            )
 
 async def fetch_thread_messages(
     database:AsyncConnectionPool,

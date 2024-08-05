@@ -51,6 +51,22 @@ async def put_thread_save(
     await cache.put_thread(request.app.cache, user_id, thread)
     await db.insert_thread(request.app.database, thread)
 
+@router.put("/thread/delete",
+    summary="Delets a Chat Thread for a user to memory.")
+async def put_thread_delete(
+    user_id:str,
+    thread_id:str,
+    request:Request,
+    background_tasks:BackgroundTasks):
+
+    thread = await get_thread_id(thread_id, user_id, request, background_tasks)
+
+    if not thread:
+        raise HTTPException(status_code=400, detail="Thread does not exist.")
+
+    background_tasks.add_task(db.delete_thread, request.app.database, thread.thread_id)
+    await cache.delete_thread(request.app.cache, user_id, thread.thread_id)
+
 @router.get("/thread/messages",
     summary="Gets all messages within a single Thread.")
 async def get_thread_messages(

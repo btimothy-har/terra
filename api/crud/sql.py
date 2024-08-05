@@ -56,8 +56,9 @@ FETCH_USER_THREADS = """
     FROM
         chats.threads as threads
         JOIN users.sessions as sessions ON threads.sid = sessions.sid
-    WHERE
-        sessions.uid = %s
+    WHERE true
+        AND threads.is_del IS NOT TRUE
+        AND sessions.uid = %s
     ORDER BY
         threads.last_used DESC;
     """
@@ -73,6 +74,7 @@ FETCH_THREAD_ID = """
         chats.threads as threads
         JOIN users.sessions as sessions ON threads.sid = sessions.sid
     WHERE true
+        AND threads.is_del IS NOT TRUE
         AND threads.tid = %s
         AND sessions.uid = %s
     LIMIT 1;
@@ -96,11 +98,18 @@ PUT_THREAD_SAVE = """
         summary = EXCLUDED.summary;
     """
 
+DELETE_THREAD = """
+    UPDATE chats.threads
+    SET is_del = TRUE
+    WHERE
+        tid = %s;
+    """
+
 FETCH_MESSAGE = """
     SELECT
         msg.role,
         msg.content,
-        msg.timestamp,
+        msg.timestamp
     FROM
         chats.messages as msg
     WHERE
