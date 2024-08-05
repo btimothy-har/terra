@@ -36,13 +36,18 @@ def get_clean_render() -> DeltaGenerator:
     return slot.container()
 
 def refresh_user_conversations() -> dict:
-    st.session_state.conversations = conversations = {
-        thread_id: ConversationThread.get_from_id(
-            thread_id=thread_id,
-            user_id=st.session_state.session.user.id
-            )
-        for thread_id in ConversationThread.get_all_for_user(st.session_state.session.user.id)
-    }
+    user_threads = ConversationThread.get_all_for_user(st.session_state.session.user.id)
+
+    if user_threads:
+        st.session_state.conversations = conversations = {
+            thread_id: ConversationThread.get_from_id(
+                thread_id=thread_id,
+                user_id=st.session_state.session.user.id
+                )
+            for thread_id in user_threads
+            }
+    else:
+        st.session_state.conversations = conversations = dict()
     return conversations
 
 def set_active_conversation(thread_id:str) -> ConversationThread:
