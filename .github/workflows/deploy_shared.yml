@@ -1,10 +1,10 @@
-name: Deploy App
+name: Deploy Shared Objects
 
 on:
   push:
     branches: [ "main" ]
     paths:
-      - "app/**"
+      - "shared/**"
 
 jobs:
   deploy_app:
@@ -21,5 +21,5 @@ jobs:
         host: ${{ secrets.HOST_ADDRESS }}
         username: ${{ secrets.HOST_USERNAME }}
         key: ${{ secrets.HOST_SSH_KEY }}
-        source: "app/*"
+        source: "shared/*"
         target: "terra"

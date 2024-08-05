@@ -1,0 +1,40 @@
+name: Deploy Docker
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "compose.yaml"
+      - "services.*.yaml"
+      - "app/Dockerfile"
+      - "api/Dockerfile"
+      - "**/requirements.txt"
+
+jobs:
+  deploy_app:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Push Files
+      uses: appleboy/scp-action@v0.1.3
+      with:
+        host: ${{ secrets.HOST_ADDRESS }}
+        username: ${{ secrets.HOST_USERNAME }}
+        key: ${{ secrets.HOST_SSH_KEY }}
+        source: "compose.yaml, services.*.yaml, app/Dockerfile, api/Dockerfile, **/requirements.txt"
+        target: "terra"
+    
+    - name: Rebuild Docker Images
+      uses: appleboy/ssh-action@v0.1.3
+      with:
+        host: ${{ secrets.HOST_ADDRESS }}
+        username: ${{ secrets.HOST_USERNAME }}
+        key: ${{ secrets.HOST_SSH_KEY }}
+        script: |
+          cd terra
+          docker-compose down
+          docker-compose -f compose.yaml up --build -d

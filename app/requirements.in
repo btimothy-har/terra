@@ -6,7 +6,5 @@ streamlit==1.37
 extra-streamlit-components>=0.1.71
 google-auth-oauthlib
 google-api-python-client
-psycopg>=3.2
-psycopg-pool>=3.2
 python-dotenv==1.0.1
 cryptography>=43.0

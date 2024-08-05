@@ -1,0 +1,75 @@
+services:
+  terrachat:
+    container_name: chat
+    build: ./app
+    env_file:
+      - ./.env
+    ports:
+      - 8501:8501
+    depends_on:
+      - ollama
+      - terraapi
+    volumes:
+      - ./app:/app
+      - ./shared:/app/shared
+  
+  terraapi:
+    container_name: api
+    build: ./api
+    env_file:
+      - ./.env
+    ports:
+      - 8000:8000
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./api:/api
+      - ./shared:/api/shared
+  
+  ollama:
+    image: ollama/ollama:latest
+    hostname: ollama
+    ports:
+      - 11434:11434
+    container_name: ollama
+    pull_policy: always
+    tty: true
+    restart: unless-stopped
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    volumes:
+      - ${MODELS_PATH}:/root/.ollama
+    extends:
+      file: ./services.${ENV}.yaml
+      service: ollama
+    
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PGDATA=${POSTGRES_DATA_PATH}
+    volumes:
+      - ${POSTGRES_DATA_PATH}:${POSTGRES_DATA_PATH}
+      - ${POSTGRES_CONFIG_PATH}:${POSTGRES_CONFIG_PATH}
+    command: ["postgres", "-c", "config_file=${POSTGRES_CONFIG_PATH}/postgresql.conf"]
+  
+  redis:
+    image: "redis:latest"
+    container_name: "redis"
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - cache:/data
+
+volumes:
+  cache:
+    driver: local
