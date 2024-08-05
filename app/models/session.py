@@ -5,7 +5,6 @@ from datetime import timedelta
 from datetime import timezone
 from typing import Optional
 from typing import Union
-from uuid import UUID
 
 import extra_streamlit_components as stx
 import requests
@@ -26,7 +25,7 @@ class AppSession(Session):
     @property
     def cookies(self) -> stx.CookieManager:
         if not self._cookies:
-            self._cookies = stx.CookieManager(key=str(self.id))
+            self._cookies = stx.CookieManager(key=self.id)
         return self._cookies
 
     @property
@@ -36,7 +35,7 @@ class AppSession(Session):
         return False
 
     @classmethod
-    def create(cls, session_id:UUID):
+    def create(cls, session_id:str):
         return cls(
             id=session_id,
             timestamp=datetime.now(timezone.utc),
@@ -45,9 +44,9 @@ class AppSession(Session):
             )
 
     @classmethod
-    def resume(cls, session_id:UUID) -> Optional["AppSession"]:
+    def resume(cls, session_id:str) -> Optional["AppSession"]:
         find_session = requests.get(
-            url=f"{API_ENDPOINT}/sessions/find",
+            url=f"{API_ENDPOINT}/users/session/id",
             params={
                 "session_id": session_id
                 }
@@ -66,7 +65,6 @@ class AppSession(Session):
             session_data["credentials"] = Credentials.from_authorized_user_info(
                 json.loads(fernet.decrypt(session_data["credentials"]))
                 )
-
             return cls(**session_data)
         return None
 
@@ -77,7 +75,7 @@ class AppSession(Session):
         copy_session.credentials = fernet.encrypt(copy_session.credentials.to_json().encode())
 
         put_save = requests.put(
-            url=f"{API_ENDPOINT}/sessions/save",
+            url=f"{API_ENDPOINT}/users/session/save",
             data=copy_session.model_dump_json(),
             )
         put_save.raise_for_status()
@@ -85,6 +83,6 @@ class AppSession(Session):
     def set_cookie(self):
         self.cookies.set(
             cookie=os.getenv("COOKIE_NAME"),
-            val=str(self.id),
+            val=self.id,
             expires_at=datetime.now(timezone.utc) + timedelta(days=7)
             )

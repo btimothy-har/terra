@@ -4,12 +4,7 @@ from pydantic import BaseModel
 
 
 class ThreadMessage(BaseModel):
+    id:str
     role:str
     content:str
     timestamp:datetime
-
-    def dict(self) -> dict:
-        return {
-            "role": self.role,
-            "content": self.content,
-            }

@@ -1,4 +1,5 @@
-from uuid import UUID
+from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -6,14 +7,19 @@ from .message import ThreadMessage
 
 
 class ConversationThread(BaseModel):
-    sid:UUID
-    thread_id:UUID
+    sid:str
+    thread_id:str
     messages:list[ThreadMessage]
+    summary:str
+    last_used:Optional[datetime] = None
 
     def __iter__(self):
         return iter(self.messages)
 
-    def message_dict(self) -> dict:
-        if len(self.messages) <= 1:
-            return []
-        return [m.dict() for m in self.messages[1:]]
+    @property
+    def user_messages(self) -> list[ThreadMessage]:
+        return [m for m in self.messages if m.role == "user"]
+
+    @property
+    def bot_messages(self) -> list[ThreadMessage]:
+        return [m for m in self.messages if m.role == "assistant"]

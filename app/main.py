@@ -106,23 +106,49 @@ if __name__ == "__main__":
         clean_render = get_clean_render()
 
         with clean_render:
+            thread_ids = ConversationThread.get_all_for_user(st.session_state.session.user.id)
+            if thread_ids:
+                st.session_state.message_history = ConversationThread.get_from_id(
+                    thread_id=thread_ids[0],
+                    user_id=st.session_state.session.user.id
+                    )
+
+            if st.session_state.message_history.summary:
+                st.write(f"Summary: {st.session_state.message_history.summary}")
+
             for message in st.session_state.message_history:
                 with st.chat_message(message.role):
                     st.write(message.content)
 
-            if getattr(st.session_state, "user_message", None):
-                with st.chat_message("user"):
-                    message = ChatMessage(content=st.session_state.user_message, role="user")
-                    st.session_state.message_history.append(message)
-                    st.write(message.content)
+        if getattr(st.session_state, "user_message", None):
+            with st.chat_message("user"):
+                new_user_message = st.session_state.message_history.append(
+                    ChatMessage(
+                        content=st.session_state.user_message,
+                        role="user")
+                        )
+                st.write(new_user_message.content)
 
-                with st.chat_message("assistant"):
-                    with st.spinner("Thinking..."):
-                        response = st.write_stream(
-                            st.session_state.ai_client.stream(st.session_state.message_history.message_dict())
-                            )
-                st.session_state.message_history.append(
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    response = st.write_stream(
+                        st.session_state.ai_client.stream(st.session_state.message_history.message_dict())
+                        )
+                new_asst_message = st.session_state.message_history.append(
                     ChatMessage(content=response, role="assistant")
                     )
+
+            st.session_state.message_history.save(st.session_state.session.user.id)
+            new_user_message.save(
+                thread_id=st.session_state.message_history.thread_id,
+                session_id=st.session_state.session.id,
+                user_id=st.session_state.session.user.id
+                )
+            new_asst_message.save(
+                thread_id=st.session_state.message_history.thread_id,
+                session_id=st.session_state.session.id,
+                user_id=st.session_state.session.user.id
+                )
+            st.rerun()
     else:
         auth_flow()

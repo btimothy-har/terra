@@ -1,5 +1,4 @@
 from datetime import datetime
-from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -7,7 +6,7 @@ from .user import User
 
 
 class Session(BaseModel):
-    id:UUID
+    id:str
     timestamp:datetime
     user:User
     credentials:bytes
