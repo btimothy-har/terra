@@ -87,7 +87,9 @@ if __name__ == "__main__":
                 ):
                 tz_select = st.selectbox(
                     label="Timezone",
-                    options=sorted(list(zoneinfo.available_timezones()), key=lambda x: zoneinfo.ZoneInfo(x).utcoffset(datetime.now(timezone.utc))),
+                    options=sorted(
+                        list(zoneinfo.available_timezones()),
+                        key=lambda x: zoneinfo.ZoneInfo(x).utcoffset(datetime.now(timezone.utc))),
                     key="user_tz"
                     )
 
