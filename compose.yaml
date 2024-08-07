@@ -1,3 +1,11 @@
+volumes:
+  cache:
+    driver: local
+
+networks:
+  terra_internal:
+    driver: bridge
+
 services:
   terrachat:
     container_name: chat
@@ -12,26 +20,26 @@ services:
     volumes:
       - ./app:/app
       - ./shared:/app/shared
+    networks:
+      - terra_internal
   
   terraapi:
     container_name: api
     build: ./api
     env_file:
       - ./.env
-    ports:
-      - 8000:8000
     depends_on:
       - postgres
       - redis
     volumes:
       - ./api:/api
       - ./shared:/api/shared
+    networks:
+      - terra_internal
   
   ollama:
     image: ollama/ollama:latest
     hostname: ollama
-    ports:
-      - 11434:11434
     container_name: ollama
     pull_policy: always
     tty: true
@@ -43,13 +51,13 @@ services:
     extends:
       file: ./services.${ENV}.yaml
       service: ollama
+    networks:
+      - terra_internal
     
   postgres:
     image: postgres:16
     container_name: postgres
     hostname: postgres
-    ports:
-      - 5432:5432
     restart: unless-stopped
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
@@ -60,16 +68,14 @@ services:
       - ${POSTGRES_DATA_PATH}:${POSTGRES_DATA_PATH}
       - ${POSTGRES_CONFIG_PATH}:${POSTGRES_CONFIG_PATH}
     command: ["postgres", "-c", "config_file=${POSTGRES_CONFIG_PATH}/postgresql.conf"]
+    networks:
+      - terra_internal
   
   redis:
     image: "redis:latest"
     container_name: "redis"
-    ports:
-      - "6379:6379"
     restart: unless-stopped
     volumes:
       - cache:/data
-
-volumes:
-  cache:
-    driver: local
+    networks:
+      - terra_internal
