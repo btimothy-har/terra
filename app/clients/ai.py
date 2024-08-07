@@ -33,6 +33,7 @@ def get_client(model:str, temp:float, max_tokens:int):
         return ChatOllama(
             model=model,
             temperature=temp,
+            num_ctx=8192,
             num_predict=max_tokens,
             base_url="http://ollama:11434"
         )

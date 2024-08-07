@@ -76,7 +76,7 @@ class AppThread(ConversationThread):
         except json.JSONDecodeError:
             return None
         else:
-            return cls(
+            return None if not thread_data else cls(
                 sid=thread_data["sid"],
                 thread_id=thread_data["thread_id"],
                 messages=[],
