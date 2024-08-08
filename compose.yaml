@@ -10,6 +10,7 @@ services:
   terrachat:
     container_name: chat
     build: ./app
+    restart: always
     env_file:
       - ./.env
     ports:
@@ -26,6 +27,7 @@ services:
   terraapi:
     container_name: api
     build: ./api
+    restart: always
     env_file:
       - ./.env
     depends_on:
@@ -43,7 +45,7 @@ services:
     container_name: ollama
     pull_policy: always
     tty: true
-    restart: unless-stopped
+    restart: always
     environment:
       - OLLAMA_KEEP_ALIVE=24h
     volumes:
@@ -58,7 +60,7 @@ services:
     image: postgres:16
     container_name: postgres
     hostname: postgres
-    restart: unless-stopped
+    restart: always
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -74,7 +76,7 @@ services:
   redis:
     image: "redis:latest"
     container_name: "redis"
-    restart: unless-stopped
+    restart: always
     volumes:
       - cache:/data
     networks:
