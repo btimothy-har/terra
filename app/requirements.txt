@@ -5,7 +5,9 @@
 #    pip-compile requirements.in
 #
 aiohttp==3.9.5
-    # via langchain
+    # via
+    #   langchain
+    #   langchain-community
 aiosignal==1.3.1
     # via aiohttp
 altair==5.3.0
@@ -40,6 +42,8 @@ click==8.1.7
     # via streamlit
 cryptography==43.0.0
     # via -r requirements.in
+dataclasses-json==0.6.7
+    # via langchain-community
 distro==1.9.0
     # via openai
 extra-streamlit-components==0.1.71
@@ -52,21 +56,40 @@ gitdb==4.0.11
     # via gitpython
 gitpython==3.1.43
     # via streamlit
-google-api-core==2.19.1
-    # via google-api-python-client
+google-ai-generativelanguage==0.6.6
+    # via google-generativeai
+google-api-core[grpc]==2.19.1
+    # via
+    #   google-ai-generativelanguage
+    #   google-api-python-client
+    #   google-generativeai
 google-api-python-client==2.138.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   google-generativeai
 google-auth==2.32.0
     # via
+    #   google-ai-generativelanguage
     #   google-api-core
     #   google-api-python-client
     #   google-auth-httplib2
     #   google-auth-oauthlib
+    #   google-generativeai
 google-auth-httplib2==0.2.0
     # via google-api-python-client
 google-auth-oauthlib==1.2.1
     # via -r requirements.in
+google-generativeai==0.7.2
+    # via langchain-google-genai
 googleapis-common-protos==1.63.2
+    # via
+    #   google-api-core
+    #   grpcio-status
+grpcio==1.65.4
+    # via
+    #   google-api-core
+    #   grpcio-status
+grpcio-status==1.62.3
     # via google-api-core
 h11==0.14.0
     # via httpcore
@@ -77,7 +100,9 @@ httplib2==0.22.0
     #   google-api-python-client
     #   google-auth-httplib2
 httpx==0.27.0
-    # via openai
+    # via
+    #   ollama
+    #   openai
 idna==3.7
     # via
     #   anyio
@@ -96,41 +121,72 @@ jsonschema==4.23.0
     # via altair
 jsonschema-specifications==2023.12.1
     # via jsonschema
-langchain==0.2.11
-    # via -r requirements.in
-langchain-core==0.2.24
+langchain==0.2.12
     # via
+    #   -r requirements.in
+    #   langchain-community
+langchain-community==0.2.11
+    # via
+    #   -r requirements.in
+    #   langchain-experimental
+langchain-core==0.2.29
+    # via
+    #   -r requirements.in
     #   langchain
+    #   langchain-community
+    #   langchain-experimental
+    #   langchain-google-genai
+    #   langchain-ollama
     #   langchain-openai
     #   langchain-text-splitters
+    #   langgraph
+    #   langgraph-checkpoint
+langchain-experimental==0.0.64
+    # via -r requirements.in
+langchain-google-genai==1.0.8
+    # via -r requirements.in
+langchain-ollama==0.1.1
+    # via -r requirements.in
 langchain-openai==0.1.19
     # via -r requirements.in
 langchain-text-splitters==0.2.2
     # via langchain
+langgraph==0.2.1
+    # via -r requirements.in
+langgraph-checkpoint==1.0.2
+    # via langgraph
 langsmith==0.1.93
     # via
     #   langchain
+    #   langchain-community
     #   langchain-core
 markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.5
     # via jinja2
+marshmallow==3.21.3
+    # via dataclasses-json
 mdurl==0.1.2
     # via markdown-it-py
 multidict==6.0.5
     # via
     #   aiohttp
     #   yarl
+mypy-extensions==1.0.0
+    # via typing-inspect
 numpy==1.26.4
     # via
     #   altair
     #   langchain
+    #   langchain-community
     #   pandas
     #   pyarrow
     #   pydeck
     #   streamlit
 oauthlib==3.2.2
     # via requests-oauthlib
+ollama==0.3.1
+    # via langchain-ollama
 openai==1.37.1
     # via langchain-openai
 orjson==3.10.6
@@ -139,6 +195,7 @@ packaging==23.2
     # via
     #   altair
     #   langchain-core
+    #   marshmallow
     #   streamlit
 pandas==2.2.2
     # via
@@ -147,11 +204,16 @@ pandas==2.2.2
 pillow==10.4.0
     # via streamlit
 proto-plus==1.24.0
-    # via google-api-core
+    # via
+    #   google-ai-generativelanguage
+    #   google-api-core
 protobuf==4.25.4
     # via
+    #   google-ai-generativelanguage
     #   google-api-core
+    #   google-generativeai
     #   googleapis-common-protos
+    #   grpcio-status
     #   proto-plus
     #   streamlit
 pyarrow==17.0.0
@@ -167,6 +229,7 @@ pycparser==2.22
 pydantic==2.8.0
     # via
     #   -r requirements.in
+    #   google-generativeai
     #   langchain
     #   langchain-core
     #   langsmith
@@ -188,6 +251,7 @@ pytz==2024.1
 pyyaml==6.0.1
     # via
     #   langchain
+    #   langchain-community
     #   langchain-core
 referencing==0.35.1
     # via
@@ -199,6 +263,7 @@ requests==2.32.3
     # via
     #   google-api-core
     #   langchain
+    #   langchain-community
     #   langsmith
     #   requests-oauthlib
     #   streamlit
@@ -223,7 +288,9 @@ sniffio==1.3.1
     #   httpx
     #   openai
 sqlalchemy==2.0.31
-    # via langchain
+    # via
+    #   langchain
+    #   langchain-community
 streamlit==1.37.0
     # via
     #   -r requirements.in
@@ -231,6 +298,7 @@ streamlit==1.37.0
 tenacity==8.5.0
     # via
     #   langchain
+    #   langchain-community
     #   langchain-core
     #   streamlit
 tiktoken==0.7.0
@@ -242,14 +310,21 @@ toolz==0.12.1
 tornado==6.4.1
     # via streamlit
 tqdm==4.66.4
-    # via openai
+    # via
+    #   google-generativeai
+    #   openai
 typing-extensions==4.12.2
     # via
+    #   google-generativeai
+    #   langchain-core
     #   openai
     #   pydantic
     #   pydantic-core
     #   sqlalchemy
     #   streamlit
+    #   typing-inspect
+typing-inspect==0.9.0
+    # via dataclasses-json
 tzdata==2024.1
     # via pandas
 uritemplate==4.1.1

@@ -1,3 +1,4 @@
+import asyncio
 import os
 from datetime import datetime
 from datetime import timezone
@@ -7,14 +8,35 @@ from uuid import uuid4
 import config
 import streamlit as st
 import zoneinfo
+from chat.graph import CHAT_AGENT
+from chat.states import AgentConfig
+from chat.states import ChatState
+from clients.ai import AVAILABLE_MODELS
 from dialogs.googleauth import auth_flow
 from dialogs.sel_thread import open_thread
 from langchain_core.messages import ChatMessage
 from models.session import AppSession
+from utils import dynamic_toast
 from utils import get_clean_render
 from utils import refresh_user_conversations
-from utils import reload_model
 from utils import set_active_conversation
+
+
+def invoke_graph():
+    state = ChatState(
+        agent=AgentConfig(
+            model=st.session_state.ai_model,
+            temp=st.session_state.ai_temp,
+            max_tokens=st.session_state.ai_max_tokens
+            ),
+        conversation=st.session_state.current_thread.message_dict(),
+        workspace=[],
+        agent_logs=[],
+        completed=False,
+        output=None
+        )
+    response = asyncio.run(CHAT_AGENT.ainvoke(state))
+    return response
 
 st.set_page_config(
     page_title="terra Chat",
@@ -30,8 +52,8 @@ if "ai_temp" not in st.session_state:
 if "ai_max_tokens" not in st.session_state:
     st.session_state.ai_max_tokens = config.DEFAULT_MAX_TOKENS
 
-if "ai_client" not in st.session_state:
-    reload_model()
+if "ai_model" not in st.session_state:
+    st.session_state.ai_model = config.DEFAULT_MODEL
 
 if not st.session_state.get("session", None):
     cookie = st.context.cookies.get(os.environ.get("COOKIE_NAME"))
@@ -64,19 +86,26 @@ if __name__ == "__main__":
                 help="Toggle settings for the AI model.",
                 use_container_width=True
                 ):
+                ai_model_select = st.selectbox(
+                    label="Model",
+                    options=AVAILABLE_MODELS,
+                    index=AVAILABLE_MODELS.index(st.session_state.ai_model),
+                    key="ai_model",
+                    on_change=partial(dynamic_toast, "AI Model Changed:", "ai_model")
+                    )
                 ai_temp_select = st.slider(
                     label="Temperature",
                     min_value=0.0,
                     max_value=1.0,
                     step=0.05,
                     key="ai_temp",
-                    on_change=partial(reload_model,True)
+                    on_change=partial(dynamic_toast, "AI Temperature Changed:", "ai_temp")
                     )
                 ai_max_tokens_select = st.select_slider(
                     label="Max Tokens",
                     options=config.MAX_TOKEN_VALUES,
                     key="ai_max_tokens",
-                    on_change=partial(reload_model,True)
+                    on_change=partial(dynamic_toast, "AI Max Tokens Changed:", "ai_max_tokens")
                     )
 
             with buttons_container.popover(
@@ -149,12 +178,19 @@ if __name__ == "__main__":
                     ).strftime("%a %-d %b %Y %-I:%M %p %Z"))
 
             with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    response = st.write_stream(
-                        st.session_state.ai_client.stream(st.session_state.current_thread.message_dict())
-                        )
+                time = datetime.now(timezone.utc)
+                with st.status("Thinking...", expanded=True) as status:
+                    response = invoke_graph()
+
+                    time_taken = datetime.now(timezone.utc) - time
+
+                    status.update(label=f"Done! Took {time_taken.seconds} seconds.", expanded=False,state="complete")
+                #st.stop()
+
+                full_response = st.write_stream(response["output"])
+
                 new_asst_message = st.session_state.current_thread.append(
-                    ChatMessage(content=response, role="assistant")
+                    ChatMessage(content=full_response, role="assistant")
                     )
                 st.caption(new_asst_message.timestamp.astimezone(
                     zoneinfo.ZoneInfo(st.session_state.user_tz)
@@ -173,6 +209,6 @@ if __name__ == "__main__":
                 )
             if st.session_state.current_thread.thread_id not in list(st.session_state.conversations.keys()):
                 st.session_state.conversations = refresh_user_conversations()
-            st.rerun()
+                st.rerun()
     else:
         auth_flow()

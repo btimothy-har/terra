@@ -1,19 +1,13 @@
 import streamlit as st
-from clients.ai import get_client
-from config import DEFAULT_MODEL
 from langchain_core.messages import ChatMessage
 from models.thread import AppThread as ConversationThread
 from streamlit.delta_generator import DeltaGenerator
 
 
-def reload_model(toast=False):
-    st.session_state.ai_client = get_client(
-        DEFAULT_MODEL,
-        st.session_state.ai_temp,
-        st.session_state.ai_max_tokens
+def dynamic_toast(message:str, key:str):
+    st.toast(
+        f"{message} `{st.session_state.get(key, "")}`"
         )
-    if toast:
-        st.toast("Language Model Reloaded.")
 
 def get_clean_render(key:str) -> DeltaGenerator:
     render_slots = st.session_state.render_slots = st.session_state.get("render_slots", dict())
