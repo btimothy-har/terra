@@ -16,6 +16,7 @@ class ChatState(TypedDict):
     conversation: list[AppMessage]
     workspace: list[BaseMessage] = []
     agent_logs: list[BaseMessage] = []
+    use_multi_agent: bool = True
     completed: bool = False
     output: Any = None
 

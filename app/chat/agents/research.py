@@ -1,5 +1,7 @@
 import os
 
+from chat.states import AgentAction
+from chat.states import ChatState
 from langchain_community.chat_models import ChatPerplexity
 from langchain_core.tools import tool
 from typing_extensions import Annotated
@@ -36,6 +38,30 @@ class ResearchAgent(BaseAgent):
             """,
             tools = [ResearchAgent.research_topic]
             )
+        self.model = PPLX
+
+    async def respond(self, state:ChatState):
+        messages = [
+            self.sys_prompt,
+            {
+                "role": "user",
+                "content": f"Prepare a report based on this on-going conversation: {state["workspace"].copy()}"
+            }]
+
+        response = await self.model.ainvoke(messages)
+        state["agent_logs"].append(
+            AgentAction(
+                agent=self.title,
+                action="output",
+                output=response.content
+                )
+            )
+        return {
+            "role": "assistant",
+            "name": self.name,
+            "title": self.title,
+            "content": response.content
+        }
 
     @tool
     @staticmethod

@@ -1,5 +1,7 @@
+import asyncio
 from enum import Enum
 
+import streamlit as st
 from chat.states import AgentAction
 from chat.states import ChatState
 from langchain_core.tools import InjectedToolArg
@@ -27,6 +29,7 @@ class EvaluationDecision(BaseModel):
     decision: EvaluationDecisionPaths = Field(description="Your decision based on your assessment of the conversation.")
     reason: str = Field(description="Explain the reason for your decision.")
 
+
 class Supervisor(BaseAgent):
     def __init__(self):
         super().__init__(
@@ -52,13 +55,15 @@ class Supervisor(BaseAgent):
             """
         }
 
-        messages = [sys_prompt] + state["conversation"].copy()
+        assign_tasks = asyncio.create_task(Supervisor.assign_tasks(state))
 
         with_tools = self.model.with_structured_output(InitialDecision)
-        ai_msg = await with_tools.ainvoke(messages)
+        ai_msg = await with_tools.ainvoke(
+            [sys_prompt] + state["conversation"].copy()
+            )
 
         if ai_msg.decision == InitialDecisionPaths.ASSIGN_TASKS_TO_AGENTS:
-            response = await Supervisor.assign_tasks(state)
+            response = await assign_tasks
             state["workspace"].append({
                 "role": "assistant",
                 "name": "Alicia",
@@ -116,14 +121,16 @@ class Supervisor(BaseAgent):
             """
             }
 
-        messages = [sys_prompt] + state["workspace"].copy()
+        request_information = asyncio.create_task(Supervisor.request_more_information(state))
 
         with_tools = self.model.with_structured_output(EvaluationDecision)
-
-        ai_msg = await with_tools.ainvoke(messages)
+        ai_msg = await with_tools.ainvoke(
+            [sys_prompt] + state["workspace"].copy()
+            )
 
         if ai_msg.decision == EvaluationDecisionPaths.NEED_MORE_INFORMATION:
-            response = await Supervisor.request_more_information(state)
+            st.caption("Looking for more information...")
+            response = await request_information
             state["workspace"].append({
                 "role": "assistant",
                 "name": "Alicia",
@@ -184,8 +191,9 @@ class Supervisor(BaseAgent):
             - DO NOT provide any suggestions or guidance on how to complete the task.
             """
            }
-        messages = [sys_prompt] + state["conversation"].copy()
-        response = await MODEL.ainvoke(messages)
+        response = await MODEL.ainvoke(
+            [sys_prompt] + state["conversation"].copy()
+            )
         return response.content
 
     @staticmethod
@@ -207,6 +215,7 @@ class Supervisor(BaseAgent):
             - Identify any areas that need further clarification or additional information.
             """
             }
-        messages = [sys_prompt] + state["workspace"].copy()
-        response = await MODEL.ainvoke(messages)
+        response = await MODEL.ainvoke(
+            [sys_prompt] + state["workspace"].copy()
+            )
         return response.content

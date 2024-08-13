@@ -54,14 +54,11 @@ class BaseAgent:
         self.model = MODEL
 
     async def respond(self, state:ChatState):
-        st.caption(f"{self.title} is thinking...")
-
         messages = [self.sys_prompt] + state["workspace"].copy()
 
         with_tools = self.model.bind_tools(
             list(self.tools.values()),
             tool_choice="any")
-
         ai_msg = await with_tools.ainvoke(messages)
 
         messages.append(ai_msg)
@@ -108,6 +105,8 @@ class BaseAgent:
             ai_msg.content = reply
 
         else:
+            st.caption(f"{self.title} is working...")
+
             tool_funcs = [(ai_action, self.tools[ai_action["name"]]) for ai_action in tool_calls
                 if ai_action["name"] in self.agent_tools.keys()
                 ]

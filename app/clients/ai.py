@@ -26,7 +26,7 @@ class OllamaModels(Enum):
 AVAILABLE_MODELS = [
     *[m.value for m in OpenAIModels],
     *[m.value for m in GoogleModels],
-    *[m.value for m in OllamaModels]
+    #*[m.value for m in OllamaModels]
     ]
 
 def get_client(model:str, temp:float=0.2, max_tokens:int=2048):

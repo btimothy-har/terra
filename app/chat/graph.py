@@ -1,4 +1,5 @@
 import asyncio
+from functools import partial
 
 import streamlit as st
 from clients.ai import get_client
@@ -12,12 +13,15 @@ from .states import ChatState
 
 
 async def enter_loop(state:ChatState) -> ChatState:
-    supervisor = Supervisor()
-    state = await supervisor.start_loop(state)
+    if state["use_multi_agent"]:
+        supervisor = Supervisor()
+        state = await supervisor.start_loop(state)
     return state
 
 def route_loop(state:ChatState) -> str:
     if state["completed"]:
+        return "stop"
+    if not state["use_multi_agent"]:
         return "stop"
     return "work"
 
@@ -25,10 +29,11 @@ async def route_to_agents(state:ChatState) -> ChatState:
     research_agent = ResearchAgent()
     programmer_agent = ProgrammerAgent()
 
-    raw_resp = await asyncio.gather(
-        research_agent.respond(state),
-        programmer_agent.respond(state)
-        )
+    agent_tasks = [
+        asyncio.create_task(research_agent.respond(state)),
+        asyncio.create_task(programmer_agent.respond(state))
+        ]
+    raw_resp = await asyncio.gather(*agent_tasks)
 
     state["workspace"].extend(raw_resp)
     return state
@@ -43,20 +48,17 @@ async def exit_loop(state:ChatState) -> ChatState:
 async def respond_to_user(state:ChatState) -> ChatState:
     agent = get_client(**state["agent"])
 
-    messages = [{
-        "role": "system",
-        "content": "You are Anthony, a helpful AI Personal Assistant. \
-            Be proactively helpful as much as possible, but do not provide any information that does not exist \
-            in the context."
-        }]
-
     user_messages = state["conversation"].copy()
     agent_messages = state["workspace"].copy()
 
-    messages.extend(user_messages)
-
     if agent_messages:
-        messages[0]['content'] += f"""
+        sys_prompt = {
+            "role": "system",
+            "content": f"""
+            You are Anthony, a helpful AI Personal Assistant. \
+            Be proactively helpful as much as possible, but do not provide any information that does not exist \
+            in the context.
+
             Your support team has prepared some useful background information for you as reference \
             to use in your response.
 
@@ -64,13 +66,30 @@ async def respond_to_user(state:ChatState) -> ChatState:
             - Be conversational and casual in nature, continuing the existing conversation with the user.
             - Include any relevant resources that may have been surfaced from agents.
             - Not mention the agents or their work directly.
+            - Not refer to yourself by name or as an AI or as a person.
             - Be as comprehensive as possible. You should aim to be as proactive as possible in your response.
 
             ### SUPPORTING INFORMATION
             {agent_messages}
             """
+            }
+    else:
+        sys_prompt = {
+            "role": "system",
+            "content": """
+            You are Anthony, a helpful AI Personal Assistant. \
+            Be proactively helpful as much as possible, leveraging on your own knowledge and \
+            experience to provide the best response to the user.
 
-    state["output"] = agent.stream(messages)
+            Your response should:
+            - Be conversational and casual in nature, continuing the existing conversation with the user.
+            - Not refer to yourself by name or as an AI or as a person.
+            - Be as comprehensive as possible. You should aim to be as proactive as possible in your response.
+            """
+            }
+
+    messages = [sys_prompt] + user_messages
+    state["output"] = partial(agent.stream, messages)
     return state
 
 agent_flow = StateGraph(ChatState)
