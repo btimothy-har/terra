@@ -4,7 +4,9 @@
 #
 #    pip-compile requirements.in
 #
-aiohttp==3.9.5
+aiohappyeyeballs==2.3.5
+    # via aiohttp
+aiohttp==3.10.2
     # via langchain
 aiosignal==1.3.1
     # via aiohttp
@@ -68,6 +70,8 @@ google-auth-oauthlib==1.2.1
     # via -r requirements.in
 googleapis-common-protos==1.63.2
     # via google-api-core
+greenlet==3.0.3
+    # via sqlalchemy
 h11==0.14.0
     # via httpcore
 httpcore==1.0.5
@@ -256,5 +260,7 @@ uritemplate==4.1.1
     # via google-api-python-client
 urllib3==2.2.2
     # via requests
+watchdog==4.0.2
+    # via streamlit
 yarl==1.9.4
     # via aiohttp
