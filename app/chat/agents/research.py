@@ -1,5 +1,6 @@
 import os
 
+import streamlit as st
 from chat.states import AgentAction
 from chat.states import ChatState
 from langchain_community.chat_models import ChatPerplexity
@@ -41,6 +42,8 @@ class ResearchAgent(BaseAgent):
         self.model = PPLX
 
     async def respond(self, state:ChatState):
+        st.caption(f"{self.title} is working...")
+
         messages = [
             self.sys_prompt,
             {
