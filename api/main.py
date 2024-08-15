@@ -13,7 +13,8 @@ from redis.commands.search.field import TextField
 from redis.commands.search.field import VectorField
 from redis.commands.search.indexDefinition import IndexDefinition
 from redis.commands.search.indexDefinition import IndexType
-from routers.chat import router as chat_router
+from routers.chats import messages_router
+from routers.chats import threads_router
 from routers.users import router as users_router
 
 EMBEDDINGS = OpenAIEmbeddings(
@@ -89,4 +90,5 @@ async def lifespan(app:FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(users_router)
-app.include_router(chat_router)
+app.include_router(threads_router)
+app.include_router(messages_router)

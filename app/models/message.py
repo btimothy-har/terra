@@ -21,22 +21,23 @@ class AppMessage(ThreadMessage):
             )
 
     def save(self, thread_id:str, session_id:str, user_id:str) -> None:
+        message_dict = self.model_dump()
+        message_dict.update({
+            "thread_id": thread_id,
+            "session_id": session_id,
+            "user_id": user_id
+            })
+
         put_save = requests.put(
-            url=f"{API_ENDPOINT}/chat/message/save",
-            params={
-                "thread_id": thread_id,
-                "session_id": session_id,
-                "user_id": user_id
-                },
-            data=self.model_dump_json(),
+            url=f"{API_ENDPOINT}/messages/save",
+            data=json.dumps(message_dict,default=str)
             )
         put_save.raise_for_status()
 
     def save_context(self, thread_id:str, context:list[dict]) -> None:
         put_context = requests.post(
-            url=f"{API_ENDPOINT}/chat/context/save",
+            url=f"{API_ENDPOINT}/threads/{thread_id}/context/save",
             data=json.dumps({
-                "thread_id": thread_id,
                 "message_id": self.id,
                 "messages": context
                 })

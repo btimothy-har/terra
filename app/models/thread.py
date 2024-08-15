@@ -42,10 +42,7 @@ class AppThread(ConversationThread):
     @classmethod
     def get_all_for_user(cls, user_id:str) -> list[str]:
         get_thread_ids = requests.get(
-            url=f"{API_ENDPOINT}/users/threads",
-            params={
-                "user_id": user_id
-                },
+            url=f"{API_ENDPOINT}/users/{user_id}/threads"
             )
         try:
             get_thread_ids.raise_for_status()
@@ -62,11 +59,8 @@ class AppThread(ConversationThread):
     @classmethod
     def get_from_id(cls, thread_id:str, user_id:str) -> Optional["AppThread"]:
         get_thread_data = requests.get(
-            url=f"{API_ENDPOINT}/chat/thread/id",
-            params={
-                "thread_id": thread_id,
-                "user_id": user_id
-                }
+            url=f"{API_ENDPOINT}/threads/{thread_id}",
+            params={"user_id": user_id}
             )
         try:
             get_thread_data.raise_for_status()
@@ -86,10 +80,7 @@ class AppThread(ConversationThread):
 
     def get_messages(self) -> list[ThreadMessage]:
         get_thread_messages = requests.get(
-            url=f"{API_ENDPOINT}/chat/thread/messages",
-            params={
-                "thread_id": self.thread_id
-                }
+            url=f"{API_ENDPOINT}/threads/{self.thread_id}/messages",
             )
         try:
             get_thread_messages.raise_for_status()
@@ -106,11 +97,8 @@ class AppThread(ConversationThread):
 
     def delete(self, user_id:str):
         put_del_thread = requests.put(
-            url=f"{API_ENDPOINT}/chat/thread/delete",
-            params={
-                "user_id": user_id,
-                "thread_id": self.thread_id
-                }
+            url=f"{API_ENDPOINT}/threads/{self.thread_id}/delete",
+            params={"user_id": user_id}
             )
         try:
             put_del_thread.raise_for_status()
@@ -144,7 +132,7 @@ class AppThread(ConversationThread):
 
     def save(self, user_id:str) -> None:
         put_save = requests.put(
-            url=f"{API_ENDPOINT}/chat/thread/save",
+            url=f"{API_ENDPOINT}/threads/save",
             params={
                 "user_id": user_id
                 },

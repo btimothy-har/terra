@@ -46,10 +46,7 @@ class AppSession(Session):
     @classmethod
     def resume(cls, session_id:str) -> Optional["AppSession"]:
         find_session = requests.get(
-            url=f"{API_ENDPOINT}/users/session/id",
-            params={
-                "session_id": session_id
-                }
+            url=f"{API_ENDPOINT}/users/session/{session_id}"
             )
         find_session.raise_for_status()
 
