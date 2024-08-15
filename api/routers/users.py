@@ -81,12 +81,10 @@ async def get_user_threads_list(
     background_tasks:BackgroundTasks) -> Optional[list[str]]:
 
     cached_threads = await cache.get_user_threads(request.app.cache, user_id)
-    print(cached_threads)
     if cached_threads:
         return cached_threads
 
     db_threads = await db.fetch_user_threads(request.app.database, user_id)
-    print(db_threads)
     if db_threads:
         background_tasks.add_task(cache.put_user_threads, request.app.cache, user_id, db_threads)
         return db_threads

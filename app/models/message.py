@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from datetime import timezone
 from uuid import uuid4
@@ -30,6 +31,17 @@ class AppMessage(ThreadMessage):
             data=self.model_dump_json(),
             )
         put_save.raise_for_status()
+
+    def save_context(self, thread_id:str, context:list[dict]) -> None:
+        put_context = requests.post(
+            url=f"{API_ENDPOINT}/chat/context/save",
+            data=json.dumps({
+                "thread_id": thread_id,
+                "message_id": self.id,
+                "messages": context
+                })
+            )
+        put_context.raise_for_status()
 
     def to_chat_message(self) -> ChatMessage:
         return ChatMessage(

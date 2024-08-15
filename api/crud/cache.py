@@ -1,6 +1,9 @@
 import json
 from typing import Optional
 
+from langchain_experimental.text_splitter import SemanticChunker
+from langchain_openai import OpenAIEmbeddings
+from pydantic import BaseModel
 from redis.asyncio import Redis
 
 from shared.models.message import ThreadMessage
@@ -8,6 +11,16 @@ from shared.models.session import Session
 from shared.models.thread import ConversationThread
 from shared.models.user import User
 
+
+class MessageToEmbed(BaseModel):
+    num:int
+    thread_id:str
+    message_id:str
+    title:str
+    content:str
+
+class EmbeddedMessage(MessageToEmbed):
+    vector_score:float
 
 ##############################
 ##### USER CACHE         #####
@@ -30,7 +43,6 @@ async def put_user(cache:Redis, user:User):
 ##### SESSION CACHE      #####
 ##############################
 async def get_session(cache:Redis, session_id:str) -> Optional[Session]:
-
     session_id = str(session_id)
     session_data = await cache.get(f"session:{session_id}")
     if session_data:
@@ -122,3 +134,39 @@ async def put_message(cache:Redis, message:ThreadMessage):
         name=f"message:{message.id}",
         value=message.model_dump_json(exclude={"id":True}),
         )
+
+async def embed_message(
+    cache:Redis,
+    splitter:SemanticChunker,
+    embedder:OpenAIEmbeddings,
+    message:MessageToEmbed):
+
+    def build_content(n:int, chunks:list[str]) -> str:
+        if len(chunks) == 1:
+            return chunks[0]
+        elif n == 0:
+            return chunks[n] + chunks[n+1]
+        elif n == len(chunks)-1:
+            return chunks[n-1] + chunks[n]
+        else:
+            return chunks[n-1] + chunks[n] + chunks[n+1]
+
+    content_chunks = splitter.split_text(message.content)
+    if not content_chunks:
+        return
+
+    embeddings = await embedder.aembed_documents(content_chunks)
+
+    chunk_embed = [{
+        "thread_id": message.thread_id,
+        "message_id": message.message_id,
+        "message_num": message.num,
+        "chunk_num": n,
+        "title": message.title,
+        "content": build_content(n, content_chunks),
+        "embeddings": embeddings[n]
+        } for n in range(len(content_chunks))]
+
+    for e in chunk_embed:
+        key = f"context:{message.thread_id}:{message.message_id}:{message.num}:{e['chunk_num']}"
+        await cache.json().set(key,"$",e)

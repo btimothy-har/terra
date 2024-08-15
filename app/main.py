@@ -227,6 +227,11 @@ if __name__ == "__main__":
                 session_id=st.session_state.session.id,
                 user_id=st.session_state.session.user.id
                 )
+            if response["workspace"]:
+                new_asst_message.save_context(
+                    thread_id=st.session_state.current_thread.thread_id,
+                    context=response["workspace"]
+                    )
             if st.session_state.current_thread.thread_id not in list(st.session_state.conversations.keys()):
                 st.session_state.conversations = refresh_user_conversations()
                 st.rerun()
