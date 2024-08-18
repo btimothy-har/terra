@@ -21,7 +21,7 @@ from .sql import INSERT_USER
 from .sql import PUT_THREAD_SAVE
 
 
-async def fetch_user(database:AsyncConnectionPool, user_id:str) -> Optional[User]:
+async def fetch_user(database: AsyncConnectionPool, user_id: str) -> Optional[User]:
     async with database.connection() as conn:
         async with conn.cursor() as cursor:
             await cursor.execute(FETCH_USER, (user_id,))
@@ -34,12 +34,13 @@ async def fetch_user(database:AsyncConnectionPool, user_id:str) -> Optional[User
             name=raw_data[1],
             given_name=raw_data[2],
             family_name=raw_data[3],
-            picture=raw_data[4]
-            )
+            picture=raw_data[4],
+        )
         return user
     return None
 
-async def insert_user(database: AsyncConnectionPool, user:User):
+
+async def insert_user(database: AsyncConnectionPool, user: User):
     async with database.connection() as conn:
         async with conn.cursor() as cursor:
             await cursor.execute(
@@ -50,17 +51,17 @@ async def insert_user(database: AsyncConnectionPool, user:User):
                     user.name,
                     user.given_name,
                     user.family_name,
-                    user.picture
-                    )
-                )
+                    user.picture,
+                ),
+            )
 
-async def fetch_session(database:AsyncConnectionPool, session_id:str) -> Optional[Session]:
+
+async def fetch_session(
+    database: AsyncConnectionPool, session_id: str
+) -> Optional[Session]:
     async with database.connection() as conn:
         async with conn.cursor() as cursor:
-            await cursor.execute(
-                FETCH_SESSION,
-                (session_id,)
-            )
+            await cursor.execute(FETCH_SESSION, (session_id,))
             raw_data = await cursor.fetchone()
 
     if raw_data:
@@ -73,25 +74,26 @@ async def fetch_session(database:AsyncConnectionPool, session_id:str) -> Optiona
                 name=raw_data[3],
                 given_name=raw_data[4],
                 family_name=raw_data[5],
-                picture=raw_data[6]
-                ),
-            credentials=raw_data[7]
-            )
+                picture=raw_data[6],
+            ),
+            credentials=raw_data[7],
+        )
         return session
     return None
 
-async def insert_session(database:AsyncConnectionPool, session:User):
+
+async def insert_session(database: AsyncConnectionPool, session: User):
     async with database.connection() as conn:
         async with conn.cursor() as cursor:
             await cursor.execute(
                 INSERT_SESSION,
-                (session.id, session.user.id, session.timestamp, session.credentials)
-                )
+                (session.id, session.user.id, session.timestamp, session.credentials),
+            )
+
 
 async def fetch_user_threads(
-    database:AsyncConnectionPool,
-    user_id:str) -> Optional[list[ConversationThread]]:
-
+    database: AsyncConnectionPool, user_id: str
+) -> Optional[list[ConversationThread]]:
     async with database.connection() as conn:
         async with conn.cursor() as cursor:
             await cursor.execute(FETCH_USER_THREADS, (user_id,))
@@ -102,17 +104,13 @@ async def fetch_user_threads(
         return thread_ids
     return None
 
-async def fetch_thread(
-    database:AsyncConnectionPool,
-    user_id:str,
-    thread_id:str) -> Optional[ConversationThread]:
 
+async def fetch_thread(
+    database: AsyncConnectionPool, user_id: str, thread_id: str
+) -> Optional[ConversationThread]:
     async with database.connection() as conn:
         async with conn.cursor() as cursor:
-            await cursor.execute(
-                FETCH_THREAD_ID,
-                (thread_id, user_id)
-            )
+            await cursor.execute(FETCH_THREAD_ID, (thread_id, user_id))
             raw_data = await cursor.fetchone()
 
     if raw_data:
@@ -122,41 +120,32 @@ async def fetch_thread(
             summary=raw_data[2],
             last_used=raw_data[3],
             messages=[],
-            )
+        )
         return thread
     return None
 
-async def insert_thread(database:AsyncConnectionPool, thread:ConversationThread):
+
+async def insert_thread(database: AsyncConnectionPool, thread: ConversationThread):
     async with database.connection() as conn:
         async with conn.cursor() as cursor:
             await cursor.execute(
                 PUT_THREAD_SAVE,
-                (
-                    thread.sid,
-                    thread.thread_id,
-                    thread.summary,
-                    thread.last_used
-                    )
-                )
+                (thread.sid, thread.thread_id, thread.summary, thread.last_used),
+            )
 
-async def delete_thread(database:AsyncConnectionPool, thread_id:str):
+
+async def delete_thread(database: AsyncConnectionPool, thread_id: str):
     async with database.connection() as conn:
         async with conn.cursor() as cursor:
-            await cursor.execute(
-                DELETE_THREAD,
-                (thread_id,)
-            )
+            await cursor.execute(DELETE_THREAD, (thread_id,))
+
 
 async def fetch_thread_messages(
-    database:AsyncConnectionPool,
-    thread_id:str) -> Optional[list[str]]:
-
+    database: AsyncConnectionPool, thread_id: str
+) -> Optional[list[str]]:
     async with database.connection() as conn:
         async with conn.cursor() as cursor:
-            await cursor.execute(
-                FETCH_THREAD_MESSAGES,
-                (thread_id,)
-            )
+            await cursor.execute(FETCH_THREAD_MESSAGES, (thread_id,))
             raw_data = await cursor.fetchall()
 
     if raw_data:
@@ -164,34 +153,29 @@ async def fetch_thread_messages(
         return message_ids
     return None
 
-async def fetch_message(
-    database:AsyncConnectionPool,
-    message_id:str) -> Optional[ThreadMessage]:
 
+async def fetch_message(
+    database: AsyncConnectionPool, message_id: str
+) -> Optional[ThreadMessage]:
     async with database.connection() as conn:
         async with conn.cursor() as cursor:
-            await cursor.execute(
-                FETCH_MESSAGE,
-                (message_id,)
-            )
+            await cursor.execute(FETCH_MESSAGE, (message_id,))
             raw_data = await cursor.fetchone()
 
     if raw_data:
         message = ThreadMessage(
-            id=message_id,
-            role=raw_data[0],
-            content=raw_data[1],
-            timestamp=raw_data[2]
-            )
+            id=message_id, role=raw_data[0], content=raw_data[1], timestamp=raw_data[2]
+        )
         return message
     return None
 
-async def insert_message(
-    database:AsyncConnectionPool,
-    session_id:str,
-    thread_id:str,
-    message:ThreadMessage) -> UUID:
 
+async def insert_message(
+    database: AsyncConnectionPool,
+    session_id: str,
+    thread_id: str,
+    message: ThreadMessage,
+) -> UUID:
     async with database.connection() as conn:
         async with conn.cursor() as cursor:
             await cursor.execute(
@@ -202,6 +186,6 @@ async def insert_message(
                     message.id,
                     message.role,
                     message.content,
-                    message.timestamp
-                    )
-                )
+                    message.timestamp,
+                ),
+            )

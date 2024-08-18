@@ -1,13 +1,13 @@
 FROM python:3.12.4
 
-### Messy workaround to get the latest version of ChatOllama with support for base_url
-RUN apt-get -y update
-RUN apt-get -y install git
+# ### Messy workaround to get the latest version of ChatOllama with support for base_url
+# RUN apt-get -y update
+# RUN apt-get -y install git
 
-RUN git clone https://github.com/langchain-ai/langchain.git
-RUN cd langchain/libs/partners/ollama && pip install -e .
-RUN cd
-### End of workaround
+# RUN git clone https://github.com/langchain-ai/langchain.git
+# RUN cd langchain/libs/partners/ollama && pip install -e .
+# RUN cd
+# ### End of workaround
 
 WORKDIR /app
 

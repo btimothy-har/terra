@@ -7,11 +7,11 @@ from .message import ThreadMessage
 
 
 class ConversationThread(BaseModel):
-    sid:str
-    thread_id:str
-    messages:list[ThreadMessage]
-    summary:str
-    last_used:Optional[datetime] = None
+    sid: str
+    thread_id: str
+    messages: list[ThreadMessage]
+    summary: str
+    last_used: Optional[datetime] = None
 
     def __iter__(self):
         return iter(self.messages)
