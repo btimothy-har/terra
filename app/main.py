@@ -230,8 +230,7 @@ if __name__ == "__main__":
                     )
 
                 with message_container:
-                    status_elem = st.empty()
-                    with status_elem.status("Thinking...", expanded=True) as status:
+                    with st.status("Thinking...", expanded=True) as status:
                         response = invoke_graph()
                         time_taken = datetime.now(timezone.utc) - message_time
                         status.update(
@@ -239,7 +238,6 @@ if __name__ == "__main__":
                             expanded=False,
                             state="complete",
                         )
-                    status_elem.empty()
                     full_response = st.write_stream(response["output"])
 
             new_asst_message = st.session_state.current_thread.append(
