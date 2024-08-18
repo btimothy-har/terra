@@ -36,6 +36,7 @@ REDIS = Redis(
 
 LOGGER = logging.getLogger("uvicorn.error")
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.logger = LOGGER
@@ -49,10 +50,9 @@ async def lifespan(app: FastAPI):
         await app.cache.ft(config.CONTEXT_INDEX).create_index(
             fields=config.CONTEXT_SCHEMA,
             definition=IndexDefinition(
-                prefix=[config.CONTEXT_PREFIX + ":"],
-                index_type=IndexType.JSON
-                )
-            )
+                prefix=[config.CONTEXT_PREFIX + ":"], index_type=IndexType.JSON
+            ),
+        )
     except redis_exceptions.ResponseError:
         index_info = await app.cache.ft(config.CONTEXT_INDEX).info()
         app.logger.warning(

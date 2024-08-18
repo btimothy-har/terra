@@ -23,6 +23,10 @@ class ArchivistAgent(BaseAgent):
             tools=[ArchivistAgent.search_archive],
         )
 
+        self.tool_model = self.model.bind_tools(
+            list(self.tools.values()), tool_choice="search_archive"
+        )
+
     @tool
     @staticmethod
     def search_archive(
