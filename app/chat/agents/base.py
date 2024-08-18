@@ -32,7 +32,10 @@ async def ask_question(
     question: Annotated[str, "The question you want ask the other Agents."],
     reason: Annotated[str, "Explain the reason for choosing this tool."],
 ):
-    """Ask a question to other Agents. Use this if you need to get clarification on the task requested of you."""
+    """
+    Ask a question to other Agents.
+    Use this if you need to get clarification on the task requested of you.
+    """
     return
 
 
@@ -148,7 +151,7 @@ class BaseAgent:
                 AgentAction(agent=self.title, action="output", output=ai_msg.content)
             )
 
-            status_text.caption(f"{self.title} has finished working.")
+            status_text.caption(f"{self.title} is working... Done!")
 
         return {
             "role": "assistant",

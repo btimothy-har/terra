@@ -18,10 +18,11 @@ SUMMARY_PROMPT = {
     "content": """
         You are an AI Summarization Agent.
         Given the conversation between the user and the assistant, \
-        suggest a Title that best summarizes the conversation.
+suggest a Title that best summarizes the conversation.
         - The title should be no longer than 5 words.
         - The title should be a phrase.
-        - The title should only contain alphanumeric characters with NO punctuation or symbols.
+        - The title should only contain alphanumeric characters with NO punctuation \
+or symbols.
     """,
 }
 

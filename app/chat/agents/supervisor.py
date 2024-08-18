@@ -50,7 +50,7 @@ class Supervisor(BaseAgent):
         super().__init__(
             name="Alicia",
             title="Supervisor",
-            sys_prompt="You are Alicia, an Agent Supervisor responsible for managing a team of agents.",
+            sys_prompt="You are Alicia",
         )
 
     async def start_loop(self, state: ChatState):

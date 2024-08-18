@@ -51,7 +51,10 @@ def set_active_conversation(thread_id: str) -> ConversationThread:
         )
         st.session_state.current_thread.append(
             ChatMessage(
-                content=f"Hello, {st.session_state.session.user.given_name}! How may I help you?",
+                content=(
+                    f"Hello, {st.session_state.session.user.given_name}! "
+                    "How may I help you?"
+                ),
                 role="assistant",
             )
         )

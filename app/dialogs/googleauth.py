@@ -60,12 +60,14 @@ def auth_flow():
 
         if not auth_code:
             st.markdown(
-                "_terra_ is a private, experimental app. Please authenticate yourself to verify identity."
+                "_terra_ is a private, experimental app. "
+                "Please authenticate yourself to verify identity."
             )
             st.caption(
-                "Authenticating via Google will allow _terra_ to view AND collect your email address and \
-                profile information. This applies even if you are not authorized to use _terra_. \
-                Please be aware of this before proceeding."
+                "Authenticating via Google will allow _terra_ to view AND "
+                "collect your email address and profile information. "
+                "This applies even if you are not authorized to use _terra_. "
+                "Please be aware of this before proceeding."
             )
             st.caption("Session cookies are stored on your browser for 7 days.")
 

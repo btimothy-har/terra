@@ -12,16 +12,16 @@ PPLX = ChatPerplexity(
     temperature=0,
     pplx_api_key=os.getenv("PPLX_API_KEY"),
     model="llama-3.1-sonar-small-128k-online",
-    max_retries=1,
-    request_timeout=10,
 )
 
 
 class ResearchAgent(BaseAgent):
     """
     Rachel, Research Assistant
-    - Proficient in analyzing a variety of internet sources to identify important facts and information.
-    - Primary role: use information available on the internet to provide accurate and unbiased information.
+    - Proficient in analyzing a variety of internet sources to identify important \
+facts and information.
+    - Primary role: use information available on the internet to provide accurate \
+and unbiased information.
     - Believes in providing unbiased and accurate information, grounded in facts.
     """
 

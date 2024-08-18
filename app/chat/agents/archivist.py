@@ -11,8 +11,8 @@ class ArchivistAgent(BaseAgent):
     """
     Arthur, Archivist
     - Proficient in translating context into queries to search a conversation archive.
-    - Skilled in extracting relevant information from the archive for the assigned context.
-    - Has access to a conversational archive of past reports and conversations between agents.
+    - Skilled in extracting relevant information from the archive.
+    - Has access to a conversational archive of past reports and agent conversations.
     """
 
     def __init__(self):
@@ -30,7 +30,8 @@ class ArchivistAgent(BaseAgent):
         reason: Annotated[str, "Explain the reason for choosing this tool."],
     ) -> str:
         """
-        Query the historical archive for information. This is information that other agents have prepared and archived.
+        Query the historical archive for information. This is information that other
+        agents have prepared and archived.
         """
 
         search_request = requests.get(

@@ -94,15 +94,18 @@ if __name__ == "__main__":
                 use_container_width=True,
             ):
                 st.caption(
-                    "Settings in this window only affect the primary AI Model, and not the background Agents."
+                    "Settings in this window only affect the primary AI Model, "
+                    "and not the background Agents."
                 )
                 ai_model_select = st.selectbox(
                     label="Model",
                     options=AVAILABLE_MODELS,
                     key="ai_model",
                     on_change=partial(dynamic_toast, "AI Model Changed:", "ai_model"),
-                    help="Gemini-1.5 models are best used with Multi-Agents, while GPT-4o is best used as a \
-                        standalone model.",
+                    help=(
+                        "Gemini-1.5 models are best used with Multi-Agents, "
+                        "while GPT-4o is best used as a standalone model."
+                    ),
                 )
                 ai_temp_select = st.slider(
                     label="Temperature",
@@ -128,8 +131,11 @@ if __name__ == "__main__":
                     on_change=partial(
                         dynamic_toast, "Multi-Agent Toggled:", "multi_agent"
                     ),
-                    help="When enabled, leverages multiple background Agents to assist in generating responses. \
-                        Disable for a faster response, using only the primary AI model.",
+                    help=(
+                        "When enabled, leverages multiple background Agents to assist "
+                        "in generating responses. Disable for a faster response, using "
+                        "only the primary AI model."
+                    ),
                 )
 
             with buttons_container.popover(
@@ -233,9 +239,6 @@ if __name__ == "__main__":
                             state="complete",
                         )
                     full_response = st.write_stream(response["output"])
-
-                    st.write(response)
-                    st.stop()
 
             new_asst_message = st.session_state.current_thread.append(
                 ChatMessage(content=full_response, role="assistant")

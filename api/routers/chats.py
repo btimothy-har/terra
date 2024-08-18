@@ -1,6 +1,7 @@
 import asyncio
 from typing import Optional
 
+import config
 import numpy as np
 from crud import cache
 from crud import database as db
@@ -122,9 +123,8 @@ async def get_thread_messages(
     "/context/save",
     summary="Stores conversation context in memory, and vectorizes them for later use.",
     description="""
-    Allows AI agents to store external context in memory by Thread ID, and vectorized for later use.
-    Vectorization is handled in the background in FastAPI.
-    Data does not persist.
+    Allows AI agents to store external context in memory by Thread ID, and vectorized
+    for later use. Vectorization is handled in the background in FastAPI.
     """,
     status_code=202,
 )
@@ -161,10 +161,6 @@ async def put_context_save(
 async def get_context_search(
     request: Request, query: str, top_k: int = 9
 ) -> list[ContextChunk]:
-    index_info = await request.app.cache.ft("idx:context").info()
-    request.app.logger.info(f"index count: {index_info['num_docs']}")
-    request.app.logger.info(f"index status: {index_info['hash_indexing_failures']}")
-
     embed_query = await request.app.text_embedder.aembed_query(query)
 
     cache_query = (
@@ -174,7 +170,7 @@ async def get_context_search(
         .dialect(2)
     )
 
-    result = await request.app.cache.ft("idx:context").search(
+    result = await request.app.cache.ft(config.CONTEXT_INDEX).search(
         cache_query, {"query_vector": np.array(embed_query, dtype=np.float32).tobytes()}
     )
 

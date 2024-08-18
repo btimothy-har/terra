@@ -8,10 +8,12 @@ from .prompts.engineer import ENGINEER_PROMPT
 
 class ProgrammerAgent(BaseAgent):
     """
-    Edmund, Software Engineer
-    - Proficient in all aspects of software engineering.
-    - Capable of using code to solve problems, with access to a Python code execution environment.
-    - Limited to providing advice on software engineering practices and executing code.
+        Edmund, Software Engineer
+        - Proficient in all aspects of software engineering.
+        - Capable of using code to solve problems, with access to a Python execution \
+environment.
+        - Limited to providing advice on software engineering practices \
+and executing code.
     """
 
     def __init__(self):

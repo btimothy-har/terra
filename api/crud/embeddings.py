@@ -1,6 +1,7 @@
 from datetime import datetime
 from datetime import timezone
 
+import config
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai import OpenAIEmbeddings
 from pydantic import BaseModel
@@ -27,7 +28,10 @@ class EmbeddedChunk(BaseModel):
 
     @property
     def key(self) -> str:
-        return f"context:{self.thread_id}:{self.message_id}:{self.message_num}:{self.chunk_num}"
+        return (
+            f"{config.CONTEXT_PREFIX}:{self.thread_id}:{self.message_id}:{self.message_num}:"
+            f"{self.chunk_num}"
+        )
 
 
 def build_content(n: int, chunks: list[str]) -> str:

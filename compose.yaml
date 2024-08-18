@@ -9,6 +9,7 @@ networks:
 services:
   terrachat:
     container_name: chat
+    image: terrachat:latest
     build: ./app
     restart: always
     env_file:
@@ -25,6 +26,7 @@ services:
   
   terraapi:
     container_name: api
+    image: terraapi:latest
     build: ./api
     restart: always
     env_file:
