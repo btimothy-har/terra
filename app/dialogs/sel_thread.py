@@ -6,7 +6,7 @@ from utils import get_clean_render
 from utils import set_active_conversation
 
 
-@st.dialog("Open Thread",width="small")
+@st.dialog("Open Thread", width="small")
 def open_thread():
     conv_data = [i for i in list(st.session_state.conversations.values()) if i]
     if len(conv_data) == 0:
@@ -25,7 +25,9 @@ def open_thread():
                 date_group = thread.last_used.strftime("%B %Y")
                 st.caption(date_group)
 
-            is_current_thread = thread.thread_id == st.session_state.current_thread.thread_id
+            is_current_thread = (
+                thread.thread_id == st.session_state.current_thread.thread_id
+            )
 
             with st.expander(thread.summary, expanded=is_current_thread):
                 _, col_resume, col_delete = st.columns([50, 25, 25])
@@ -36,15 +38,15 @@ def open_thread():
                     type="secondary",
                     on_click=partial(set_active_conversation, thread.thread_id),
                     disabled=is_current_thread,
-                    use_container_width=True
-                    )
+                    use_container_width=True,
+                )
 
                 delete_thread = col_delete.button(
                     label="Delete",
                     key=f"convdelete_{thread.thread_id}",
                     on_click=partial(delete_conversation, thread.thread_id),
-                    use_container_width=True
-                    )
+                    use_container_width=True,
+                )
                 if select_thread:
                     st.rerun()
                 if delete_thread:

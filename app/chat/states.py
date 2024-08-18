@@ -11,7 +11,9 @@ class AgentConfig(TypedDict):
     temp: float
     max_tokens: int
 
+
 class ChatState(TypedDict):
+    loop_count: int = 0
     agent: AgentConfig | dict
     conversation: list[AppMessage]
     workspace: list[BaseMessage] = []
@@ -19,6 +21,7 @@ class ChatState(TypedDict):
     use_multi_agent: bool = True
     completed: bool = False
     output: Any = None
+
 
 class AgentAction(TypedDict):
     agent: str

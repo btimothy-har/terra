@@ -18,26 +18,21 @@ from routers.chats import threads_router
 from routers.users import router as users_router
 
 EMBEDDINGS = OpenAIEmbeddings(
-    model="text-embedding-3-small",
-    dimensions=768,
-    api_key=os.getenv("OPENAI_API_KEY")
-    )
+    model="text-embedding-3-small", dimensions=768, api_key=os.getenv("OPENAI_API_KEY")
+)
 
 CHUNKER = SemanticChunker(
     embeddings=EMBEDDINGS,
     breakpoint_threshold_type="standard_deviation",
-    breakpoint_threshold_amount=0.5
-    )
+    breakpoint_threshold_amount=0.5,
+)
 
 POSTGRES_URL = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/terra"
-POSTGRES = AsyncConnectionPool(POSTGRES_URL,open=False)
+POSTGRES = AsyncConnectionPool(POSTGRES_URL, open=False)
 
 REDIS = Redis(
-    host="redis",
-    port=6379,
-    decode_responses=True,
-    auto_close_connection_pool=False
-    )
+    host="redis", port=6379, decode_responses=True, auto_close_connection_pool=False
+)
 
 LOGGER = logging.getLogger("uvicorn.error")
 
@@ -46,6 +41,7 @@ schema = (
     TextField("$.message_id", no_stem=True, as_name="message_id"),
     NumericField("$.message_num", as_name="message_num"),
     NumericField("$.chunk_num", as_name="chunk_num"),
+    TextField("$.timestamp", as_name="timestamp"),
     TextField("$.title", as_name="title"),
     TextField("$.content", as_name="content"),
     VectorField(
@@ -57,12 +53,13 @@ schema = (
             "DISTANCE_METRIC": "COSINE",
         },
         as_name="embeddings",
-        ),
-    )
+    ),
+)
 definition = IndexDefinition(prefix=["context:"], index_type=IndexType.JSON)
 
+
 @asynccontextmanager
-async def lifespan(app:FastAPI):
+async def lifespan(app: FastAPI):
     app.logger = LOGGER
     app.text_splitter = CHUNKER
     app.text_embedder = EMBEDDINGS
@@ -71,20 +68,25 @@ async def lifespan(app:FastAPI):
     app.cache = REDIS
 
     try:
-        await app.cache.ft("idx:context").create_index(fields=schema, definition=definition)
+        await app.cache.ft("idx:context").create_index(
+            fields=schema, definition=definition
+        )
     except redis_exceptions.ResponseError:
-        app.logger.warning("Index idx:content already exists.")
+        index_info = await app.cache.ft("idx:context").info()
+        app.logger.warning(f"Index idx:content already exists. \
+{index_info['num_docs']} documents indexed with {index_info['hash_indexing_failures']} failures.")
     else:
         app.logger.info("Index idx:content created.")
 
     await app.database.open()
     app.logger.info("Database and cache connections established.")
 
+    # await app.cache.ft("idx:context").dropindex(delete_documents=True)
+
     yield
 
     await app.database.close()
     await app.cache.close()
-
 
 
 app = FastAPI(lifespan=lifespan)

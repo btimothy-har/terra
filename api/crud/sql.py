@@ -124,3 +124,24 @@ INSERT_MESSAGE = """
     SET role = EXCLUDED.role,
         content = EXCLUDED.content;
     """
+
+FETCH_ALL_CONTEXT = """
+    SELECT
+        ctx.key,
+        ctx.tid,
+        ctx.mid,
+        ctx.message_no,
+        ctx.chunk_no,
+        ctx.timestamp,
+        ctx.title,
+        ctx.content,
+        ctx.embeddings
+    FROM
+        chats.context as ctx
+    """
+
+INSERT_CONTEXT = """
+    INSERT INTO chats.context (key, tid, mid, message_no, chunk_no, timestamp, title, content, embeddings)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (key) DO NOTHING;
+    """

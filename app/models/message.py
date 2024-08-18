@@ -12,46 +12,40 @@ from shared.models.message import ThreadMessage
 
 class AppMessage(ThreadMessage):
     @classmethod
-    def from_chat_message(cls, message:ChatMessage) -> "ThreadMessage":
+    def from_chat_message(cls, message: ChatMessage) -> "ThreadMessage":
         return cls(
             id=str(uuid4()),
             role=message.role,
             content=message.content,
-            timestamp=datetime.now(timezone.utc)
-            )
+            timestamp=datetime.now(timezone.utc),
+        )
 
-    def save(self, thread_id:str, session_id:str, user_id:str) -> None:
+    def save(self, thread_id: str, session_id: str, user_id: str) -> None:
         message_dict = self.model_dump()
-        message_dict.update({
-            "thread_id": thread_id,
-            "session_id": session_id,
-            "user_id": user_id
-            })
+        message_dict.update(
+            {"thread_id": thread_id, "session_id": session_id, "user_id": user_id}
+        )
 
         put_save = requests.put(
             url=f"{API_ENDPOINT}/messages/save",
-            data=json.dumps(message_dict,default=str)
-            )
+            data=json.dumps(message_dict, default=str),
+        )
         put_save.raise_for_status()
 
-    def save_context(self, thread_id:str, context:list[dict]) -> None:
+    def save_context(self, thread_id: str, context: list[dict]) -> None:
         put_context = requests.post(
-            url=f"{API_ENDPOINT}/threads/{thread_id}/context/save",
-            data=json.dumps({
-                "message_id": self.id,
-                "messages": context
-                })
-            )
+            url=f"{API_ENDPOINT}/threads/context/save",
+            data=json.dumps(
+                {"thread_id": thread_id, "message_id": self.id, "messages": context}
+            ),
+        )
         put_context.raise_for_status()
 
     def to_chat_message(self) -> ChatMessage:
-        return ChatMessage(
-            role=self.role,
-            content=self.content
-            )
+        return ChatMessage(role=self.role, content=self.content)
 
     def to_chat_dict(self) -> dict:
         return {
             "role": self.role,
             "content": self.content,
-            }
+        }

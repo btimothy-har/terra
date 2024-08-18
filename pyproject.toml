@@ -1,0 +1,22 @@
+[tool.ruff]
+line-length = 88
+fix = true
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "W",
+    "ASYNC",
+    "N",
+    "UP",
+    "YTT",
+    "DTZ",
+    "A",
+    "B",
+    "I"
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-single-line = true
