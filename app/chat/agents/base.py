@@ -65,13 +65,14 @@ class BaseAgent:
         }
         self.agent_tools = {tool.func.__name__: tool for tool in tools}
         self.tools.update(self.agent_tools)
+
         self.model = MODEL
+        self.tool_model = MODEL.bind_tools(list(self.tools.values()), tool_choice="any")
 
     async def respond(self, state: ChatState):
         messages = [self.sys_prompt] + state["workspace"].copy()
 
-        with_tools = self.model.bind_tools(list(self.tools.values()), tool_choice="any")
-        ai_msg = await with_tools.ainvoke(messages)
+        ai_msg = await self.tool_model.ainvoke(messages)
 
         messages.append(ai_msg)
         tool_calls = ai_msg.tool_calls
