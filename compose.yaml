@@ -59,6 +59,9 @@ services:
     command: ["postgres", "-c", "config_file=${POSTGRES_CONFIG_PATH}/postgresql.conf"]
     networks:
       - terra_internal
+    extends:
+      file: ./services.${ENV}.yaml
+      service: postgres
   
   redis:
     image: "redis/redis-stack:latest"
@@ -69,19 +72,19 @@ services:
     networks:
       - terra_internal
 
-  ollama:
-    image: ollama/ollama:latest
-    hostname: ollama
-    container_name: ollama
-    pull_policy: always
-    tty: true
-    restart: always
-    environment:
-      - OLLAMA_KEEP_ALIVE=24h
-    volumes:
-      - ${MODELS_PATH}:/root/.ollama
-    extends:
-      file: ./services.${ENV}.yaml
-      service: ollama
-    networks:
-      - terra_internal
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   hostname: ollama
+  #   container_name: ollama
+  #   pull_policy: always
+  #   tty: true
+  #   restart: always
+  #   environment:
+  #     - OLLAMA_KEEP_ALIVE=24h
+  #   volumes:
+  #     - ${MODELS_PATH}:/root/.ollama
+  #   extends:
+  #     file: ./services.${ENV}.yaml
+  #     service: ollama
+  #   networks:
+  #     - terra_internal
