@@ -59,9 +59,6 @@ services:
     command: ["postgres", "-c", "config_file=${POSTGRES_CONFIG_PATH}/postgresql.conf"]
     networks:
       - terra_internal
-    extends:
-      file: ./services.${ENV}.yaml
-      service: postgres
   
   redis:
     image: "redis/redis-stack:latest"
