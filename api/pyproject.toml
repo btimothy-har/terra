@@ -1,0 +1,9 @@
+[project]
+name = "terra_api"
+version = "0.1.0"
+description = "API for the Terra project"
+requires-python = ">=3.12.4"
+readme = "README.md"
+
+[tool.setuptools]
+packages = ["crud", "routers", "shared"]
