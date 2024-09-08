@@ -1,32 +1,54 @@
 volumes:
-  cache:
+  chat_src:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./app/src/app
+  api_src:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./api/src/api
+  shared:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./shared
 
 networks:
-  terra_internal:
+  internal:
     driver: bridge
+  net_postgres:
+    external: true
+  net_redis:
+    external: true
 
 services:
-  terrachat:
-    container_name: chat
-    image: terrachat:latest
-    build: ./app
+  chat:
+    container_name: terra_chat
+    image: terra_chat:latest
+    build:
+      context: ./
+      dockerfile: ./app/src/Dockerfile
     restart: always
     env_file:
       - ./.env
     ports:
       - 8501:8501
     depends_on:
-      - terraapi
+      - api
     volumes:
-      - ./app:/app
-      - ./shared:/app/shared
+      - chat_src:/app/app
+      - shared:/shared
     networks:
-      - terra_internal
+      - internal
   
-  terraapi:
-    container_name: api
-    image: terraapi:latest
+  api:
+    container_name: terra_api
+    image: terra_api:latest
     build: ./api
     restart: always
     env_file:
@@ -35,53 +57,13 @@ services:
       - postgres
       - redis
     volumes:
-      - ./api:/api
-      - ./shared:/api/shared
+      - api_src:/api
+      - shared:/shared
     networks:
-      - terra_internal
+      - internal
+      - net_postgres
+      - net_redis
     extends:
       file: ./services.${ENV}.yaml
-      service: terraapi
+      service: api
     
-  postgres:
-    image: postgres:16
-    container_name: postgres
-    hostname: postgres
-    restart: always
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - PGDATA=${POSTGRES_DATA_PATH}
-    volumes:
-      - ${POSTGRES_DATA_PATH}:${POSTGRES_DATA_PATH}
-      - ${POSTGRES_CONFIG_PATH}:${POSTGRES_CONFIG_PATH}
-    command: ["postgres", "-c", "config_file=${POSTGRES_CONFIG_PATH}/postgresql.conf"]
-    networks:
-      - terra_internal
-  
-  redis:
-    image: "redis/redis-stack:latest"
-    container_name: "redis"
-    restart: always
-    volumes:
-      - cache:/data
-    networks:
-      - terra_internal
-
-  # ollama:
-  #   image: ollama/ollama:latest
-  #   hostname: ollama
-  #   container_name: ollama
-  #   pull_policy: always
-  #   tty: true
-  #   restart: always
-  #   environment:
-  #     - OLLAMA_KEEP_ALIVE=24h
-  #   volumes:
-  #     - ${MODELS_PATH}:/root/.ollama
-  #   extends:
-  #     file: ./services.${ENV}.yaml
-  #     service: ollama
-  #   networks:
-  #     - terra_internal

@@ -1,3 +1,14 @@
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.6.1",
+]
+
+[tool.uv.workspace]
+members = ["api", "app", "shared"]
+
+[tool.uv.sources]
+shared = { workspace = true }
+
 [tool.ruff]
 line-length = 88
 fix = true
