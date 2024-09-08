@@ -21,9 +21,9 @@ volumes:
 networks:
   internal:
     driver: bridge
-  net_postgres:
+  services_net_postgres:
     external: true
-  net_redis:
+  services_net_redis:
     external: true
 
 services:
@@ -61,8 +61,8 @@ services:
       - shared:/shared
     networks:
       - internal
-      - net_postgres
-      - net_redis
+      - services_net_postgres
+      - services_net_redis
     extends:
       file: ./services.${ENV}.yaml
       service: api
