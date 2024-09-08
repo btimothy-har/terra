@@ -53,9 +53,6 @@ services:
     restart: always
     env_file:
       - ./.env
-    depends_on:
-      - postgres
-      - redis
     volumes:
       - api_src:/api
       - shared:/shared
