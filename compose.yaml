@@ -49,7 +49,9 @@ services:
   api:
     container_name: terra_api
     image: terra_api:latest
-    build: ./api
+    build:
+      context: ./
+      dockerfile: ./api/src/Dockerfile
     restart: always
     env_file:
       - ./.env
