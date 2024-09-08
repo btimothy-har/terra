@@ -41,8 +41,8 @@ services:
     depends_on:
       - api
     volumes:
-      - chat_src:/app/app
-      - shared:/shared
+      - chat_src:/src/app
+      - shared:/src/app/shared
     networks:
       - internal
   
@@ -54,8 +54,8 @@ services:
     env_file:
       - ./.env
     volumes:
-      - api_src:/api
-      - shared:/shared
+      - api_src:/src/api
+      - shared:/src/api/shared
     networks:
       - internal
       - services_net_postgres
