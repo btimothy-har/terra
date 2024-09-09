@@ -31,8 +31,8 @@ services:
     container_name: terra_chat
     image: terra_chat:latest
     build:
-      context: ./
-      dockerfile: ./app/src/Dockerfile
+      context: ./app
+      dockerfile: Dockerfile
     restart: always
     env_file:
       - ./.env
@@ -50,14 +50,14 @@ services:
     container_name: terra_api
     image: terra_api:latest
     build:
-      context: ./
-      dockerfile: ./api/src/Dockerfile
+      context: ./api
+      dockerfile: Dockerfile
     restart: always
     env_file:
       - ./.env
     volumes:
       - api_src:/src/api
-      - shared:/src/api/shared
+      - shared:/src/shared
     networks:
       - internal
       - services_net_postgres

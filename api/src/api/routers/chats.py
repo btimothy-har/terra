@@ -1,11 +1,7 @@
 import asyncio
 from typing import Optional
 
-import config
 import numpy as np
-from crud import cache
-from crud import database as db
-from crud import embeddings as emb
 from fastapi import APIRouter
 from fastapi import BackgroundTasks
 from fastapi import Request
@@ -13,6 +9,10 @@ from fastapi.exceptions import HTTPException
 from pydantic import BaseModel
 from redis.commands.search.query import Query
 
+import api.config as config
+from api.crud import cache
+from api.crud import database as db
+from api.crud import embeddings as emb
 from shared.models.message import ThreadMessage
 from shared.models.thread import ConversationThread
 
