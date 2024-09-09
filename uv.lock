@@ -5,6 +5,7 @@ requires-python = ">=3.12.4"
 members = [
     "terra-api",
     "terra-app",
+    "terra-jobs",
     "terra-shared",
 ]
 
@@ -42,6 +43,11 @@ source = { editable = "api" }
 name = "terra-app"
 version = "1.0.0"
 source = { editable = "app" }
+
+[[package]]
+name = "terra-jobs"
+version = "0.1.0"
+source = { editable = "jobs" }
 
 [[package]]
 name = "terra-shared"
