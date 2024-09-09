@@ -2,7 +2,6 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-import config
 from fastapi import FastAPI
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai import OpenAIEmbeddings
@@ -11,9 +10,11 @@ from redis import exceptions as redis_exceptions
 from redis.asyncio import Redis
 from redis.commands.search.indexDefinition import IndexDefinition
 from redis.commands.search.indexDefinition import IndexType
-from routers.chats import messages_router
-from routers.chats import threads_router
-from routers.users import router as users_router
+
+import api.config as config
+from api.routers import messages_router
+from api.routers import threads_router
+from api.routers import users_router
 
 EMBEDDINGS = OpenAIEmbeddings(
     model="text-embedding-3-small",

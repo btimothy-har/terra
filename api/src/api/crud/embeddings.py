@@ -1,11 +1,12 @@
 from datetime import datetime
 from datetime import timezone
 
-import config
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai import OpenAIEmbeddings
 from pydantic import BaseModel
 from redis.asyncio import Redis
+
+import api.config as config
 
 
 class MessageToEmbed(BaseModel):

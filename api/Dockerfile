@@ -3,15 +3,13 @@ COPY --from=ghcr.io/astral-sh/uv:0.3.0 /uv /bin/uv
 
 WORKDIR /src
 
-COPY ./api/requirements.txt .
+COPY ./requirements.txt .
 RUN uv pip install --system "psycopg[binary]" \
     && uv pip install --system -r requirements.txt
 
-COPY ./api/src/api /src/api
-
-EXPOSE 8100
+COPY ./src/api /src/api
 
 CMD ["uvicorn", "api.main:app", \
     "--reload", \
     "--host", "0.0.0.0", \
-    "--port", "8100"]
+    "--port", "8000"]

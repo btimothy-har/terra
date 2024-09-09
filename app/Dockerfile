@@ -3,16 +3,18 @@ COPY --from=ghcr.io/astral-sh/uv:0.3.0 /uv /bin/uv
 
 WORKDIR /src
 
-COPY ./app/requirements.txt .
+COPY ./requirements.txt .
 RUN uv pip install --system -r requirements.txt
 
-COPY ./app/src/app /src/app
+WORKDIR /src/app
+
+COPY ./src/app .
 
 EXPOSE 8501
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
-ENTRYPOINT ["streamlit", "run", "app/main.py", \
+ENTRYPOINT ["streamlit", "run", "main.py", \
     "--server.port=8501", \
     "--server.headless=true", \
     "--server.runOnSave=true", \
