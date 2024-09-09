@@ -38,14 +38,14 @@ charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via streamlit
-cryptography==43.0.0
-    # via -r app/requirements.in
+cryptography==43.0.1
+    # via -r requirements.in
 dataclasses-json==0.6.7
     # via langchain-community
 distro==1.9.0
     # via openai
 extra-streamlit-components==0.1.71
-    # via -r app/requirements.in
+    # via -r requirements.in
 frozenlist==1.4.1
     # via
     #   aiohttp
@@ -56,14 +56,14 @@ gitpython==3.1.43
     # via streamlit
 google-ai-generativelanguage==0.6.6
     # via google-generativeai
-google-api-core==2.19.1
+google-api-core[grpc]==2.19.1
     # via
     #   google-ai-generativelanguage
     #   google-api-python-client
     #   google-generativeai
 google-api-python-client==2.140.0
     # via
-    #   -r app/requirements.in
+    #   -r requirements.in
     #   google-generativeai
 google-auth==2.33.0
     # via
@@ -76,13 +76,15 @@ google-auth==2.33.0
 google-auth-httplib2==0.2.0
     # via google-api-python-client
 google-auth-oauthlib==1.2.1
-    # via -r app/requirements.in
+    # via -r requirements.in
 google-generativeai==0.7.2
     # via langchain-google-genai
 googleapis-common-protos==1.63.2
     # via
     #   google-api-core
     #   grpcio-status
+greenlet==3.0.3
+    # via sqlalchemy
 grpcio==1.65.4
     # via
     #   google-api-core
@@ -123,15 +125,15 @@ jsonschema-specifications==2023.12.1
     # via jsonschema
 langchain==0.2.13
     # via
-    #   -r app/requirements.in
+    #   -r requirements.in
     #   langchain-community
 langchain-community==0.2.12
     # via
-    #   -r app/requirements.in
+    #   -r requirements.in
     #   langchain-experimental
 langchain-core==0.2.38
     # via
-    #   -r app/requirements.in
+    #   -r requirements.in
     #   langchain
     #   langchain-community
     #   langchain-experimental
@@ -142,17 +144,17 @@ langchain-core==0.2.38
     #   langgraph
     #   langgraph-checkpoint
 langchain-experimental==0.0.64
-    # via -r app/requirements.in
+    # via -r requirements.in
 langchain-google-genai==1.0.8
-    # via -r app/requirements.in
+    # via -r requirements.in
 langchain-ollama==0.1.1
-    # via -r app/requirements.in
+    # via -r requirements.in
 langchain-openai==0.1.23
-    # via -r app/requirements.in
+    # via -r requirements.in
 langchain-text-splitters==0.2.2
     # via langchain
 langgraph==0.2.3
-    # via -r app/requirements.in
+    # via -r requirements.in
 langgraph-checkpoint==1.0.2
     # via langgraph
 langsmith==0.1.99
@@ -227,7 +229,7 @@ pycparser==2.22
     # via cffi
 pydantic==2.8.2
     # via
-    #   -r app/requirements.in
+    #   -r requirements.in
     #   google-generativeai
     #   langchain
     #   langchain-core
@@ -244,7 +246,7 @@ pyparsing==3.1.2
 python-dateutil==2.9.0.post0
     # via pandas
 python-dotenv==1.0.1
-    # via -r app/requirements.in
+    # via -r requirements.in
 pytz==2024.1
     # via pandas
 pyyaml==6.0.2
@@ -292,7 +294,7 @@ sqlalchemy==2.0.32
     #   langchain-community
 streamlit==1.37.1
     # via
-    #   -r app/requirements.in
+    #   -r requirements.in
     #   extra-streamlit-components
 tenacity==8.5.0
     # via
@@ -329,5 +331,7 @@ uritemplate==4.1.1
     # via google-api-python-client
 urllib3==2.2.2
     # via requests
+watchdog==4.0.2
+    # via streamlit
 yarl==1.9.4
     # via aiohttp
