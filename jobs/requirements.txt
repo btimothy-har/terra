@@ -79,6 +79,8 @@ pydantic-core==2.23.3
     # via pydantic
 pyyaml==6.0.2
     # via langchain-core
+redis==5.0.8
+    # via -r jobs/requirements.in
 regex==2024.7.24
     # via tiktoken
 requests==2.32.2

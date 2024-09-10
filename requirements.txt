@@ -283,7 +283,9 @@ pyyaml==6.0.2
     #   langchain-community
     #   langchain-core
 redis==5.0.8
-    # via -r api/requirements.in
+    # via
+    #   -r api/requirements.in
+    #   -r jobs/requirements.in
 referencing==0.35.1
     # via
     #   jsonschema

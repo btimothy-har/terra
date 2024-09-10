@@ -82,7 +82,7 @@ class NewsScraper(AsyncScraper):
         if self._last_fetched:
             return self._last_fetched
         else:
-            return datetime.now(UTC) - timedelta(hours=1)
+            return datetime.now(UTC) - timedelta(days=1)
 
     def compute_new_sleep_time(self, quota_remaining: int):
         now = datetime.now(UTC)
@@ -104,7 +104,7 @@ class NewsScraper(AsyncScraper):
             "language": "en",
             "earliest-publish-date": self.last_fetched.strftime("%Y-%m-%d %H:%M:%S"),
             "sort": "publish-time",
-            "sort-direction": "ASC",
+            "sort-direction": "DESC",
             "news-sources": ",".join(SOURCES),
             "number-of-articles": 10,
         }
