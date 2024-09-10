@@ -1,5 +1,6 @@
 import asyncio
 import json
+import math
 import os
 from datetime import UTC
 from datetime import datetime
@@ -13,8 +14,57 @@ from .base import AsyncScraper
 from .models import NewsItem
 from .models.schema import NewsItemSchema
 from .utils.ai import LLM
-from .utils.news_sources import SOURCES
 from .utils.prompts import NEWS_LANGUAGE_PROMPT
+
+SOURCES = [
+    "cnn.com",
+    "bbc.co.uk",
+    "vox.com",
+    "globalissues.org",
+    "egyptian-gazette.com",
+    "cbslocal.com",
+    "euronews.com",
+    "financialpost.com",
+    "time.com",
+    "sky.com",
+    "washingtonpost.com",
+    "cbc.ca",
+    "aljazeera.com",
+    "channelnewsasia.com",
+    "dailymail.co.uk",
+    "huffingtonpost.co.uk",
+    "independent.co.uk",
+    "politico.com",
+    "washingtontimes.com",
+    "nikkei.com",
+    "economist.com.na",
+    "hrmasia.com",
+    "nationalpost.com",
+    "google.com",
+    "technode.com",
+    "thediplomat.com",
+    "asiasentinel.com",
+    "bostonherald.com",
+    "campaignasia.com",
+    "cbsnews.com",
+    "cnbc.com",
+    "computerworld.com",
+    "dailyherald.com",
+    "eastasiaforum.org",
+    "financeasia.com",
+    "huffpost.com",
+    "japantimes.co.jp",
+    "nytimes.com",
+    "politico.eu",
+    "theworld.org",
+    "rand.org",
+    "scmp.com",
+    "euronews247.com",
+    "theguardian.com",
+    "yahoo.com",
+    "dailywire.com",
+    "reuters.com",
+]
 
 
 class LanguageClassifier(BaseModel):
@@ -32,7 +82,7 @@ class NewsScraper(AsyncScraper):
         if self._last_fetched:
             return self._last_fetched
         else:
-            return datetime.now(UTC) - timedelta(days=1)
+            return datetime.now(UTC) - timedelta(hours=1)
 
     def compute_new_sleep_time(self, quota_remaining: int):
         now = datetime.now(UTC)
@@ -76,12 +126,11 @@ class NewsScraper(AsyncScraper):
         await self.load(transformed)
 
         quota_remaining = req_headers["X-API-Quota-Left"]
+        delay = max(math.ceil(self.compute_new_sleep_time(float(quota_remaining))), 180)
 
-        self._next_run = datetime.now(UTC) + timedelta(
-            seconds=max(self.compute_new_sleep_time(float(quota_remaining)), 180)
-        )
+        self._next_run = datetime.now(UTC) + timedelta(seconds=delay)
         self.logger.info(
-            f"Quota remaining: {quota_remaining}. Next run at: {self._next_run}"
+            f"Quota remaining: {quota_remaining}. Next run in: {delay} seconds."
         )
 
     async def transform(self, data: list[dict]):
