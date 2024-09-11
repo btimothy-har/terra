@@ -12,6 +12,7 @@ from pydantic import model_validator
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from scrapers.base import BaseAsyncScraper
+from scrapers.base import ScraperFetchError
 from scrapers.models import NewsItemSchema
 from scrapers.utils.ai import llm
 from scrapers.utils.funcs import check_and_set_next_run
@@ -162,7 +163,12 @@ class NewsScraper(BaseAsyncScraper):
         )
         run_timestamp = datetime.now(UTC)
 
-        articles, headers = await self.fetch(last_fetch, run_timestamp)
+        try:
+            articles, headers = await self.fetch(last_fetch, run_timestamp)
+        except ScraperFetchError as e:
+            self.log.error(f"Error fetching News: {e}")
+            return run_timestamp + timedelta(seconds=60)
+
         articles = list({article["id"]: article for article in articles}.values())
 
         quota_remaining = headers.get("X-API-Quota-Left", 0)
