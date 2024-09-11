@@ -3,6 +3,9 @@ name = "terra_shared"
 version = "0.1.0"
 description = "Shared Resources for the Terra project"
 requires-python = ">=3.12.4"
+dependencies = [
+    "pydantic~=2.8"
+]
 
 [build-system]
 requires = ["hatchling"]
