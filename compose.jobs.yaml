@@ -31,6 +31,5 @@ services:
       - jobs_src:/src/jobs
       - shared:/src/shared
     networks:
-      - internal
       - services_net_postgres
       - services_net_redis
