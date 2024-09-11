@@ -23,8 +23,7 @@ class JobsOrchestrator:
 
             tasks = []
             for scraper in self.scrapers:
-                if scraper.should_run:
-                    tasks.append(asyncio.create_task(scraper.run()))
+                tasks.append(asyncio.create_task(scraper.run()))
 
             await asyncio.gather(*tasks)
             self.iter_count += 1

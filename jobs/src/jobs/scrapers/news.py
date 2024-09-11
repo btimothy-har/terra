@@ -77,13 +77,6 @@ class NewsScraper(AsyncScraper):
         super().__init__(namespace="news", request_limit=2, request_interval=1)
         self.url = "https://api.worldnewsapi.com/search-news"
 
-    @property
-    def last_fetched(self) -> datetime:
-        if self._last_fetched:
-            return self._last_fetched
-        else:
-            return datetime.now(UTC) - timedelta(days=1)
-
     def compute_new_sleep_time(self, quota_remaining: int):
         now = datetime.now(UTC)
         midnight = datetime.combine(
@@ -98,11 +91,23 @@ class NewsScraper(AsyncScraper):
         return time_between_requests
 
     async def run(self):
+        if not self._next_run:
+            self._next_run = await self.get_next_run()
+
+        if not self.should_run:
+            return
+
+        last_fetch = await self.get_last_fetch()
+        last_fetch = (
+            last_fetch.strftime("%Y-%m-%d %H:%M:%S")
+            if last_fetch
+            else (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+        )
         args = {}
         args["params"] = {
             "api-key": os.getenv("NEWS_API_KEY"),
             "language": "en",
-            "earliest-publish-date": self.last_fetched.strftime("%Y-%m-%d %H:%M:%S"),
+            "earliest-publish-date": last_fetch,
             "sort": "publish-time",
             "sort-direction": "DESC",
             "news-sources": ",".join(SOURCES),
@@ -112,6 +117,12 @@ class NewsScraper(AsyncScraper):
             url=self.url,
             **args,
         )
+
+        quota_remaining = req_headers["X-API-Quota-Left"]
+        delay = max(math.ceil(self.compute_new_sleep_time(float(quota_remaining))), 180)
+
+        self._next_run = datetime.now(UTC) + timedelta(seconds=delay)
+        await self.set_next_run(self._next_run)
 
         get_latest_news = json.loads(get_latest_news)
         data = get_latest_news["news"]
@@ -125,10 +136,6 @@ class NewsScraper(AsyncScraper):
         transformed = await self.transform(data)
         await self.load(transformed)
 
-        quota_remaining = req_headers["X-API-Quota-Left"]
-        delay = max(math.ceil(self.compute_new_sleep_time(float(quota_remaining))), 180)
-
-        self._next_run = datetime.now(UTC) + timedelta(seconds=delay)
         self.logger.info(
             f"Quota remaining: {quota_remaining}. Next run in: {delay} seconds."
         )

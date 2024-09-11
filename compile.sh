@@ -8,4 +8,4 @@ eval "uv sync"
 
 eval "uv pip install -r requirements.txt"
 
-echo "Compilation complete."
+echo "Compilation complete." 
