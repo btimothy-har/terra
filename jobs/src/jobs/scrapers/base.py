@@ -13,6 +13,10 @@ from scrapers.utils.funcs import cache_client
 from scrapers.utils.funcs import check_and_set_next_run
 
 
+class ScraperFetchError(Exception):
+    pass
+
+
 class BaseAsyncScraper(ABC):
     def __init__(
         self,
@@ -30,10 +34,13 @@ class BaseAsyncScraper(ABC):
 
     async def fetch(self, url: str, method: str = "GET", **request_args):
         async with self._limiter:
-            async with aiohttp.ClientSession() as session:
-                async with session.request(method, url, **request_args) as response:
-                    response.raise_for_status()
-                    content = await response.text()
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.request(method, url, **request_args) as response:
+                        response.raise_for_status()
+                        content = await response.text()
+            except Exception as e:
+                raise ScraperFetchError(f"Failed to fetch {url}: {e}") from e
 
         await self.save_state(
             f"extract:{datetime.now(UTC).isoformat()}", content, ex=259_200

@@ -28,7 +28,7 @@ jobs:
         source: "compose.yaml, services.*.yaml, app/Dockerfile, api/Dockerfile, **/requirements.txt"
         target: "terra"
     
-    - name: Rebuild Docker Images
+    - name: Restart Docker Containers
       uses: appleboy/ssh-action@v0.1.3
       with:
         host: ${{ secrets.HOST_ADDRESS }}
@@ -36,5 +36,5 @@ jobs:
         key: ${{ secrets.HOST_SSH_KEY }}
         script: |
           cd terra
-          docker-compose down
+          docker-compose -f compose.yaml down
           docker-compose -f compose.yaml up --build -d
