@@ -1,7 +1,3 @@
-from datetime import datetime
-
-from pydantic import BaseModel
-from pydantic import ConfigDict
 from sqlalchemy import Column
 from sqlalchemy import Float
 from sqlalchemy import String
@@ -29,22 +25,3 @@ class NewsItemSchema(Base):
     category = Column(String)
     source_country = Column(String)
     sentiment = Column(Float)
-
-
-class NewsItem(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    item_id: str
-    title: str
-    content: str
-    summary: str | None
-    url: str
-    image: str | None
-    video: str | None
-    publish_date: datetime
-    author: str | None
-    authors: list[str] | None
-    language: str | None
-    category: str | None
-    source_country: str | None
-    sentiment: float | None

@@ -19,7 +19,7 @@ class JobsOrchestrator:
     async def _loop(self):
         while self.running:
             if self.iter_count > 0:
-                await asyncio.sleep(30)
+                await asyncio.sleep(60)
 
             tasks = []
             for scraper in self.scrapers:

@@ -1,5 +1,4 @@
-from . import schema
 from .base import Base
-from .news_item import NewsItem
+from .news_item import NewsItemSchema
 
-__all__ = ["Base", "schema", "NewsItem"]
+__all__ = ["Base", "NewsItemSchema"]

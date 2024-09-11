@@ -4,10 +4,10 @@ COPY --from=ghcr.io/astral-sh/uv:0.3.0 /uv /bin/uv
 WORKDIR /src
 
 COPY ./requirements.txt .
+COPY ./pyproject.toml .
 RUN uv pip install --system -r requirements.txt
 
-WORKDIR /src/jobs
+COPY ./src/jobs ./jobs
+RUN uv pip install --system -e .
 
-COPY ./src/jobs .
-
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python", "jobs/main.py"]
