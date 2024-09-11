@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
     paths:
       - "shared/**"
-
+      - ".github/workflows/deploy_shared.yml"
 jobs:
   deploy_app:
     runs-on: ubuntu-latest

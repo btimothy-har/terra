@@ -9,7 +9,7 @@ on:
       - "app/Dockerfile"
       - "api/Dockerfile"
       - "**/requirements.txt"
-
+      - ".github/workflows/deploy_docker.yml"
 jobs:
   deploy_app:
     runs-on: ubuntu-latest

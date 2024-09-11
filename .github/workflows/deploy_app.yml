@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
     paths:
       - "app/**"
-
+      - ".github/workflows/deploy_app.yml"
 jobs:
   deploy_app:
     runs-on: ubuntu-latest

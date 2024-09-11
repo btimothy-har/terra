@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
     paths:
       - "api/**"
+      - ".github/workflows/deploy_api.yml"
 
 jobs:
   deploy_api:
