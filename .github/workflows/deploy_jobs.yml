@@ -22,7 +22,7 @@ jobs:
         host: ${{ secrets.HOST_ADDRESS }}
         username: ${{ secrets.HOST_USERNAME }}
         key: ${{ secrets.HOST_SSH_KEY }}
-        source: "jobs/*"
+        source: "jobs/*, compose.jobs.yaml"
         target: "terra"
   
     - name: Restart Docker Container
