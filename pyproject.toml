@@ -4,7 +4,7 @@ dev-dependencies = [
 ]
 
 [tool.uv.workspace]
-members = ["api", "app", "shared"]
+members = ["api", "app", "shared", "jobs"]
 
 [tool.uv.sources]
 shared = { workspace = true }

@@ -11,6 +11,12 @@ volumes:
       type: none
       o: bind
       device: ./api/src/api
+  jobs_src:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./jobs/src/jobs
   shared:
     driver: local
     driver_opts:
@@ -65,4 +71,19 @@ services:
     extends:
       file: ./services.${ENV}.yaml
       service: api
-    
+  
+  jobs:
+    container_name: terra_jobs
+    image: terra_jobs:latest
+    build:
+      context: ./jobs
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    volumes:
+      - jobs_src:/src/jobs
+      - shared:/src/shared
+    networks:
+      - internal
+      - services_net_postgres
+      - services_net_redis

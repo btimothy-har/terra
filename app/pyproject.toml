@@ -1,5 +1,5 @@
 [project]
-name = "terra_app"
+name = "terra-app"
 version = "1.0.0"
 description = "Web UI for the Terra App"
 requires-python = ">=3.12.4"
