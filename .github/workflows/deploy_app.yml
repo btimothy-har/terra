@@ -8,9 +8,10 @@ on:
       - "api/**"
       - "shared/**"
       - "compose.yaml"
+      - "services.*.yaml"
       - ".github/workflows/deploy_app.yml"
 jobs:
-  deploy_app:
+  deploy:
     runs-on: ubuntu-latest
     environment: production
 
@@ -51,7 +52,7 @@ jobs:
         host: ${{ secrets.HOST_ADDRESS }}
         username: ${{ secrets.HOST_USERNAME }}
         key: ${{ secrets.HOST_SSH_KEY }}
-        source: "compose.yaml"
+        source: "compose.yaml, services.*.yaml"
         target: "terra_app"
     
     - name: Restart Docker Containers

@@ -158,16 +158,12 @@ class NewsScraper(BaseAsyncScraper):
         self.log.info("Running news scraper...")
 
         run_timestamp = datetime.now(UTC)
-
-        if self._iter_count == 0:
-            last_fetch = datetime.now(UTC) - timedelta(days=1)
-        else:
-            last_fetch = await self.get_state("last_fetch")
-            last_fetch = (
-                datetime.fromisoformat(last_fetch)
-                if last_fetch
-                else (datetime.now(UTC) - timedelta(days=1))
-            )
+        last_fetch = await self.get_state("last_fetch")
+        last_fetch = (
+            datetime.fromisoformat(last_fetch)
+            if last_fetch
+            else (datetime.now(UTC) - timedelta(days=1))
+        )
 
         try:
             articles = await self.fetch(from_date=last_fetch, to_date=run_timestamp)
