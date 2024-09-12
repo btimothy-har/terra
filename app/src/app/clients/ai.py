@@ -11,8 +11,6 @@ class OpenRouterModels(Enum):
     ANTHROPIC_CLAUDE_SONNET = "anthropic/claude-3.5-sonnet"
     ANTHROPIC_CLAUDE_HAIKU = "anthropic/claude-3-haiku"
     ANTHROPIC_CLAUDE_OPUS = "anthropic/claude-3-opus"
-    DEEPSEEK_CHAT_2_5 = "deepseek/deepseek-chat"
-    DEEPSEEK_CODER_2 = "deepseek/deepseek-coder"
     OPENAI_GPT4O = "openai/gpt-4o"
     OPENAI_GPT4O_MINI = "openai/gpt-4o-mini"
     MATTSHUMER_REFLECTION_70B = "mattshumer/reflection-70b"

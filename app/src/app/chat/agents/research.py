@@ -3,7 +3,7 @@ import os
 import streamlit as st
 from chat.states import AgentAction
 from chat.states import ChatState
-from langchain_openai import ChatOpenAI
+from langchain_community.chat_models import ChatPerplexity
 
 from .base import BaseAgent
 from .prompts.research import RESARCH_AGENT_PROMPT
@@ -25,12 +25,18 @@ and unbiased information.
             title="Research Assistant",
             sys_prompt=RESARCH_AGENT_PROMPT,
         )
-        self.model = ChatOpenAI(
-            model="perplexity/llama-3.1-sonar-large-128k-online",
+        # TODO: Switch to OpenRouter when PPLX Credits are finished
+        # self.model = ChatOpenAI(
+        #     model="perplexity/llama-3.1-sonar-large-128k-online",
+        #     temperature=0,
+        #     timeout=30,
+        #     api_key=os.getenv("OPENROUTER_API_KEY"),
+        #     base_url=os.getenv("OPENROUTER_BASE_URL"),
+        # )
+        self.model = ChatPerplexity(
             temperature=0,
-            timeout=30,
-            api_key=os.getenv("OPENROUTER_API_KEY"),
-            base_url=os.getenv("OPENROUTER_BASE_URL"),
+            pplx_api_key=os.getenv("PPLX_API_KEY"),
+            model="llama-3.1-sonar-small-128k-online",
         )
 
     async def respond(self, state: ChatState):
