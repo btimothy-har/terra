@@ -9,7 +9,6 @@ from models.message import AppMessage
 class AgentConfig(TypedDict):
     model: str
     temp: float
-    max_tokens: int
 
 
 class ChatState(TypedDict):

@@ -5,11 +5,12 @@ from typing import Optional
 import streamlit as st
 from chat.states import AgentAction
 from chat.states import ChatState
+from clients.ai import OpenRouterModels
 from clients.ai import get_client
 from langchain_core.tools import tool
 from typing_extensions import Annotated
 
-MODEL = get_client(model="gpt-4o-mini")
+model = get_client(model=OpenRouterModels.OPENAI_GPT4O_MINI.value)
 
 
 def insert_tool_args(tool: dict, **kwargs):
@@ -66,8 +67,8 @@ class BaseAgent:
         self.agent_tools = {tool.func.__name__: tool for tool in tools}
         self.tools.update(self.agent_tools)
 
-        self.model = MODEL
-        self.tool_model = MODEL.bind_tools(list(self.tools.values()), tool_choice="any")
+        self.model = model
+        self.tool_model = model.bind_tools(list(self.tools.values()), tool_choice="any")
 
     async def respond(self, state: ChatState):
         messages = [self.sys_prompt] + state["workspace"].copy()

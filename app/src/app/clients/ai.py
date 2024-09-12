@@ -1,40 +1,30 @@
 import os
 from enum import Enum
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 
 
-class OpenAIModels(Enum):
-    if os.getenv("OPENAI_API_KEY"):
-        GPT_4O_MINI = "gpt-4o-mini"
-        GPT_4O = "gpt-4o"
-        GPT_4_TURBO = "gpt-4-turbo"
+class OpenRouterModels(Enum):
+    GOOGLE_GEMINI_FLASH = "google/gemini-flash-1.5"
+    GOOGLE_GEMINI_PRO = "google/gemini-pro-1.5"
+    GOOGLE_GEMMA2_27B = "google/gemma-2-27b-it"
+    ANTHROPIC_CLAUDE_SONNET = "anthropic/claude-3.5-sonnet"
+    ANTHROPIC_CLAUDE_HAIKU = "anthropic/claude-3-haiku"
+    ANTHROPIC_CLAUDE_OPUS = "anthropic/claude-3-opus"
+    OPENAI_GPT4O = "openai/gpt-4o"
+    OPENAI_GPT4O_MINI = "openai/gpt-4o-mini"
+    MATTSHUMER_REFLECTION_70B = "mattshumer/reflection-70b"
+    MISTRALAI_MISTRALNEMO = "mistralai/mistral-nemo"
 
 
-class GoogleModels(Enum):
-    if os.getenv("GOOGLE_API_KEY"):
-        GEMINI_PRO = "gemini-1.5-pro"
-        GEMINI_FLASH = "gemini-1.5-flash"
+AVAILABLE_MODELS = [m.value for m in OpenRouterModels]
 
 
-AVAILABLE_MODELS = [*[m.value for m in OpenAIModels], *[m.value for m in GoogleModels]]
-
-
-def get_client(model: str, temp: float = 0.2, max_tokens: int = 2048):
-    if model in set([m.value for m in OpenAIModels]):
-        return ChatOpenAI(
-            model=model,
-            temperature=temp,
-            max_tokens=max_tokens,
-            timeout=30,
-            api_key=os.getenv("OPENAI_API_KEY"),
-        )
-
-    if model in set([m.value for m in GoogleModels]):
-        return ChatGoogleGenerativeAI(
-            model=model,
-            api_key=os.getenv("GOOGLE_API_KEY"),
-            temp=temp,
-            max_output_tokens=max_tokens,
-        )
+def get_client(model: str, temp: float = 0.2):
+    return ChatOpenAI(
+        model=model,
+        temperature=temp,
+        timeout=30,
+        api_key=os.getenv("OPENROUTER_API_KEY"),
+        base_url=os.getenv("OPENROUTER_BASE_URL"),
+    )

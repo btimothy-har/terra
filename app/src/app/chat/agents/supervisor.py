@@ -10,8 +10,8 @@ from pydantic import Field
 from typing_extensions import Annotated
 
 from .archivist import ArchivistAgent
-from .base import MODEL
 from .base import BaseAgent
+from .base import model
 from .engineer import ProgrammerAgent
 from .prompts import supervisor as prompts
 from .research import ResearchAgent
@@ -98,7 +98,7 @@ class Supervisor(BaseAgent):
             "role": "system",
             "content": prompts.SUPERVISOR_ASSIGN_TASKS.format(agents=AGENT_DESCRIPTION),
         }
-        response = await MODEL.ainvoke([sys_prompt] + state["conversation"].copy())
+        response = await model.ainvoke([sys_prompt] + state["conversation"].copy())
         return response.content
 
     async def evaluate_loop(self, state: ChatState):
@@ -167,5 +167,5 @@ class Supervisor(BaseAgent):
             "content": prompts.SUPERVISOR_FEEDBACK.format(agents=AGENT_DESCRIPTION),
         }
 
-        response = await MODEL.ainvoke([sys_prompt] + state["workspace"].copy())
+        response = await model.ainvoke([sys_prompt] + state["workspace"].copy())
         return response.content
