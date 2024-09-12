@@ -1,6 +1,5 @@
 import asyncio
 import json
-import math
 import os
 from datetime import UTC
 from datetime import datetime
@@ -142,13 +141,17 @@ class NewsScraper(BaseAsyncScraper):
         while response.available > len(retrieved_articles):
             args["params"]["offset"] = len(retrieved_articles)
 
+            if resp_headers.get("X-API-Quota-Left", 0) == 0:
+                self.log.error("News API quota exceeded.")
+                break
+
             resp_data, resp_headers = await super().fetch(self.url, **args)
             response = NewsAPIResponse.model_validate(json.loads(resp_data))
             retrieved_articles.extend(response.news)
 
             await asyncio.sleep(0)
 
-        return retrieved_articles, resp_headers
+        return retrieved_articles
 
     @check_and_set_next_run()
     async def run(self):
@@ -164,15 +167,12 @@ class NewsScraper(BaseAsyncScraper):
         run_timestamp = datetime.now(UTC)
 
         try:
-            articles, headers = await self.fetch(last_fetch, run_timestamp)
+            articles = await self.fetch(from_date=last_fetch, to_date=run_timestamp)
         except ScraperFetchError as e:
             self.log.error(f"Error fetching News: {e}")
             return run_timestamp + timedelta(seconds=60)
 
         articles = list({article["id"]: article for article in articles}.values())
-
-        quota_remaining = headers.get("X-API-Quota-Left", 0)
-        delay = calculate_delay(run_timestamp, float(quota_remaining))
 
         self.log.info(f"Retrieved {len(articles)} articles.")
         if len(articles) > 0:
@@ -181,10 +181,7 @@ class NewsScraper(BaseAsyncScraper):
 
         await self.save_state("last_fetch", run_timestamp.isoformat())
 
-        next_run = datetime.now(UTC) + timedelta(seconds=delay)
-        self.log.info(
-            f"Quota remaining: {quota_remaining}. Next run in: {delay} seconds."
-        )
+        next_run = datetime.now(UTC) + timedelta(hours=12)
         return next_run
 
     async def process(self, data: list[dict]):
@@ -249,18 +246,3 @@ class NewsScraper(BaseAsyncScraper):
 
         await asyncio.gather(*[load_one(item) for item in data])
         self.log.info(f"Loaded {len(data)} articles.")
-
-
-def calculate_delay(run_timestamp: datetime, quota_remaining: int):
-    midnight = datetime.combine(
-        run_timestamp.date() + timedelta(days=1), datetime.min.time(), tzinfo=UTC
-    )
-    seconds_left = (midnight - run_timestamp).total_seconds()
-
-    if int(quota_remaining) > 1:
-        time_between_requests = seconds_left / int(quota_remaining)
-    else:
-        time_between_requests = seconds_left
-
-    delay = max(math.ceil(time_between_requests), 600)
-    return delay
