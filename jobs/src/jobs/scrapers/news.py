@@ -157,14 +157,17 @@ class NewsScraper(BaseAsyncScraper):
     async def run(self):
         self.log.info("Running news scraper...")
 
-        last_fetch = await self.get_state("last_fetch")
-
-        last_fetch = (
-            datetime.fromisoformat(last_fetch)
-            if last_fetch
-            else (datetime.now(UTC) - timedelta(days=1))
-        )
         run_timestamp = datetime.now(UTC)
+
+        if self._iter_count == 0:
+            last_fetch = datetime.now(UTC) - timedelta(days=1)
+        else:
+            last_fetch = await self.get_state("last_fetch")
+            last_fetch = (
+                datetime.fromisoformat(last_fetch)
+                if last_fetch
+                else (datetime.now(UTC) - timedelta(days=1))
+            )
 
         try:
             articles = await self.fetch(from_date=last_fetch, to_date=run_timestamp)
@@ -181,7 +184,8 @@ class NewsScraper(BaseAsyncScraper):
 
         await self.save_state("last_fetch", run_timestamp.isoformat())
 
-        next_run = datetime.now(UTC) + timedelta(hours=12)
+        next_run = datetime.now(UTC) + timedelta(hours=24)
+        self._iter_count += 1
         return next_run
 
     async def process(self, data: list[dict]):

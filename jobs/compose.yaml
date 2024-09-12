@@ -4,13 +4,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ./jobs/src/jobs
-  shared:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./shared
+      device: ./src/jobs
 
 networks:
   services_net_postgres:
@@ -23,13 +17,12 @@ services:
     container_name: terra_jobs
     image: terra_jobs:latest
     build:
-      context: ./jobs
+      context: .
       dockerfile: Dockerfile
     env_file:
-      - ./.env
+      - ../.env
     volumes:
       - jobs_src:/src/jobs
-      - shared:/src/shared
     networks:
       - services_net_postgres
       - services_net_redis

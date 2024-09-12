@@ -31,6 +31,7 @@ class BaseAsyncScraper(ABC):
         self._concurrency = asyncio.Semaphore(task_concurrency)
         self._limiter = AsyncLimiter(request_limit, request_interval)
         self._last_fetch = None
+        self._iter_count = 0
 
     async def fetch(self, url: str, method: str = "GET", **request_args):
         async with self._limiter:
