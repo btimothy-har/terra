@@ -98,4 +98,4 @@ agent_flow.add_conditional_edges(
 agent_flow.add_edge("respond_to_user", END)
 
 agent_flow.set_entry_point("enter_loop")
-CHAT_AGENT = agent_flow.compile()
+chat_agent = agent_flow.compile()

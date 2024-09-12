@@ -8,7 +8,7 @@ from uuid import uuid4
 import config
 import streamlit as st
 import zoneinfo
-from chat.graph import CHAT_AGENT
+from chat.graph import chat_agent
 from chat.states import AgentConfig
 from chat.states import ChatState
 from clients.ai import AVAILABLE_MODELS
@@ -27,9 +27,7 @@ def invoke_graph():
         loop_count=0,
         thread_id=st.session_state.current_thread.thread_id,
         agent=AgentConfig(
-            model=st.session_state.ai_model,
-            temp=st.session_state.ai_temp,
-            max_tokens=st.session_state.ai_max_tokens,
+            model=st.session_state.ai_model, temp=st.session_state.ai_temp
         ),
         conversation=st.session_state.current_thread.message_dict(),
         workspace=[],
@@ -38,7 +36,7 @@ def invoke_graph():
         completed=False,
         output=None,
     )
-    response = asyncio.run(CHAT_AGENT.ainvoke(state))
+    response = asyncio.run(chat_agent.ainvoke(state))
     return response
 
 
@@ -49,18 +47,6 @@ st.set_page_config(
     initial_sidebar_state="auto",
     # menu_items=None
 )
-
-if "ai_temp" not in st.session_state:
-    st.session_state.ai_temp = config.DEFAULT_TEMP
-
-if "ai_max_tokens" not in st.session_state:
-    st.session_state.ai_max_tokens = config.DEFAULT_MAX_TOKENS
-
-if "ai_model" not in st.session_state:
-    st.session_state.ai_model = config.DEFAULT_MODEL
-
-if "multi_agent" not in st.session_state:
-    st.session_state.multi_agent = True
 
 if not st.session_state.get("session", None):
     cookie = st.context.cookies.get(os.environ.get("COOKIE_NAME"))
@@ -95,38 +81,33 @@ if __name__ == "__main__":
             ):
                 st.caption(
                     "Settings in this window only affect the primary AI Model, "
-                    "and not the background Agents."
+                    "<br />and not the background Agents.",
+                    unsafe_allow_html=True,
                 )
                 ai_model_select = st.selectbox(
                     label="Model",
                     options=AVAILABLE_MODELS,
+                    index=AVAILABLE_MODELS.index(config.DEFAULT_MODEL),
                     key="ai_model",
                     on_change=partial(dynamic_toast, "AI Model Changed:", "ai_model"),
                     help=(
-                        "Gemini-1.5 models are best used with Multi-Agents, "
-                        "while GPT-4o is best used as a standalone model."
+                        "Gemini-1.5 models are recommended for use with Multi-Agents."
                     ),
                 )
                 ai_temp_select = st.slider(
                     label="Temperature",
                     min_value=0.0,
                     max_value=1.0,
+                    value=config.DEFAULT_TEMP,
                     step=0.05,
                     key="ai_temp",
                     on_change=partial(
                         dynamic_toast, "AI Temperature Changed:", "ai_temp"
                     ),
                 )
-                ai_max_tokens_select = st.select_slider(
-                    label="Max Tokens",
-                    options=config.MAX_TOKEN_VALUES,
-                    key="ai_max_tokens",
-                    on_change=partial(
-                        dynamic_toast, "AI Max Tokens Changed:", "ai_max_tokens"
-                    ),
-                )
                 multi_agent_toggle = st.checkbox(
                     label="Use Multi-Agent",
+                    value=True,
                     key="multi_agent",
                     on_change=partial(
                         dynamic_toast, "Multi-Agent Toggled:", "multi_agent"

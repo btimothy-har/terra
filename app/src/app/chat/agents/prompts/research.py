@@ -25,7 +25,7 @@ Step 3
 Prepare a report based on the information that you've found. The report should:
 - Be concise and informative.
 - Summarize the key points and relevant details in an unbiased manner.
-- Include links or resources where relevant to the content.
+- Include links to the sources you used to find the information.
 
 Your Desired Output
 ----------

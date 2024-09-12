@@ -5,6 +5,7 @@ from typing import Optional
 from uuid import uuid4
 
 import requests
+from clients.ai import OpenRouterModels
 from clients.ai import get_client
 from config import API_ENDPOINT
 from langchain_core.messages import ChatMessage
@@ -121,7 +122,7 @@ class AppThread(ConversationThread):
         return thread_msg
 
     def create_summary(self) -> str:
-        llm = get_client(model="gpt-4o-mini", temp=0.3, max_tokens=512)
+        llm = get_client(model=OpenRouterModels.OPENAI_GPT4O_MINI.value, temp=0.3)
 
         sm_messages = self.message_dict()
         sm_messages.extend([SUMMARY_PROMPT])
