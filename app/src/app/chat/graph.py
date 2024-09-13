@@ -61,7 +61,7 @@ async def respond_to_user(state: ChatState) -> ChatState:
     if state["agent"]["model"] in o1_models:
         agent = get_client(
             model=state["agent"]["model"],
-            temperature=1,
+            temp=1,
         )
     else:
         agent = get_client(**state["agent"])
