@@ -13,6 +13,8 @@ class OpenRouterModels(Enum):
     ANTHROPIC_CLAUDE_OPUS = "anthropic/claude-3-opus"
     OPENAI_GPT4O = "openai/gpt-4o"
     OPENAI_GPT4O_MINI = "openai/gpt-4o-mini"
+    OPENAI_O1 = "openai/o1-preview"
+    OPENAI_O1_MINI = "openai/o1-mini"
     MATTSHUMER_REFLECTION_70B = "mattshumer/reflection-70b"
     MISTRALAI_MISTRALNEMO = "mistralai/mistral-nemo"
 
