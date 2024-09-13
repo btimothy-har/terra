@@ -56,14 +56,22 @@ async def exit_loop(state: ChatState) -> ChatState:
 
 
 async def respond_to_user(state: ChatState) -> ChatState:
-    agent = get_client(**state["agent"])
+    o1_models = ["openai/o1-preview", "openai/o1-mini"]
+
+    if state["agent"]["model"] in o1_models:
+        agent = get_client(
+            model=state["agent"]["model"],
+            temperature=1,
+        )
+    else:
+        agent = get_client(**state["agent"])
 
     user_messages = state["conversation"].copy()
     agent_messages = state["workspace"].copy()
 
     if agent_messages:
         sys_prompt = {
-            "role": "system",
+            "role": "user" if state["agent"]["model"] in o1_models else "system",
             "content": assistant_prompts.ASSISTANT_WITH_AGENT.format(
                 context=agent_messages
             ),
