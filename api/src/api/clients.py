@@ -24,13 +24,22 @@ chunker = SemanticChunker(
 )
 
 
-postgres = AsyncConnectionPool(config.POSTGRES_URL, open=False)
+async def postgres() -> AsyncConnectionPool:
+    database = AsyncConnectionPool(config.POSTGRES_URL, open=False)
+    await database.open()
+    return database
 
-redis = Redis(
-    host="redis",
-    port=config.REDIS_PORT,
-    decode_responses=True,
-    auto_close_connection_pool=False,
-)
 
-chroma = chromadb.Client(address=config.CHROMA_ADDRESS)
+async def redis() -> Redis:
+    redis = Redis(
+        host="redis",
+        port=config.REDIS_PORT,
+        decode_responses=True,
+        auto_close_connection_pool=False,
+    )
+    return redis
+
+
+async def chromadb() -> chromadb.AsyncHttpClient:
+    chroma = await chromadb.AsyncHttpClient(host="chromadb", port=config.CHROMA_PORT)
+    return chroma

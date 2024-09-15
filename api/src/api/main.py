@@ -1,11 +1,8 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from redis import exceptions as redis_exceptions
-from redis.commands.search.indexDefinition import IndexDefinition
-from redis.commands.search.indexDefinition import IndexType
 
-import api.config as config
+from api.clients import chromadb
 from api.clients import logger
 from api.clients import postgres
 from api.clients import redis
@@ -16,38 +13,16 @@ from api.routers import users_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.database = postgres
-    app.cache = redis
+    app.state.database = await postgres()
+    app.state.cache = await redis()
+    app.state.vector = await chromadb()
 
-    try:
-        await app.cache.ft(config.CONTEXT_INDEX).create_index(
-            fields=config.CONTEXT_SCHEMA,
-            definition=IndexDefinition(
-                prefix=[config.CONTEXT_PREFIX + ":"], index_type=IndexType.JSON
-            ),
-        )
-    except redis_exceptions.ResponseError:
-        index_info = await app.cache.ft(config.CONTEXT_INDEX).info()
-        logger.warning(
-            f"Index {config.CONTEXT_INDEX} already exists. "
-            f"{index_info['num_docs']} documents indexed with "
-            f"{index_info['hash_indexing_failures']} failures."
-        )
-    else:
-        index_info = await app.cache.ft(config.CONTEXT_INDEX).info()
-        logger.warning(
-            f"Index {config.CONTEXT_INDEX} created. "
-            f"{index_info['num_docs']} documents indexed with "
-            f"{index_info['hash_indexing_failures']} failures."
-        )
-
-    await app.database.open()
     logger.info("Database and cache connections established.")
 
     yield
 
-    await app.database.close()
-    await app.cache.close()
+    await app.state.database.close()
+    await app.state.cache.close()
 
 
 app = FastAPI(lifespan=lifespan)

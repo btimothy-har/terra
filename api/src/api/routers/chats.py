@@ -57,17 +57,17 @@ async def get_thread_id(
     user_id: str,
 ):
     cached_thread = await cache.get_thread(
-        request.app.cache, user_id=user_id, thread_id=thread_id
+        request.app.state.cache, user_id=user_id, thread_id=thread_id
     )
     if cached_thread:
         return cached_thread
 
     db_thread = await db.fetch_thread(
-        request.app.database, thread_id=thread_id, user_id=user_id
+        request.app.state.database, thread_id=thread_id, user_id=user_id
     )
     if db_thread:
         background_tasks.add_task(
-            cache.put_thread, request.app.cache, user_id, db_thread
+            cache.put_thread, request.app.state.cache, user_id, db_thread
         )
         return db_thread
     return None

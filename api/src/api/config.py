@@ -8,7 +8,7 @@ POSTGRES_URL = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_
 
 REDIS_PORT = 6379
 
-CHROMA_ADDRESS = "chromadb:8001"
+CHROMA_PORT = 8001
 
 CONTEXT_PREFIX = "ctx"
 CONTEXT_INDEX = f"idx:{CONTEXT_PREFIX}"
