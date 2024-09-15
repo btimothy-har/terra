@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from redis.commands.search.query import Query
 
 import api.config as config
+from api.clients import text_embed
 from api.crud import cache
 from api.crud import database as db
 from api.crud import embeddings as emb
@@ -56,17 +57,17 @@ async def get_thread_id(
     user_id: str,
 ):
     cached_thread = await cache.get_thread(
-        request.app.cache, user_id=user_id, thread_id=thread_id
+        request.app.state.cache, user_id=user_id, thread_id=thread_id
     )
     if cached_thread:
         return cached_thread
 
     db_thread = await db.fetch_thread(
-        request.app.database, thread_id=thread_id, user_id=user_id
+        request.app.state.database, thread_id=thread_id, user_id=user_id
     )
     if db_thread:
         background_tasks.add_task(
-            cache.put_thread, request.app.cache, user_id, db_thread
+            cache.put_thread, request.app.state.cache, user_id, db_thread
         )
         return db_thread
     return None
@@ -74,8 +75,8 @@ async def get_thread_id(
 
 @threads_router.put("/save", summary="Saves a Chat Thread for a user to memory.")
 async def put_thread_save(request: Request, user_id: str, thread: ConversationThread):
-    await cache.put_thread(request.app.cache, user_id, thread)
-    await db.insert_thread(request.app.database, thread)
+    await cache.put_thread(request.app.state.cache, user_id, thread)
+    await db.insert_thread(request.app.state.database, thread)
 
 
 @threads_router.put(
@@ -89,8 +90,10 @@ async def put_thread_delete(
     if not thread:
         raise HTTPException(status_code=400, detail="Thread does not exist.")
 
-    background_tasks.add_task(db.delete_thread, request.app.database, thread.thread_id)
-    await cache.delete_thread(request.app.cache, user_id, thread.thread_id)
+    background_tasks.add_task(
+        db.delete_thread, request.app.state.database, thread.thread_id
+    )
+    await cache.delete_thread(request.app.state.cache, user_id, thread.thread_id)
 
 
 @threads_router.get(
@@ -99,11 +102,13 @@ async def put_thread_delete(
 async def get_thread_messages(
     request: Request, background_tasks: BackgroundTasks, thread_id: str
 ) -> list[ThreadMessage]:
-    message_ids = await cache.get_thread_messages(request.app.cache, thread_id)
+    message_ids = await cache.get_thread_messages(request.app.state.cache, thread_id)
     if not message_ids:
-        message_ids = await db.fetch_thread_messages(request.app.database, thread_id)
+        message_ids = await db.fetch_thread_messages(
+            request.app.state.database, thread_id
+        )
         background_tasks.add_task(
-            cache.put_thread_messages, request.app.cache, thread_id, message_ids
+            cache.put_thread_messages, request.app.state.cache, thread_id, message_ids
         )
 
     if message_ids:
@@ -143,9 +148,7 @@ async def put_context_save(
 
         background_tasks.add_task(
             emb.embed_message,
-            request.app.cache,
-            request.app.text_splitter,
-            request.app.text_embedder,
+            request.app.state.cache,
             message,
         )
     return
@@ -161,7 +164,7 @@ async def put_context_save(
 async def get_context_search(
     request: Request, query: str, top_k: int = 9
 ) -> list[ContextChunk]:
-    embed_query = await request.app.text_embedder.aembed_query(query)
+    embed_query = await text_embed.aembed_query(query)
 
     cache_query = (
         Query(f"(*)=>[KNN {top_k} @embeddings $query_vector AS vector_score]")
@@ -170,7 +173,7 @@ async def get_context_search(
         .dialect(2)
     )
 
-    result = await request.app.cache.ft(config.CONTEXT_INDEX).search(
+    result = await request.app.state.cache.ft(config.CONTEXT_INDEX).search(
         cache_query, {"query_vector": np.array(embed_query, dtype=np.float32).tobytes()}
     )
 
@@ -196,13 +199,19 @@ messages_router = APIRouter(tags=["messages"], prefix="/messages")
 async def get_message_id(
     request: Request, background_tasks: BackgroundTasks, message_id: str
 ) -> Optional[ThreadMessage]:
-    cached_message = await cache.get_message(request.app.cache, message_id=message_id)
+    cached_message = await cache.get_message(
+        request.app.state.cache, message_id=message_id
+    )
     if cached_message:
         return cached_message
 
-    db_message = await db.fetch_message(request.app.database, message_id=message_id)
+    db_message = await db.fetch_message(
+        request.app.state.database, message_id=message_id
+    )
     if db_message:
-        background_tasks.add_task(cache.put_message, request.app.cache, db_message)
+        background_tasks.add_task(
+            cache.put_message, request.app.state.cache, db_message
+        )
         return db_message
     return None
 
@@ -222,13 +231,16 @@ async def put_message_save(
             status_code=400, detail="A thread must exist before saving a message."
         )
 
-    background_tasks.add_task(cache.put_message, request.app.cache, message)
+    background_tasks.add_task(cache.put_message, request.app.state.cache, message)
     background_tasks.add_task(
-        cache.put_thread_messages, request.app.cache, message.thread_id, [message.id]
+        cache.put_thread_messages,
+        request.app.state.cache,
+        message.thread_id,
+        [message.id],
     )
     background_tasks.add_task(
         db.insert_message,
-        request.app.database,
+        request.app.state.database,
         message.session_id,
         message.thread_id,
         message,

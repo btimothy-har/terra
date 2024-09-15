@@ -20,13 +20,13 @@ router = APIRouter(tags=["users"], prefix="/users")
 async def get_user_id(
     request: Request, background_tasks: BackgroundTasks, user_id: str
 ):
-    cached_user = await cache.get_user(request.app.cache, user_id)
+    cached_user = await cache.get_user(request.app.state.cache, user_id)
     if cached_user:
         return cached_user
 
-    db_user = await db.fetch_user(request.app.database, user_id)
+    db_user = await db.fetch_user(request.app.state.database, user_id)
     if db_user:
-        background_tasks.add_task(cache.put_user, request.app.cache, db_user)
+        background_tasks.add_task(cache.put_user, request.app.state.cache, db_user)
         return db_user
     return None
 
@@ -35,8 +35,8 @@ async def get_user_id(
 async def put_user_save(
     request: Request, background_tasks: BackgroundTasks, user: User
 ):
-    background_tasks.add_task(db.insert_user, request.app.database, user)
-    await cache.put_user(request.app.cache, user)
+    background_tasks.add_task(db.insert_user, request.app.state.database, user)
+    await cache.put_user(request.app.state.cache, user)
 
 
 @router.get(
@@ -47,13 +47,15 @@ async def put_user_save(
 async def resume_session(
     request: Request, background_tasks: BackgroundTasks, session_id: str
 ):
-    cached_session = await cache.get_session(request.app.cache, session_id)
+    cached_session = await cache.get_session(request.app.state.cache, session_id)
     if cached_session:
         return cached_session
 
-    db_session = await db.fetch_session(request.app.database, session_id)
+    db_session = await db.fetch_session(request.app.state.database, session_id)
     if db_session:
-        background_tasks.add_task(cache.put_session, request.app.cache, db_session)
+        background_tasks.add_task(
+            cache.put_session, request.app.state.cache, db_session
+        )
         return db_session
     return None
 
@@ -62,9 +64,9 @@ async def resume_session(
 async def save_session(
     request: Request, background_tasks: BackgroundTasks, session: Session
 ):
-    background_tasks.add_task(db.insert_session, request.app.database, session)
+    background_tasks.add_task(db.insert_session, request.app.state.database, session)
 
-    await cache.put_session(request.app.cache, session)
+    await cache.put_session(request.app.state.cache, session)
     await put_user_save(request, background_tasks, session.user)
 
 
@@ -75,14 +77,14 @@ async def save_session(
 async def get_user_threads_list(
     request: Request, background_tasks: BackgroundTasks, user_id: str
 ) -> Optional[list[str]]:
-    cached_threads = await cache.get_user_threads(request.app.cache, user_id)
+    cached_threads = await cache.get_user_threads(request.app.state.cache, user_id)
     if cached_threads:
         return cached_threads
 
-    db_threads = await db.fetch_user_threads(request.app.database, user_id)
+    db_threads = await db.fetch_user_threads(request.app.state.database, user_id)
     if db_threads:
         background_tasks.add_task(
-            cache.put_user_threads, request.app.cache, user_id, db_threads
+            cache.put_user_threads, request.app.state.cache, user_id, db_threads
         )
         return db_threads
     return None

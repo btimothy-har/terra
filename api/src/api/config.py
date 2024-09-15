@@ -1,6 +1,10 @@
+import os
+
 from redis.commands.search.field import NumericField
 from redis.commands.search.field import TextField
 from redis.commands.search.field import VectorField
+
+POSTGRES_URL = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/terra"
 
 CONTEXT_PREFIX = "ctx"
 CONTEXT_INDEX = f"idx:{CONTEXT_PREFIX}"
