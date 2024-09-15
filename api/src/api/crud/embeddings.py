@@ -1,12 +1,12 @@
 from datetime import datetime
 from datetime import timezone
 
-from langchain_experimental.text_splitter import SemanticChunker
-from langchain_openai import OpenAIEmbeddings
 from pydantic import BaseModel
 from redis.asyncio import Redis
 
 import api.config as config
+from api.clients import chunker
+from api.clients import embeddings
 
 
 class MessageToEmbed(BaseModel):
@@ -48,16 +48,14 @@ def build_content(n: int, chunks: list[str]) -> str:
 
 async def embed_message(
     cache: Redis,
-    splitter: SemanticChunker,
-    embedder: OpenAIEmbeddings,
     message: MessageToEmbed,
 ):
-    content_chunks = splitter.split_text(message.content)
+    content_chunks = chunker.split_text(message.content)
     if not content_chunks:
         return
 
     for n, chunk in enumerate(content_chunks):
-        embedding = await embedder.aembed_query(chunk)
+        embedding = await embeddings.aembed_query(chunk)
         embedded = EmbeddedChunk(
             thread_id=message.thread_id,
             message_id=message.message_id,

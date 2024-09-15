@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from redis.commands.search.query import Query
 
 import api.config as config
+from api.clients import embeddings
 from api.crud import cache
 from api.crud import database as db
 from api.crud import embeddings as emb
@@ -144,8 +145,6 @@ async def put_context_save(
         background_tasks.add_task(
             emb.embed_message,
             request.app.cache,
-            request.app.text_splitter,
-            request.app.text_embedder,
             message,
         )
     return
@@ -161,7 +160,7 @@ async def put_context_save(
 async def get_context_search(
     request: Request, query: str, top_k: int = 9
 ) -> list[ContextChunk]:
-    embed_query = await request.app.text_embedder.aembed_query(query)
+    embed_query = await embeddings.aembed_query(query)
 
     cache_query = (
         Query(f"(*)=>[KNN {top_k} @embeddings $query_vector AS vector_score]")
