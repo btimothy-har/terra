@@ -158,6 +158,6 @@ class BaseAgent:
         return {
             "role": "assistant",
             "name": self.name,
-            "title": self.title,
+            "agent": self.title,
             "content": ai_msg.content,
         }

@@ -65,6 +65,6 @@ and unbiased information.
         return {
             "role": "assistant",
             "name": self.name,
-            "title": self.title,
+            "agent": self.title,
             "content": response.content,
         }

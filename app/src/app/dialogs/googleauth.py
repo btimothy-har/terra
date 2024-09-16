@@ -2,10 +2,9 @@ import os
 
 import google_auth_oauthlib.flow
 import streamlit as st
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from models.user import AppUser
+from models import User
 
 SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
@@ -22,15 +21,14 @@ def get_credentials(auth_code: str) -> Credentials:
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def get_user_info(session_id: str) -> AppUser:
+def get_user_info(credentials: Credentials) -> User:
     user_info_service = build(
         serviceName="oauth2",
         version="v2",
-        credentials=st.session_state.session.credentials,
+        credentials=credentials,
     )
     user_info = user_info_service.userinfo().get().execute()
-    user = AppUser.create(**user_info)
-    user.save()
+    user = User.create(**user_info)
     return user
 
 
@@ -45,18 +43,18 @@ def auth_flow():
             )
         )
 
-    if not st.session_state.session.credentials:
+    if not st.session_state.session.user:
         auth_code = st.query_params.get("code")
         if auth_code:
             with st.spinner("Authenticating..."):
                 try:
-                    st.session_state.session.credentials = get_credentials(auth_code)
+                    credentials = get_credentials(auth_code)
                 except Exception as e:
                     st.error(f"Authorization failed: {e}")
                     auth_code = None
                 else:
-                    if not st.session_state.session.credentials.valid:
-                        st.session_state.session.credentials.refresh(Request())
+                    st.session_state.session.user = get_user_info(credentials)
+                    st.session_state.session.save()
 
         if not auth_code:
             st.markdown(
@@ -81,9 +79,6 @@ def auth_flow():
                 unsafe_allow_html=True,
             )
             st.stop()
-
-    st.session_state.session.user = get_user_info(st.session_state.session.id)
-    st.session_state.session.save()
 
     if not st.session_state.session.authorized:
         st.error("You are not authorized to access _terra_.")

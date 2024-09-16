@@ -70,7 +70,7 @@ class Supervisor(BaseAgent):
                 {
                     "role": "assistant",
                     "name": "Alicia",
-                    "title": "Supervisor",
+                    "agent": "Supervisor",
                     "content": f"{response}",
                 }
             )
@@ -133,7 +133,7 @@ class Supervisor(BaseAgent):
                     {
                         "role": "assistant",
                         "name": "Alicia",
-                        "title": "Supervisor",
+                        "agent": "Supervisor",
                         "content": f"{response}",
                     }
                 )

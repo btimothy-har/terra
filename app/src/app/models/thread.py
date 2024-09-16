@@ -2,17 +2,15 @@ import json
 from datetime import datetime
 from datetime import timezone
 from typing import Optional
-from uuid import uuid4
 
 import requests
 from clients.ai import OpenRouterModels
 from clients.ai import get_client
 from config import API_ENDPOINT
-from langchain_core.messages import ChatMessage
 
-from shared.models.thread import ConversationThread
+import shared.models as models
 
-from .message import AppMessage as ThreadMessage
+from .message import ThreadMessage
 
 SUMMARY_PROMPT = {
     "role": "system",
@@ -28,22 +26,21 @@ or symbols.
 }
 
 
-class AppThread(ConversationThread):
+class ConversationThread(models.ConversationThread):
     messages: list[ThreadMessage]
     summary: Optional[str]
 
     @classmethod
-    def create(cls, session_id) -> "AppThread":
+    def create(cls, user_id: str) -> "ConversationThread":
         return cls(
-            sid=session_id,
-            thread_id=str(uuid4()),
-            messages=[],
+            user_id=user_id,
             summary=None,
             last_used=datetime.now(timezone.utc),
+            messages=[],
         )
 
     @classmethod
-    def get_all_for_user(cls, user_id: str) -> list[str]:
+    def get_all_for_user(cls, user_id: str) -> list[str] | None:
         get_thread_ids = requests.get(url=f"{API_ENDPOINT}/users/{user_id}/threads")
         try:
             get_thread_ids.raise_for_status()
@@ -58,10 +55,8 @@ class AppThread(ConversationThread):
         return None
 
     @classmethod
-    def get_from_id(cls, thread_id: str, user_id: str) -> Optional["AppThread"]:
-        get_thread_data = requests.get(
-            url=f"{API_ENDPOINT}/threads/{thread_id}", params={"user_id": user_id}
-        )
+    def get_from_id(cls, thread_id: str) -> Optional["ConversationThread"]:
+        get_thread_data = requests.get(url=f"{API_ENDPOINT}/threads/{thread_id}")
         try:
             get_thread_data.raise_for_status()
             thread_data = get_thread_data.json()
@@ -74,17 +69,17 @@ class AppThread(ConversationThread):
                 None
                 if not thread_data
                 else cls(
-                    sid=thread_data["sid"],
-                    thread_id=thread_data["thread_id"],
-                    messages=[],
+                    id=thread_data["id"],
+                    user_id=thread_data["user_id"],
                     summary=thread_data["summary"],
                     last_used=datetime.fromisoformat(thread_data["last_used"]),
+                    messages=[],
                 )
             )
 
     def get_messages(self) -> list[ThreadMessage]:
         get_thread_messages = requests.get(
-            url=f"{API_ENDPOINT}/threads/{self.thread_id}/messages",
+            url=f"{API_ENDPOINT}/threads/{self.id}/messages",
         )
         try:
             get_thread_messages.raise_for_status()
@@ -99,10 +94,9 @@ class AppThread(ConversationThread):
             self.messages = msgs
             return msgs
 
-    def delete(self, user_id: str):
+    def delete(self):
         put_del_thread = requests.put(
-            url=f"{API_ENDPOINT}/threads/{self.thread_id}/delete",
-            params={"user_id": user_id},
+            url=f"{API_ENDPOINT}/threads/{self.id}/delete",
         )
         try:
             put_del_thread.raise_for_status()
@@ -111,15 +105,16 @@ class AppThread(ConversationThread):
         except json.JSONDecodeError:
             return None
 
-    def append(self, message: ChatMessage) -> ThreadMessage:
-        thread_msg = ThreadMessage.from_chat_message(message)
-        self.messages.append(thread_msg)
+    def append(self, message: ThreadMessage):
+        self.messages.append(message)
         if message.role == "user":
-            self.last_used = datetime.now(timezone.utc)
+            self.last_used = message.timestamp
 
         if message.role == "assistant" and len(self.user_messages) == 1:
             self.create_summary()
-        return thread_msg
+
+        self.save()
+        message.save(self.thread_id)
 
     def create_summary(self) -> str:
         llm = get_client(model=OpenRouterModels.OPENAI_GPT4O_MINI.value, temp=0.3)
@@ -131,10 +126,9 @@ class AppThread(ConversationThread):
         self.summary = get_summary.content
         return get_summary.content
 
-    def save(self, user_id: str) -> None:
+    def save(self) -> None:
         put_save = requests.put(
             url=f"{API_ENDPOINT}/threads/save",
-            params={"user_id": user_id},
             data=self.model_dump_json(),
         )
         put_save.raise_for_status()

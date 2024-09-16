@@ -1,12 +1,12 @@
 import requests
 from config import API_ENDPOINT
 
-from shared.models.user import User
+import shared.models as models
 
 
-class AppUser(User):
+class User(models.User):
     @classmethod
-    def create(cls, **kwargs) -> "AppUser":
+    def create(cls, **kwargs) -> "User":
         return cls(
             id=kwargs["id"],
             email=kwargs["email"],

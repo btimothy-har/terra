@@ -14,8 +14,8 @@ from chat.states import ChatState
 from clients.ai import AVAILABLE_MODELS
 from dialogs.googleauth import auth_flow
 from dialogs.sel_thread import open_thread
-from langchain_core.messages import ChatMessage
-from models.session import AppSession
+from models import Session
+from models import ThreadMessage
 from utils import dynamic_toast
 from utils import get_clean_render
 from utils import refresh_user_conversations
@@ -50,13 +50,12 @@ st.set_page_config(
 
 if not st.session_state.get("session", None):
     cookie = st.context.cookies.get(os.environ.get("COOKIE_NAME"))
-    session = AppSession.resume(cookie) if cookie else None
+    session = Session.resume(cookie) if cookie else None
 
     if session:
         st.session_state.session = session
     else:
-        st.session_state.session = AppSession.create(cookie if cookie else str(uuid4()))
-        st.session_state.session.set_cookie()
+        st.session_state.session = Session.create(cookie if cookie else str(uuid4()))
 
 if __name__ == "__main__":
     if st.session_state.session.authorized:
@@ -188,9 +187,10 @@ if __name__ == "__main__":
 
         if getattr(st.session_state, "user_message", None):
             with st.chat_message("user"):
-                new_user_message = st.session_state.current_thread.append(
-                    ChatMessage(content=st.session_state.user_message, role="user")
+                new_user_message = ThreadMessage(
+                    content=st.session_state.user_message, role="user"
                 )
+                st.session_state.current_thread.append(new_user_message)
                 st.write(new_user_message.content)
                 st.caption(
                     new_user_message.timestamp.astimezone(
@@ -221,21 +221,11 @@ if __name__ == "__main__":
                         )
                     full_response = st.write_stream(response["output"])
 
-            new_asst_message = st.session_state.current_thread.append(
-                ChatMessage(content=full_response, role="assistant")
+            new_asst_message = ThreadMessage(
+                content=full_response, role="assistant", model=st.session_state.ai_model
             )
+            st.session_state.current_thread.append(new_asst_message)
 
-            st.session_state.current_thread.save(st.session_state.session.user.id)
-            new_user_message.save(
-                thread_id=st.session_state.current_thread.thread_id,
-                session_id=st.session_state.session.id,
-                user_id=st.session_state.session.user.id,
-            )
-            new_asst_message.save(
-                thread_id=st.session_state.current_thread.thread_id,
-                session_id=st.session_state.session.id,
-                user_id=st.session_state.session.user.id,
-            )
             if response["workspace"]:
                 new_asst_message.save_context(
                     thread_id=st.session_state.current_thread.thread_id,
