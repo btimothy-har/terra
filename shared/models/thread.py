@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional
+from uuid import uuid4
 
 from pydantic import BaseModel
 
@@ -7,11 +8,11 @@ from .message import ThreadMessage
 
 
 class ConversationThread(BaseModel):
-    sid: str
-    thread_id: str
-    messages: list[ThreadMessage]
+    id: str = str(uuid4())
+    user_id: str
     summary: str
     last_used: Optional[datetime] = None
+    messages: list[ThreadMessage]
 
     def __iter__(self):
         return iter(self.messages)
