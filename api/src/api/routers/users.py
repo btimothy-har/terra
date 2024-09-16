@@ -1,13 +1,15 @@
 from typing import Optional
 
 from fastapi import APIRouter
-from fastapi import BackgroundTasks
-from fastapi import Request
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.sql import select
 
-from api.crud import cache
-from api.crud import database as db
-from shared.models.session import Session
-from shared.models.user import User
+from api.clients import database_session
+from api.database.schemas import SessionSchema
+from api.database.schemas import ThreadSchema
+from api.database.schemas import UserSchema
+from api.models.models import Session
+from api.models.models import User
 
 router = APIRouter(tags=["users"], prefix="/users")
 
@@ -15,76 +17,91 @@ router = APIRouter(tags=["users"], prefix="/users")
 @router.get(
     "/{user_id}",
     response_model=Optional[User],
-    summary="Gets a user by ID from memory. 1 hour cache.",
+    summary="Gets a user by ID from memory.",
 )
-async def get_user_id(
-    request: Request, background_tasks: BackgroundTasks, user_id: str
-):
-    cached_user = await cache.get_user(request.app.state.cache, user_id)
-    if cached_user:
-        return cached_user
-
-    db_user = await db.fetch_user(request.app.state.database, user_id)
-    if db_user:
-        background_tasks.add_task(cache.put_user, request.app.state.cache, db_user)
-        return db_user
+async def get_user_id(user_id: str):
+    async with database_session() as db:
+        query = await db.execute(select(UserSchema).filter(UserSchema.id == user_id))
+        results = query.scalar_one_or_none()
+    if results:
+        return User.model_validate(results)
     return None
 
 
-@router.put("/save", summary="Saves a user to memory.")
-async def put_user_save(
-    request: Request, background_tasks: BackgroundTasks, user: User
-):
-    background_tasks.add_task(db.insert_user, request.app.state.database, user)
-    await cache.put_user(request.app.state.cache, user)
+@router.put(
+    "/save",
+    summary="Saves a user to memory.",
+)
+async def put_user_save(user: User):
+    async with database_session() as db:
+        stmt = pg_insert(UserSchema).values(**user.model_dump())
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["id"],
+            set_={
+                "email": stmt.excluded.email,
+                "name": stmt.excluded.name,
+                "given_name": stmt.excluded.given_name,
+                "family_name": stmt.excluded.family_name,
+                "picture": stmt.excluded.picture,
+            },
+        )
+        await db.execute(stmt)
+        await db.commit()
 
 
 @router.get(
     "/session/{session_id}",
     response_model=Optional[Session],
-    summary="Gets a stored session by cookie value (session_id). 1 hour cache.",
+    summary="Gets a stored session by cookie value (session_id).",
 )
-async def resume_session(
-    request: Request, background_tasks: BackgroundTasks, session_id: str
-):
-    cached_session = await cache.get_session(request.app.state.cache, session_id)
-    if cached_session:
-        return cached_session
-
-    db_session = await db.fetch_session(request.app.state.database, session_id)
-    if db_session:
-        background_tasks.add_task(
-            cache.put_session, request.app.state.cache, db_session
+async def resume_session(session_id: str):
+    async with database_session() as db:
+        query = await db.execute(
+            select(SessionSchema).filter(SessionSchema.id == session_id)
         )
-        return db_session
+        results = query.scalar_one_or_none()
+    if results:
+        user = await get_user_id(results.user_id)
+        return Session.model_validate(
+            {
+                "id": results.id,
+                "timestamp": results.timestamp,
+                "user": user,
+            }
+        )
     return None
 
 
-@router.put("/session/save", summary="Saves a session to memory.")
-async def save_session(
-    request: Request, background_tasks: BackgroundTasks, session: Session
-):
-    background_tasks.add_task(db.insert_session, request.app.state.database, session)
+@router.put(
+    "/session/save",
+    summary="Saves a session to memory.",
+)
+async def save_session(session: Session):
+    await put_user_save(session.user)
 
-    await cache.put_session(request.app.state.cache, session)
-    await put_user_save(request, background_tasks, session.user)
+    async with database_session() as db:
+        stmt = pg_insert(SessionSchema).values(
+            user=session.user.id,
+            **session.model_dump(exclude={"user"}),
+        )
+        stmt = stmt.on_conflict_do_nothing(index_elements=["id"])
+        await db.execute(stmt)
+        await db.commit()
 
 
 @router.get(
     "/{user_id}/threads",
     summary="Gets all conversation threads for a user. Only returns the Thread IDs.",
 )
-async def get_user_threads_list(
-    request: Request, background_tasks: BackgroundTasks, user_id: str
-) -> Optional[list[str]]:
-    cached_threads = await cache.get_user_threads(request.app.state.cache, user_id)
-    if cached_threads:
-        return cached_threads
-
-    db_threads = await db.fetch_user_threads(request.app.state.database, user_id)
-    if db_threads:
-        background_tasks.add_task(
-            cache.put_user_threads, request.app.state.cache, user_id, db_threads
+async def get_user_threads_list(user_id: str) -> Optional[list[str]]:
+    async with database_session() as db:
+        query = await db.execute(
+            select(ThreadSchema).filter(
+                ThreadSchema.user == user_id,
+                ThreadSchema.is_deleted.is_(False),
+            )
         )
-        return db_threads
+        results = query.scalars().all()
+    if results:
+        return [t.id for t in results]
     return None

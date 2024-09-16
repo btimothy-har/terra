@@ -1,18 +1,20 @@
 import logging
 import os
+from contextlib import asynccontextmanager
 
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai import OpenAIEmbeddings
-from psycopg_pool import AsyncConnectionPool
-from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.orm import sessionmaker
 
 import api.config as config
 
 logger = logging.getLogger("uvicorn.error")
 
 text_embed = OpenAIEmbeddings(
-    model="text-embedding-3-small",
-    dimensions=config.CONTEXT_DIM,
+    model=config.EMBED_MODEL,
+    dimensions=config.EMBED_DIM,
     api_key=os.getenv("OPENAI_API_KEY"),
 )
 
@@ -22,18 +24,13 @@ text_chunk = SemanticChunker(
     breakpoint_threshold_amount=0.5,
 )
 
+POSTGRES_URL = f"postgresql+asyncpg://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/terra"
 
-async def postgres() -> AsyncConnectionPool:
-    database = AsyncConnectionPool(config.POSTGRES_URL, open=False)
-    await database.open()
-    return database
+engine = create_async_engine(POSTGRES_URL)
+AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-async def redis() -> Redis:
-    redis = Redis(
-        host="redis",
-        port=6379,
-        decode_responses=True,
-        auto_close_connection_pool=False,
-    )
-    return redis
+@asynccontextmanager
+async def database_session():
+    async with AsyncSessionLocal() as session:
+        yield session
