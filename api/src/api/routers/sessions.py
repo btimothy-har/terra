@@ -6,34 +6,36 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import select
 
 import api.auth as auth
-from api.clients import database_session
 from api.database.schemas import SessionSchema
-from api.models.models import Session
+from api.models import Session
+from api.utils import database_session
 
 from .users import get_user_id
 from .users import put_user_save
 
 router = APIRouter(tags=["session"], prefix="/session")
 
+DatabaseSession = Annotated[AsyncSession, Depends(database_session)]
+
 
 @router.put(
     "/save",
     summary="Saves a session to memory.",
 )
-async def save_session(session: Session):
-    await put_user_save(session.user)
+async def save_session(session: Session, db: DatabaseSession):
+    await put_user_save(session.user, db)
 
-    async with database_session() as db:
-        stmt = pg_insert(SessionSchema).values(
-            user=session.user.id,
-            **session.model_dump(exclude={"user"}),
-        )
-        stmt = stmt.on_conflict_do_nothing(index_elements=["id"])
-        await db.execute(stmt)
-        await db.commit()
+    stmt = pg_insert(SessionSchema).values(
+        user=session.user.id,
+        **session.model_dump(exclude={"user"}),
+    )
+    stmt = stmt.on_conflict_do_nothing(index_elements=["id"])
+    await db.execute(stmt)
+    await db.commit()
 
 
 @router.get(
@@ -41,12 +43,11 @@ async def save_session(session: Session):
     response_model=Optional[Session],
     summary="Gets a stored session by cookie value (session_id).",
 )
-async def resume_session(session_id: str):
-    async with database_session() as db:
-        query = await db.execute(
-            select(SessionSchema).filter(SessionSchema.id == session_id)
-        )
-        results = query.scalar_one_or_none()
+async def resume_session(session_id: str, db: DatabaseSession):
+    query = await db.execute(
+        select(SessionSchema).filter(SessionSchema.id == session_id)
+    )
+    results = query.scalar_one_or_none()
     if results:
         user = await get_user_id(results.user_id)
         return Session.model_validate(

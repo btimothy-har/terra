@@ -16,9 +16,6 @@ from sqlalchemy.sql import update
 from api.auth import AuthPayload
 from api.auth import NotAuthorizedError
 from api.auth import authenticate_request
-from api.clients import database_session
-from api.clients import run_in_executor
-from api.clients import text_embed
 from api.database.schemas import ContextSchema
 from api.database.schemas import MessageSchema
 from api.database.schemas import ThreadSchema
@@ -27,6 +24,9 @@ from api.models import ContextChunk
 from api.models import ContextMessage
 from api.models import ConversationThread
 from api.models import ThreadMessage
+from api.utils import database_session
+from api.utils import run_in_executor
+from api.utils import text_embed
 
 threads_router = APIRouter(tags=["threads"], prefix="/threads")
 

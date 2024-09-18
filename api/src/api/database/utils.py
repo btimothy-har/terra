@@ -3,10 +3,10 @@ import hashlib
 
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from api.clients import database_session
-from api.clients import text_chunk
-from api.clients import text_embed
-from api.src.api.models.models import ContextMessage
+from api.models import ContextMessage
+from api.utils import database_session
+from api.utils import text_chunk
+from api.utils import text_embed
 
 from .schemas import ContextSchema
 

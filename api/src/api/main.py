@@ -8,8 +8,8 @@ from api.routers import users_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from api.clients import engine
     from api.database.schemas import Base
+    from api.utils import engine
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

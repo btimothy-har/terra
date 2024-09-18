@@ -7,12 +7,14 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import select
 
-from api.clients import database_session
 from api.database.schemas import ThreadSchema
 from api.database.schemas import UserSchema
 from api.models.models import User
+from api.utils import database_session
 
 router = APIRouter(tags=["users"], prefix="/users")
+
+DatabaseSession = Annotated[AsyncSession, Depends(database_session)]
 
 
 @router.get(
@@ -20,10 +22,9 @@ router = APIRouter(tags=["users"], prefix="/users")
     response_model=Optional[User],
     summary="Gets a user by ID from memory.",
 )
-async def get_user_id(user_id: str):
-    async with database_session() as db:
-        query = await db.execute(select(UserSchema).filter(UserSchema.id == user_id))
-        results = query.scalar_one_or_none()
+async def get_user_id(user_id: str, db: DatabaseSession):
+    query = await db.execute(select(UserSchema).filter(UserSchema.id == user_id))
+    results = query.scalar_one_or_none()
     if results:
         return User.model_validate(results)
     return None
@@ -33,21 +34,20 @@ async def get_user_id(user_id: str):
     "/save",
     summary="Saves a user to memory.",
 )
-async def put_user_save(user: User):
-    async with database_session() as db:
-        stmt = pg_insert(UserSchema).values(**user.model_dump())
-        stmt = stmt.on_conflict_do_update(
-            index_elements=["id"],
-            set_={
-                "email": stmt.excluded.email,
-                "name": stmt.excluded.name,
-                "given_name": stmt.excluded.given_name,
-                "family_name": stmt.excluded.family_name,
-                "picture": stmt.excluded.picture,
-            },
-        )
-        await db.execute(stmt)
-        await db.commit()
+async def put_user_save(user: User, db: DatabaseSession):
+    stmt = pg_insert(UserSchema).values(**user.model_dump())
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["id"],
+        set_={
+            "email": stmt.excluded.email,
+            "name": stmt.excluded.name,
+            "given_name": stmt.excluded.given_name,
+            "family_name": stmt.excluded.family_name,
+            "picture": stmt.excluded.picture,
+        },
+    )
+    await db.execute(stmt)
+    await db.commit()
 
 
 @router.get(
