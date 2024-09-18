@@ -1,4 +1,5 @@
-from .message import ContextMessage
+from shared.models import ContextMessage
+
 from .message import ThreadMessage
 from .session import Session
 from .thread import ConversationThread

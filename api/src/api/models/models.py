@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 
 import shared.models as models
+from api.auth import encrypt_user_data
 
 
 class User(models.User):
@@ -15,11 +16,17 @@ class Session(models.Session):
 
 
 class ConversationThread(models.ConversationThread):
-    model_config = ConfigDict(from_attributes=True)
+    def encrypt(self, key: bytes, **kwargs) -> dict:
+        model_dict = self.model_dump(**kwargs)
+        model_dict["summary"] = encrypt_user_data(key, model_dict["summary"])
+        return model_dict
 
 
 class ThreadMessage(models.ThreadMessage):
-    model_config = ConfigDict(from_attributes=True)
+    def encrypt(self, key: bytes, **kwargs) -> dict:
+        model_dict = self.model_dump(**kwargs)
+        model_dict["content"] = encrypt_user_data(key, model_dict["content"])
+        return model_dict
 
 
 class ContextMessage(models.ContextMessage):

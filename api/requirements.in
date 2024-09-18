@@ -9,3 +9,5 @@ langchain-experimental
 sqlalchemy==2.0.32
 psycopg2==2.9.9
 asyncpg==0.29.0
+cryptography~=43.0.1
+pyjwt~=2.9

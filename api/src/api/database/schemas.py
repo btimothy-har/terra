@@ -9,11 +9,13 @@ from sqlalchemy.dialects.postgresql import VECTOR
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 
+from api.auth import decrypt_user_data
+
 Base = declarative_base()
 
 
 class UserSchema(Base):
-    __tablename__ = "profile"
+    __tablename__ = "profiles"
     __table_args__ = {"schema": "users"}
 
     id = Column(String, primary_key=True)
@@ -24,6 +26,23 @@ class UserSchema(Base):
     picture = Column(String)
 
 
+class UserKeySchema(Base):
+    __tablename__ = "keys"
+    __table_args__ = {"schema": "users"}
+
+    id = Column(String, ForeignKey("users.profile.id"), primary_key=True)
+    public_key = Column(BYTEA)
+    private_key = Column(BYTEA)
+
+
+class UserDataKeySchema(Base):
+    __tablename__ = "data_keys"
+    __table_args__ = {"schema": "users"}
+
+    id = Column(String, primary_key=True)
+    data_key = Column(BYTEA)
+
+
 class SessionSchema(Base):
     __tablename__ = "sessions"
     __table_args__ = {"schema": "users"}
@@ -31,6 +50,7 @@ class SessionSchema(Base):
     id = Column(String, primary_key=True)
     user_id = Column(String, ForeignKey("users.profile.id"), nullable=False)
     timestamp = Column(TIMESTAMP(timezone=True), nullable=False)
+    credentials = Column(BYTEA, nullable=True)
 
 
 class ThreadSchema(Base):
@@ -48,6 +68,13 @@ class ThreadSchema(Base):
     )
     is_deleted = Column(Boolean, nullable=False, default=False)
 
+    def decrypt(self, key: bytes) -> dict:
+        return {
+            "id": self.id,
+            "summary": decrypt_user_data(key, self.summary),
+            "last_used": self.last_used,
+        }
+
 
 class MessageSchema(Base):
     __tablename__ = "messages"
@@ -59,6 +86,16 @@ class MessageSchema(Base):
     content = Column(BYTEA, nullable=False)
     timestamp = Column(TIMESTAMP(timezone=True), nullable=False)
     model = Column(String)
+
+    def decrypt(self, key: bytes) -> dict:
+        return {
+            "id": self.id,
+            "thread_id": self.thread_id,
+            "role": self.role,
+            "content": decrypt_user_data(key, self.content),
+            "timestamp": self.timestamp,
+            "model": self.model,
+        }
 
 
 class ContextSchema(Base):

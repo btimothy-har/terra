@@ -9,7 +9,6 @@ from .message import ThreadMessage
 
 class ConversationThread(BaseModel):
     id: str = str(uuid4())
-    user_id: str
     summary: str
     last_used: Optional[datetime] = None
     messages: list[ThreadMessage]
