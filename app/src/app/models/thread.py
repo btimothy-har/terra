@@ -7,6 +7,7 @@ import requests
 from clients.ai import OpenRouterModels
 from clients.ai import get_client
 from config import API_ENDPOINT
+from config import authorization_header
 
 import shared.models as models
 
@@ -56,7 +57,9 @@ class ConversationThread(models.ConversationThread):
 
     @classmethod
     def get_from_id(cls, thread_id: str) -> Optional["ConversationThread"]:
-        get_thread_data = requests.get(url=f"{API_ENDPOINT}/threads/{thread_id}")
+        get_thread_data = requests.get(
+            url=f"{API_ENDPOINT}/threads/{thread_id}", headers=authorization_header()
+        )
         try:
             get_thread_data.raise_for_status()
             thread_data = get_thread_data.json()
@@ -80,6 +83,7 @@ class ConversationThread(models.ConversationThread):
     def get_messages(self) -> list[ThreadMessage]:
         get_thread_messages = requests.get(
             url=f"{API_ENDPOINT}/threads/{self.id}/messages",
+            headers=authorization_header(),
         )
         try:
             get_thread_messages.raise_for_status()
@@ -97,6 +101,7 @@ class ConversationThread(models.ConversationThread):
     def delete(self):
         put_del_thread = requests.put(
             url=f"{API_ENDPOINT}/threads/{self.id}/delete",
+            headers=authorization_header(),
         )
         try:
             put_del_thread.raise_for_status()
@@ -129,6 +134,7 @@ class ConversationThread(models.ConversationThread):
     def save(self) -> None:
         put_save = requests.put(
             url=f"{API_ENDPOINT}/threads/save",
+            headers=authorization_header(),
             data=self.model_dump_json(),
         )
         put_save.raise_for_status()

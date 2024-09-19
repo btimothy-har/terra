@@ -2,15 +2,12 @@ from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
-
-from .user import User
+from pydantic import ConfigDict
 
 
 class Session(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     id: str
     timestamp: datetime
-    user: Optional[User] = None
     credentials: Optional[bytes] = None
-
-    class Config:
-        arbitrary_types_allowed = True

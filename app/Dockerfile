@@ -14,7 +14,7 @@ EXPOSE 8501
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
-ENTRYPOINT ["streamlit", "run", "main.py", \
+ENTRYPOINT ["streamlit", "run", "Chat.py", \
     "--server.port=8501", \
     "--server.headless=true", \
     "--server.runOnSave=true", \

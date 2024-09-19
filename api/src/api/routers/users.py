@@ -26,7 +26,7 @@ async def get_user_id(user_id: str, db: DatabaseSession):
     query = await db.execute(select(UserSchema).filter(UserSchema.id == user_id))
     results = query.scalar_one_or_none()
     if results:
-        return User.model_validate(results)
+        return User.model_validate(results, from_attributes=True)
     return None
 
 

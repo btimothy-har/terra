@@ -7,11 +7,11 @@ from typing import Optional
 
 import extra_streamlit_components as stx
 import requests
+from clients.fernet import get_encryption_client
 from config import API_ENDPOINT
+from google.oauth2.credentials import Credentials
 
 import shared.models as models
-
-from .user import User
 
 
 class Session(models.Session):
@@ -23,14 +23,6 @@ class Session(models.Session):
             self._cookies = stx.CookieManager(key=self.id)
         return self._cookies
 
-    @property
-    def authorized(self) -> bool:
-        if self.user and getattr(self.user, "email", None) in os.getenv(
-            "AUTH_USERS", ""
-        ).split(","):
-            return True
-        return False
-
     @classmethod
     def create(cls, session_id: str):
         new_session = cls(
@@ -41,7 +33,7 @@ class Session(models.Session):
 
     @classmethod
     def resume(cls, session_id: str) -> Optional["Session"]:
-        find_session = requests.get(url=f"{API_ENDPOINT}/users/session/{session_id}")
+        find_session = requests.get(url=f"{API_ENDPOINT}/session/{session_id}")
         find_session.raise_for_status()
 
         try:
@@ -50,14 +42,24 @@ class Session(models.Session):
             return None
 
         if session_data:
-            session_data["user"] = User(**session_data["user"])
+            fernet = get_encryption_client()
+            session_data["credentials"] = Credentials.from_authorized_user_info(
+                json.loads(fernet.decrypt(session_data["credentials"]))
+            )
             return cls(**session_data)
         return None
 
     def save(self):
+        copy_session = self.model_copy()
+
+        fernet = get_encryption_client()
+        copy_session.credentials = fernet.encrypt(
+            copy_session.credentials.to_json().encode()
+        )
+
         put_save = requests.put(
-            url=f"{API_ENDPOINT}/users/session/save",
-            data=self.model_dump_json(),
+            url=f"{API_ENDPOINT}/session/save",
+            data=copy_session.model_dump_json(),
         )
         put_save.raise_for_status()
 
@@ -65,5 +67,5 @@ class Session(models.Session):
         self.cookies.set(
             cookie=os.getenv("COOKIE_NAME"),
             val=self.id,
-            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=90),
         )

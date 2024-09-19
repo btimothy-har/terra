@@ -108,10 +108,7 @@ class UserKeyHandler:
     async def is_valid_session(self, session_id: str) -> bool:
         async with database_session() as db:
             query = await db.execute(
-                select(SessionSchema).filter(
-                    SessionSchema.id == session_id,
-                    SessionSchema.user_id == self.hashed_user_id,
-                )
+                select(SessionSchema).filter(SessionSchema.id == session_id)
             )
             results = query.scalar_one_or_none()
 

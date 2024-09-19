@@ -1,13 +1,13 @@
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
+from datetime import UTC
+from datetime import datetime
 from typing import Annotated
 from typing import Optional
 
 from fastapi import APIRouter
-from fastapi import BackgroundTasks
 from fastapi import Depends
 from fastapi import HTTPException
-from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import select
@@ -16,17 +16,17 @@ from sqlalchemy.sql import update
 from api.auth import AuthPayload
 from api.auth import NotAuthorizedError
 from api.auth import authenticate_request
+from api.database.context import embed_context
+from api.database.context import search_context
 from api.database.schemas import ContextSchema
 from api.database.schemas import MessageSchema
 from api.database.schemas import ThreadSchema
-from api.database.utils import embed_context_message
 from api.models import ContextChunk
 from api.models import ContextMessage
 from api.models import ConversationThread
 from api.models import ThreadMessage
 from api.utils import database_session
 from api.utils import run_in_executor
-from api.utils import text_embed
 
 threads_router = APIRouter(tags=["threads"], prefix="/threads")
 
@@ -49,10 +49,9 @@ async def get_thread_by_id(thread_id: str, db: DatabaseSession, auth: UserAuth):
     result = query.scalar_one_or_none()
     if result:
         try:
-            model_dict = await run_in_executor(
-                ProcessPoolExecutor(), result.decrypt, auth.data_key
+            return await run_in_executor(
+                ProcessPoolExecutor(), ConversationThread.decrypt, result, auth.data_key
             )
-            return ConversationThread.model_validate(model_dict)
         except NotAuthorizedError as exc:
             raise HTTPException(status_code=401, detail="Not Authorized") from exc
     return None
@@ -112,11 +111,13 @@ async def get_thread_messages(thread_id: str, db: DatabaseSession, auth: UserAut
             with ProcessPoolExecutor() as executor:
                 decrypted_results = await asyncio.gather(
                     *(
-                        run_in_executor(executor, m.decrypt, auth.data_key)
+                        run_in_executor(
+                            executor, ThreadMessage.decrypt, m, auth.data_key
+                        )
                         for m in results
                     )
                 )
-                return [ThreadMessage.model_validate(m) for m in decrypted_results]
+                return decrypted_results
         except NotAuthorizedError as exc:
             raise HTTPException(status_code=401, detail="Not Authorized") from exc
     return []
@@ -139,10 +140,9 @@ async def get_message_by_id(
     result = query.scalar_one_or_none()
     if result:
         try:
-            model_dict = await run_in_executor(
-                ProcessPoolExecutor(), result.decrypt, auth.data_key
+            return await run_in_executor(
+                ProcessPoolExecutor(), ThreadMessage.decrypt, result, auth.data_key
             )
-            return ThreadMessage.model_validate(model_dict)
         except NotAuthorizedError as exc:
             raise HTTPException(status_code=401, detail="Not Authorized") from exc
     return None
@@ -186,15 +186,28 @@ async def put_thread_message(
     Allows AI agents to store external context in memory by Thread ID, and vectorized
     for later use. Vectorization is handled in the background in FastAPI.
     """,
-    status_code=202,
 )
-async def put_context_save(background_tasks: BackgroundTasks, message: ContextMessage):
+async def put_context_save(db: DatabaseSession, message: ContextMessage) -> str | None:
     if not message.content:
         return
     if message.agent in ["Supervisor", "Archivist"]:
         return
 
-    background_tasks.add_task(embed_context_message, message)
+    message_id = await embed_context(message)
+    if not message_id:
+        return
+
+    stmt = pg_insert(ContextSchema).values(
+        id=message_id,
+        timestamp=datetime.now(UTC),
+        agent=message.agent,
+        content=message.content,
+    )
+    stmt = stmt.on_conflict_do_nothing()
+
+    await db.execute(stmt)
+    await db.commit()
+    return message_id
 
 
 @threads_router.get(
@@ -205,21 +218,14 @@ async def put_context_save(background_tasks: BackgroundTasks, message: ContextMe
     Allows AI agents to retrieve stored context in memory.
     """,
 )
-async def get_context_search(db: DatabaseSession, query: str, top_k: int = 10):
-    embedding_array = func.array(await text_embed.aembed_query(query))
-
-    stmt = (
-        select(ContextSchema)
-        .order_by(ContextSchema.embedding.cosine_distance(embedding_array))
-        .limit(top_k)
-    )
-    results = db.execute(stmt).scalars().all()
+async def get_context_search(query: str, top_k: int = 10):
+    results = await search_context(query, top_k)
 
     return [
         ContextChunk(
-            timestamp=r.timestamp,
-            agent=r.agent,
-            content=r.content,
+            timestamp=r.metadata.creation_time,
+            agent=r.properties["agent"],
+            content=r.properties["content"],
         )
         for r in results
     ]

@@ -1,3 +1,5 @@
+import os
+
 import requests
 from config import API_ENDPOINT
 
@@ -5,6 +7,12 @@ import shared.models as models
 
 
 class User(models.User):
+    @property
+    def authorized(self) -> bool:
+        if self.email in os.getenv("AUTH_USERS", "").split(","):
+            return True
+        return False
+
     @classmethod
     def create(cls, **kwargs) -> "User":
         return cls(

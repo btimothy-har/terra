@@ -14,7 +14,6 @@ from api.database.schemas import SessionSchema
 from api.models import Session
 from api.utils import database_session
 
-from .users import get_user_id
 from .users import put_user_save
 
 router = APIRouter(tags=["session"], prefix="/session")
@@ -30,8 +29,7 @@ async def save_session(session: Session, db: DatabaseSession):
     await put_user_save(session.user, db)
 
     stmt = pg_insert(SessionSchema).values(
-        user=session.user.id,
-        **session.model_dump(exclude={"user"}),
+        **session.model_dump(),
     )
     stmt = stmt.on_conflict_do_nothing(index_elements=["id"])
     await db.execute(stmt)
@@ -49,15 +47,7 @@ async def resume_session(session_id: str, db: DatabaseSession):
     )
     results = query.scalar_one_or_none()
     if results:
-        user = await get_user_id(results.user_id)
-        return Session.model_validate(
-            {
-                "id": results.id,
-                "timestamp": results.timestamp,
-                "user": user,
-                "credentials": results.credentials,
-            }
-        )
+        return Session.model_validate(results, from_attributes=True)
     return None
 
 
@@ -66,7 +56,9 @@ async def resume_session(session_id: str, db: DatabaseSession):
     response_model=auth.Token,
     summary="Authorizes a session and returns a JWT token.",
 )
-async def authorize_session(payload: Annotated[OAuth2PasswordRequestForm, Depends()]):
+async def authorize_session(
+    payload: Annotated[OAuth2PasswordRequestForm, Depends()],
+):
     # username = session id
     # password = google uid
 

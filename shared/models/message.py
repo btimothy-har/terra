@@ -14,8 +14,5 @@ class ThreadMessage(BaseModel):
 
 
 class ContextMessage(BaseModel):
-    id: str = str(uuid4())
-    thread_id: str
-    message_id: str
     content: str
     agent: str

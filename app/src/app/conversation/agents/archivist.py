@@ -40,7 +40,7 @@ class ArchivistAgent(BaseAgent):
 
         search_request = requests.get(
             url=f"{API_ENDPOINT}/threads/context/search",
-            params={"query": query, "top_k": 3},
+            params={"query": query, "top_k": 6},
         )
         search_request.raise_for_status()
         search_docs = search_request.json()

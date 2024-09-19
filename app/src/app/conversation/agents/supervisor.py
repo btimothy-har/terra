@@ -2,8 +2,8 @@ import asyncio
 from enum import Enum
 
 import streamlit as st
-from chat.states import AgentAction
-from chat.states import ChatState
+from conversation.states import AgentAction
+from conversation.states import ChatState
 from langchain_core.tools import InjectedToolArg
 from pydantic import BaseModel
 from pydantic import Field

@@ -1,13 +1,14 @@
 import asyncio
 import logging
 import os
-from contextlib import asynccontextmanager
 
+import weaviate
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai import OpenAIEmbeddings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
+from weaviate.connect import ConnectionParams
 
 import api.config as config
 
@@ -31,7 +32,19 @@ engine = create_async_engine(POSTGRES_URL)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-@asynccontextmanager
+weaviate_client = weaviate.WeaviateAsyncClient(
+    connection_params=ConnectionParams.from_params(
+        http_host="weaviate",
+        http_port=8080,
+        http_secure=False,
+        grpc_host="weaviate",
+        grpc_port=50051,
+        grpc_secure=False,
+    ),
+    additional_headers={"X-OpenAI-Api-Key": os.getenv("OPENAI_API_KEY")},
+)
+
+
 async def database_session():
     async with AsyncSessionLocal() as session:
         yield session

@@ -1,8 +1,8 @@
 import os
 
 import streamlit as st
-from chat.states import AgentAction
-from chat.states import ChatState
+from conversation.states import AgentAction
+from conversation.states import ChatState
 from langchain_community.chat_models import ChatPerplexity
 
 from .base import BaseAgent
