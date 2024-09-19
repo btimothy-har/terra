@@ -15,20 +15,21 @@ SCOPES = [
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def get_user_info(credentials: Credentials) -> User:
-    if not credentials.valid:
-        credentials.refresh(Request())
+def get_user_info(session_id: str, _credentials: Credentials) -> User:
+    if not _credentials.valid:
+        _credentials.refresh(Request())
 
     user_info_service = build(
         serviceName="oauth2",
         version="v2",
-        credentials=credentials,
+        credentials=_credentials,
     )
     user_info = user_info_service.userinfo().get().execute()
     user = User.create(**user_info)
     return user
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_credentials(auth_code: str) -> Credentials:
     flow = st.session_state.google_auth
     flow.fetch_token(code=auth_code)
@@ -52,7 +53,6 @@ def auth_flow():
             try:
                 st.session_state.session.credentials = get_credentials(auth_code)
             except Exception as e:
-                print(e)
                 st.error(f"Authorization failed: {e}")
                 auth_code = None
             else:
@@ -69,7 +69,6 @@ def auth_flow():
             "This applies even if you are not authorized to use _terra_. "
             "Please be aware of this before proceeding."
         )
-        st.caption("Session cookies are stored on your browser for 7 days.")
 
         authorization_url, _ = st.session_state.google_auth.authorization_url(
             access_type="offline",

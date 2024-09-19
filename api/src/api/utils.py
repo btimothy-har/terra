@@ -8,7 +8,6 @@ from langchain_openai import OpenAIEmbeddings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
-from weaviate.connect import ConnectionParams
 
 import api.config as config
 
@@ -32,17 +31,13 @@ engine = create_async_engine(POSTGRES_URL)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-weaviate_client = weaviate.WeaviateAsyncClient(
-    connection_params=ConnectionParams.from_params(
-        http_host="weaviate",
-        http_port=8080,
-        http_secure=False,
-        grpc_host="weaviate",
+def weaviate_session() -> weaviate.Client:
+    return weaviate.connect_to_local(
+        host="weaviate",
+        port=8080,
         grpc_port=50051,
-        grpc_secure=False,
-    ),
-    additional_headers={"X-OpenAI-Api-Key": os.getenv("OPENAI_API_KEY")},
-)
+        headers={"X-OpenAI-Api-Key": os.getenv("OPENAI_API_KEY")},
+    )
 
 
 async def database_session():

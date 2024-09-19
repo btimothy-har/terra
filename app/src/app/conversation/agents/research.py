@@ -44,7 +44,7 @@ and unbiased information.
         status_text.caption(f"{self.title} is working...")
 
         supervisor_context = [
-            m for m in state["workspace"].copy() if m["title"] == "Supervisor"
+            m for m in state["workspace"].copy() if m["agent"] == "Supervisor"
         ]
 
         messages = [

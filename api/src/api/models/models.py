@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Self
 
 from pydantic import BaseModel
@@ -16,8 +17,11 @@ class Session(models.Session):
 
 
 class ConversationThread(models.ConversationThread):
+    last_used: datetime
+    messages: None = None
+
     def encrypt(self, key: bytes, **kwargs) -> dict:
-        model_dict = self.model_dump(**kwargs)
+        model_dict = self.model_dump(exclude={"messages"}, **kwargs)
         model_dict["summary"] = encrypt_user_data(key, model_dict["summary"])
         return model_dict
 
@@ -55,6 +59,6 @@ class ContextMessage(models.ContextMessage):
 
 
 class ContextChunk(BaseModel):
-    timestamp: str
+    timestamp: datetime
     agent: str
     content: str

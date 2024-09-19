@@ -10,23 +10,11 @@ from sqlalchemy.sql import func
 Base = declarative_base()
 
 
-class UserSchema(Base):
-    __tablename__ = "profiles"
-    __table_args__ = {"schema": "users"}
-
-    id = Column(String, primary_key=True)
-    email = Column(String, nullable=False, index=True)
-    name = Column(String)
-    given_name = Column(String)
-    family_name = Column(String)
-    picture = Column(String)
-
-
 class UserKeySchema(Base):
     __tablename__ = "keys"
     __table_args__ = {"schema": "users"}
 
-    id = Column(String, ForeignKey("users.profiles.id"), primary_key=True)
+    id = Column(String, primary_key=True)
     public_key = Column(BYTEA)
     private_key = Column(BYTEA)
 
@@ -53,7 +41,7 @@ class ThreadSchema(Base):
     __table_args__ = {"schema": "conversations"}
 
     id = Column(String, primary_key=True)
-    user_id = Column(String, ForeignKey("users.profiles.id"), nullable=False)
+    user_id = Column(String, nullable=False)
     summary = Column(BYTEA, nullable=False)
     last_used = Column(
         TIMESTAMP(timezone=True),

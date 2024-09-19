@@ -48,5 +48,5 @@ class ArchivistAgent(BaseAgent):
         if len(search_docs) == 0:
             return "No relevant information was found in the archive."
 
-        doc_return = [f"**{doc['title']}**\n{doc['content']}" for doc in search_docs]
+        doc_return = [f"**{doc['agent']}**\n{doc['content']}" for doc in search_docs]
         return "\n\n".join(doc_return)

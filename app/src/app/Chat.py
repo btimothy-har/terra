@@ -1,7 +1,6 @@
 # ruff: noqa: N999 Streamlit things
 
 import asyncio
-import os
 from datetime import datetime
 from datetime import timezone
 from functools import partial
@@ -29,7 +28,7 @@ from utils import set_active_conversation
 def invoke_graph():
     state = ChatState(
         loop_count=0,
-        thread_id=st.session_state.current_thread.thread_id,
+        thread_id=st.session_state.current_thread.id,
         agent=AgentConfig(
             model=st.session_state.ai_model, temp=st.session_state.ai_temp
         ),
@@ -53,7 +52,7 @@ st.set_page_config(
 )
 
 if not st.session_state.get("session", None):
-    cookie = st.context.cookies.get(os.environ.get("COOKIE_NAME"))
+    cookie = st.context.cookies.get(config.SESSION_COOKIE)
     session = Session.resume(cookie) if cookie else None
 
     if session:
@@ -61,9 +60,15 @@ if not st.session_state.get("session", None):
     else:
         st.session_state.session = Session.create(cookie if cookie else str(uuid4()))
 
+    st.session_state.session.set_cookie(
+        config.SESSION_COOKIE, st.session_state.session.id
+    )
+
 if not st.session_state.get("user", None):
     if st.session_state.session.credentials:
-        st.session_state.user = get_user_info(st.session_state.session.credentials)
+        st.session_state.user = get_user_info(
+            st.session_state.session.id, st.session_state.session.credentials
+        )
     else:
         auth_flow()
 
@@ -71,11 +76,19 @@ if st.session_state.user.authorized:
     if "user_tz" not in st.session_state:
         st.session_state.user_tz = "UTC"
 
-    if "current_thread" not in st.session_state:
-        st.session_state.current_thread = set_active_conversation("new")
-
     if "conversations" not in st.session_state:
         st.session_state.conversations = refresh_user_conversations()
+
+    if "current_thread" not in st.session_state:
+        thread_cookie = st.context.cookies.get(config.THREAD_COOKIE)
+        if thread_cookie:
+            st.session_state.current_thread = set_active_conversation(thread_cookie)
+        else:
+            st.session_state.current_thread = set_active_conversation("new")
+
+    st.session_state.session.set_cookie(
+        config.THREAD_COOKIE, st.session_state.current_thread.id
+    )
 
     with st.sidebar:
         buttons_container = st.container()
@@ -176,9 +189,6 @@ if st.session_state.user.authorized:
         if st.session_state.current_thread.summary:
             st.header(f"{st.session_state.current_thread.summary}")
 
-        if len(st.session_state.current_thread.messages) == 0:
-            st.session_state.current_thread.get_messages()
-
         for message in st.session_state.current_thread:
             with st.chat_message(message.role):
                 st.write(message.content)
@@ -225,16 +235,20 @@ if st.session_state.user.authorized:
                 full_response = st.write_stream(response["output"])
 
         new_asst_message = ThreadMessage(
-            content=full_response, role="assistant", model=st.session_state.ai_model
+            content=full_response,
+            role="assistant",
+            model=st.session_state.ai_model,
         )
         st.session_state.current_thread.append(new_asst_message)
 
-        if response["workspace"]:
-            for msg in response["workspace"]:
-                ctx_msg = ContextMessage(**msg)
-                ctx_msg.save()
+        st.session_state.current_thread.save()
+        new_user_message.save(st.session_state.current_thread.id)
+        new_asst_message.save(st.session_state.current_thread.id)
 
-        if st.session_state.current_thread.thread_id not in list(
+        if response["workspace"]:
+            ContextMessage.save(response["workspace"])
+
+        if st.session_state.current_thread.id not in list(
             st.session_state.conversations.keys()
         ):
             st.session_state.conversations = refresh_user_conversations()

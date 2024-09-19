@@ -14,8 +14,6 @@ from api.database.schemas import SessionSchema
 from api.models import Session
 from api.utils import database_session
 
-from .users import put_user_save
-
 router = APIRouter(tags=["session"], prefix="/session")
 
 DatabaseSession = Annotated[AsyncSession, Depends(database_session)]
@@ -26,8 +24,6 @@ DatabaseSession = Annotated[AsyncSession, Depends(database_session)]
     summary="Saves a session to memory.",
 )
 async def save_session(session: Session, db: DatabaseSession):
-    await put_user_save(session.user, db)
-
     stmt = pg_insert(SessionSchema).values(
         **session.model_dump(),
     )
@@ -59,9 +55,6 @@ async def resume_session(session_id: str, db: DatabaseSession):
 async def authorize_session(
     payload: Annotated[OAuth2PasswordRequestForm, Depends()],
 ):
-    # username = session id
-    # password = google uid
-
     key_handler = auth.UserKeyHandler(payload.password)
 
     if not await key_handler.is_valid_session(payload.username):

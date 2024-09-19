@@ -32,17 +32,18 @@ class ConversationThread(models.ConversationThread):
     summary: Optional[str]
 
     @classmethod
-    def create(cls, user_id: str) -> "ConversationThread":
+    def create(cls) -> "ConversationThread":
         return cls(
-            user_id=user_id,
             summary=None,
             last_used=datetime.now(timezone.utc),
             messages=[],
         )
 
     @classmethod
-    def get_all_for_user(cls, user_id: str) -> list[str] | None:
-        get_thread_ids = requests.get(url=f"{API_ENDPOINT}/users/{user_id}/threads")
+    def get_all_for_user(cls) -> list[str] | None:
+        get_thread_ids = requests.get(
+            url=f"{API_ENDPOINT}/threads/user", headers=authorization_header()
+        )
         try:
             get_thread_ids.raise_for_status()
             thread_ids = get_thread_ids.json()
@@ -73,7 +74,6 @@ class ConversationThread(models.ConversationThread):
                 if not thread_data
                 else cls(
                     id=thread_data["id"],
-                    user_id=thread_data["user_id"],
                     summary=thread_data["summary"],
                     last_used=datetime.fromisoformat(thread_data["last_used"]),
                     messages=[],
@@ -118,9 +118,6 @@ class ConversationThread(models.ConversationThread):
         if message.role == "assistant" and len(self.user_messages) == 1:
             self.create_summary()
 
-        self.save()
-        message.save(self.thread_id)
-
     def create_summary(self) -> str:
         llm = get_client(model=OpenRouterModels.OPENAI_GPT4O_MINI.value, temp=0.3)
 
@@ -134,8 +131,8 @@ class ConversationThread(models.ConversationThread):
     def save(self) -> None:
         put_save = requests.put(
             url=f"{API_ENDPOINT}/threads/save",
+            data=self.model_dump_json(exclude={"messages"}),
             headers=authorization_header(),
-            data=self.model_dump_json(),
         )
         put_save.raise_for_status()
 

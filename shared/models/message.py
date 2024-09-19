@@ -3,14 +3,15 @@ from datetime import datetime
 from uuid import uuid4
 
 from pydantic import BaseModel
+from pydantic import Field
 
 
 class ThreadMessage(BaseModel):
-    id: str = str(uuid4())
+    id: str = Field(default_factory=lambda: str(uuid4()))
     role: str
     content: str
-    timestamp: datetime = datetime.now(UTC)
-    model: str = None
+    timestamp: datetime = Field(default=datetime.now(UTC))
+    model: str | None = None
 
 
 class ContextMessage(BaseModel):

@@ -1,11 +1,10 @@
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
-from datetime import UTC
-from datetime import datetime
 from typing import Annotated
 from typing import Optional
 
 from fastapi import APIRouter
+from fastapi import BackgroundTasks
 from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -18,7 +17,6 @@ from api.auth import NotAuthorizedError
 from api.auth import authenticate_request
 from api.database.context import embed_context
 from api.database.context import search_context
-from api.database.schemas import ContextSchema
 from api.database.schemas import MessageSchema
 from api.database.schemas import ThreadSchema
 from api.models import ContextChunk
@@ -32,6 +30,25 @@ threads_router = APIRouter(tags=["threads"], prefix="/threads")
 
 DatabaseSession = Annotated[AsyncSession, Depends(database_session)]
 UserAuth = Annotated[AuthPayload, Depends(authenticate_request)]
+
+
+@threads_router.get(
+    "/user",
+    summary="Gets all conversation threads for a user. Only returns the Thread IDs.",
+)
+async def get_threads_for_user(
+    db: Annotated[AsyncSession, Depends(database_session)], auth: UserAuth
+) -> Optional[list[str]]:
+    query = await db.execute(
+        select(ThreadSchema).filter(
+            ThreadSchema.user_id == auth.user_key,
+            ThreadSchema.is_deleted.is_(False),
+        )
+    )
+    results = query.scalars().all()
+    if results:
+        return [t.id for t in results]
+    return None
 
 
 @threads_router.get(
@@ -59,14 +76,13 @@ async def get_thread_by_id(thread_id: str, db: DatabaseSession, auth: UserAuth):
 
 @threads_router.put(
     "/save",
-    response_model=ConversationThread,
     summary="Saves a Chat Thread for a user to memory.",
 )
 async def put_thread_save(
     thread: ConversationThread, db: DatabaseSession, auth: UserAuth
 ):
     model_dict = await run_in_executor(
-        ProcessPoolExecutor(), thread.encrypt, auth.data_key, exclude={"messages"}
+        ProcessPoolExecutor(), thread.encrypt, auth.data_key
     )
     stmt = pg_insert(ThreadSchema).values(
         user_id=auth.user_key,
@@ -123,7 +139,7 @@ async def get_thread_messages(thread_id: str, db: DatabaseSession, auth: UserAut
     return []
 
 
-@threads_router.put(
+@threads_router.get(
     "/{thread_id}/messages/{message_id}",
     response_model=Optional[ThreadMessage],
     summary="Finds a Chat Message by ID.",
@@ -154,12 +170,11 @@ async def get_message_by_id(
 async def put_thread_message(
     thread_id: str, message: ThreadMessage, db: DatabaseSession, auth: UserAuth
 ):
-    thread = await get_thread_by_id(thread_id)
+    thread = await get_thread_by_id(thread_id, db, auth)
     if not thread:
         raise HTTPException(
             status_code=400, detail="A thread must exist before saving a message."
         )
-
     encrypted_message = await run_in_executor(
         ProcessPoolExecutor(), message.encrypt, auth.data_key
     )
@@ -186,28 +201,18 @@ async def put_thread_message(
     Allows AI agents to store external context in memory by Thread ID, and vectorized
     for later use. Vectorization is handled in the background in FastAPI.
     """,
+    status_code=202,
 )
-async def put_context_save(db: DatabaseSession, message: ContextMessage) -> str | None:
+async def post_context_save(
+    background_tasks: BackgroundTasks, message: list[ContextMessage]
+) -> str | None:
     if not message.content:
         return
     if message.agent in ["Supervisor", "Archivist"]:
         return
-
-    message_id = await embed_context(message)
-    if not message_id:
-        return
-
-    stmt = pg_insert(ContextSchema).values(
-        id=message_id,
-        timestamp=datetime.now(UTC),
-        agent=message.agent,
-        content=message.content,
-    )
-    stmt = stmt.on_conflict_do_nothing()
-
-    await db.execute(stmt)
-    await db.commit()
-    return message_id
+    for m in message:
+        background_tasks.add_task(embed_context, m)
+    return
 
 
 @threads_router.get(
@@ -219,7 +224,7 @@ async def put_context_save(db: DatabaseSession, message: ContextMessage) -> str 
     """,
 )
 async def get_context_search(query: str, top_k: int = 10):
-    results = await search_context(query, top_k)
+    results = await asyncio.to_thread(search_context, query, top_k)
 
     return [
         ContextChunk(

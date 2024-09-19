@@ -1,5 +1,4 @@
 import json
-import os
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -7,28 +6,26 @@ from typing import Optional
 
 import extra_streamlit_components as stx
 import requests
+import streamlit as st
 from clients.fernet import get_encryption_client
 from config import API_ENDPOINT
+from config import SESSION_COOKIE
 from google.oauth2.credentials import Credentials
 
 import shared.models as models
 
 
+def cookie_manager(session_id: str) -> stx.CookieManager:
+    return stx.CookieManager(key=session_id)
+
+
 class Session(models.Session):
-    _cookies = None
-
-    @property
-    def cookies(self) -> stx.CookieManager:
-        if not self._cookies:
-            self._cookies = stx.CookieManager(key=self.id)
-        return self._cookies
-
     @classmethod
     def create(cls, session_id: str):
         new_session = cls(
             id=session_id, timestamp=datetime.now(timezone.utc), user=None
         )
-        new_session.set_cookie()
+        new_session.set_cookie(cookie=SESSION_COOKIE, val=session_id)
         return new_session
 
     @classmethod
@@ -63,9 +60,20 @@ class Session(models.Session):
         )
         put_save.raise_for_status()
 
-    def set_cookie(self):
-        self.cookies.set(
-            cookie=os.getenv("COOKIE_NAME"),
-            val=self.id,
-            expires_at=datetime.now(timezone.utc) + timedelta(days=90),
+    def set_cookie(
+        self,
+        name: str,
+        val: str,
+        expires_at: datetime | None = None,
+    ):
+        if not expires_at:
+            expires_at = datetime.now(timezone.utc) + timedelta(days=90)
+
+        if "cookie_manager" not in st.session_state:
+            st.session_state.cookie_manager = cookie_manager(self.id)
+
+        st.session_state.cookie_manager.set(
+            cookie=name,
+            val=val,
+            expires_at=expires_at,
         )

@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import os
+from contextlib import asynccontextmanager
 from typing import Annotated
 from typing import Any
 
@@ -22,9 +23,15 @@ from sqlalchemy.sql import select
 from api.database.schemas import SessionSchema
 from api.database.schemas import UserDataKeySchema
 from api.database.schemas import UserKeySchema
-from api.utils import database_session
+from api.utils import AsyncSessionLocal
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="session/authorize")
+
+
+@asynccontextmanager
+async def database_session():
+    async with AsyncSessionLocal() as session:
+        yield session
 
 
 class Token(BaseModel):
@@ -59,26 +66,26 @@ async def authenticate_request(token: Annotated[str, Depends(oauth2_scheme)]):
 
     session_key = base64.b64decode(enc_session_key).decode("utf-8")
     session_id, user_id = session_key.split(":")
-    public_key = base64.b64decode(enc_public_key).decode("utf-8")
+    public_key = enc_public_key.encode("utf-8")
 
     key_handler = await UserKeyHandler.load_keys(user_id)
     if not await key_handler.is_valid_session(session_id):
         raise cred_exception
 
     payload["data_key"] = await key_handler.get_or_create_data_key(public_key)
-    payload["user_key"] = await key_handler.hashed_user_id
+    payload["user_key"] = key_handler.hashed_user_id
     return AuthPayload(**payload)
 
 
 def encrypt_user_data(data_key: bytes, data: Any) -> bytes:
     f = Fernet(data_key)
-    return f.encrypt(data)
+    return f.encrypt(data.encode("utf-8"))
 
 
 def decrypt_user_data(data_key: bytes, encrypted_data: bytes) -> Any:
     try:
         f = Fernet(data_key)
-        return f.decrypt(encrypted_data)
+        return f.decrypt(encrypted_data).decode("utf-8")
     except Exception as e:
         raise NotAuthorizedError from e
 
@@ -102,8 +109,8 @@ class UserKeyHandler:
 
     @property
     def data_key_id(self) -> str:
-        key = f"{self.hashed_user_id}:{self.public_key}"
-        return base64.urlsafe_b64encode(key).decode("utf-8")
+        key = f"{self.hashed_user_id}:{self.public_key.decode('utf-8')}"
+        return base64.urlsafe_b64encode(key.encode("utf-8")).decode("utf-8")
 
     async def is_valid_session(self, session_id: str) -> bool:
         async with database_session() as db:
@@ -121,7 +128,7 @@ class UserKeyHandler:
         session_key = f"{session_id}:{self.user_id}"
         jwt_payload = {
             "session": base64.b64encode(session_key.encode()).decode("utf-8"),
-            "key": base64.b64encode(self.public_key).decode("utf-8"),
+            "key": self.public_key.decode("utf-8"),
         }
         encoded_jwt = jwt.encode(
             jwt_payload, os.getenv("JWT_SECRET_KEY"), algorithm="HS256"
@@ -133,7 +140,7 @@ class UserKeyHandler:
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=os.getenv("PRIVATE_KEY_SALT"),
+            salt=os.getenv("PRIVATE_KEY_SALT").encode("utf-8"),
             iterations=100000,
         )
         key = base64.urlsafe_b64encode(kdf.derive(self.user_id.encode("utf-8")))

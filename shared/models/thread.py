@@ -3,15 +3,16 @@ from typing import Optional
 from uuid import uuid4
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from .message import ThreadMessage
 
 
 class ConversationThread(BaseModel):
-    id: str = str(uuid4())
+    id: str = Field(default_factory=lambda: str(uuid4()))
     summary: str
     last_used: Optional[datetime] = None
-    messages: list[ThreadMessage]
+    messages: Optional[list[ThreadMessage]] = []
 
     def __iter__(self):
         return iter(self.messages)
