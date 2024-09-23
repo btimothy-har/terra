@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import select
 
 import api.auth as auth
-from api.database.schemas import SessionSchema
+from api.data.schemas import SessionSchema
 from api.models import Session
 from api.utils import database_session
 

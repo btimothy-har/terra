@@ -2,7 +2,6 @@ import asyncio
 import logging
 import os
 
-import weaviate
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai import OpenAIEmbeddings
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,19 +24,8 @@ text_chunk = SemanticChunker(
     breakpoint_threshold_amount=0.5,
 )
 
-POSTGRES_URL = f"postgresql+asyncpg://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/terra"
-
-engine = create_async_engine(POSTGRES_URL)
+engine = create_async_engine(f"postgresql+asyncpg://{config.POSTGRES_URL}")
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-
-def weaviate_session() -> weaviate.Client:
-    return weaviate.connect_to_local(
-        host="weaviate",
-        port=8080,
-        grpc_port=50051,
-        headers={"X-OpenAI-Api-Key": os.getenv("OPENAI_API_KEY")},
-    )
 
 
 async def database_session():

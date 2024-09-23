@@ -27,12 +27,14 @@ class ThreadMessage(models.ThreadMessage):
 
 class ContextMessage(models.ContextMessage):
     @classmethod
-    def save(cls, messages: list["ContextMessage"]):
-        try:
+    def save(cls, messages: list[dict]):
+        for m in messages:
+            msg = ContextMessage(
+                content=m["content"],
+                agent=m["agent"],
+            )
             put_context = requests.post(
                 url=f"{API_ENDPOINT}/threads/context/save",
-                data=[m.model_dump_json() for m in messages],
+                data=msg.model_dump_json(),
             )
             put_context.raise_for_status()
-        except Exception:
-            return

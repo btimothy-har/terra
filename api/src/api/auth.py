@@ -20,9 +20,9 @@ from pydantic import BaseModel
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.sql import select
 
-from api.database.schemas import SessionSchema
-from api.database.schemas import UserDataKeySchema
-from api.database.schemas import UserKeySchema
+from api.data.schemas import SessionSchema
+from api.data.schemas import UserDataKeySchema
+from api.data.schemas import UserKeySchema
 from api.utils import AsyncSessionLocal
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="session/authorize")

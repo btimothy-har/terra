@@ -62,13 +62,3 @@ class MessageSchema(Base):
     content = Column(BYTEA, nullable=False)
     timestamp = Column(TIMESTAMP(timezone=True), nullable=False)
     model = Column(String)
-
-
-class ContextSchema(Base):
-    __tablename__ = "context"
-    __table_args__ = {"schema": "agent"}
-
-    id = Column(String, primary_key=True)
-    timestamp = Column(TIMESTAMP(timezone=True), nullable=False)
-    agent = Column(String, nullable=False)
-    content = Column(String, nullable=False)

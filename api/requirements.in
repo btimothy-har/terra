@@ -12,4 +12,6 @@ psycopg2==2.9.9
 asyncpg==0.29.0
 cryptography~=43.0.1
 pyjwt~=2.9
-weaviate-client~=4.8.1
+pgvector~=0.3.3
+haystack-ai~=2.5.1
+pgvector-haystack==1.0.0

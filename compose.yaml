@@ -31,8 +31,6 @@ networks:
     external: true
   services_net_redis:
     external: true
-  services_net_weaviate:
-    external: true
 
 services:
   chat:
@@ -70,7 +68,6 @@ services:
       - internal
       - services_net_postgres
       - services_net_redis
-      - services_net_weaviate
     extends:
       file: ./services.${ENV}.yaml
       service: api

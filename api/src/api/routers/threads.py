@@ -1,5 +1,6 @@
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
+from datetime import datetime
 from typing import Annotated
 from typing import Optional
 
@@ -15,10 +16,10 @@ from sqlalchemy.sql import update
 from api.auth import AuthPayload
 from api.auth import NotAuthorizedError
 from api.auth import authenticate_request
-from api.database.context import embed_context
-from api.database.context import search_context
-from api.database.schemas import MessageSchema
-from api.database.schemas import ThreadSchema
+from api.data.context import ingest_context
+from api.data.context import search_context
+from api.data.schemas import MessageSchema
+from api.data.schemas import ThreadSchema
 from api.models import ContextChunk
 from api.models import ContextMessage
 from api.models import ConversationThread
@@ -203,15 +204,14 @@ async def put_thread_message(
     """,
     status_code=202,
 )
-async def post_context_save(
-    background_tasks: BackgroundTasks, message: list[ContextMessage]
+def post_context_save(
+    background_tasks: BackgroundTasks, message: ContextMessage
 ) -> str | None:
     if not message.content:
         return
     if message.agent in ["Supervisor", "Archivist"]:
         return
-    for m in message:
-        background_tasks.add_task(embed_context, m)
+    background_tasks.add_task(ingest_context, message)
     return
 
 
@@ -223,14 +223,14 @@ async def post_context_save(
     Allows AI agents to retrieve stored context in memory.
     """,
 )
-async def get_context_search(query: str, top_k: int = 10):
-    results = await asyncio.to_thread(search_context, query, top_k)
+def get_context_search(query: str, top_k: int = 10):
+    results = search_context(query, top_k)
 
     return [
         ContextChunk(
-            timestamp=r.metadata.creation_time,
-            agent=r.properties["agent"],
-            content=r.properties["content"],
+            timestamp=datetime.fromisoformat(r.meta["timestamp"]),
+            agent=r.meta["agent"],
+            content=r.content,
         )
         for r in results
     ]
