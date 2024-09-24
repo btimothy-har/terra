@@ -205,13 +205,13 @@ async def put_thread_message(
     status_code=202,
 )
 def post_context_save(
-    background_tasks: BackgroundTasks, message: ContextMessage
+    background_tasks: BackgroundTasks, messages: list[ContextMessage]
 ) -> str | None:
-    if not message.content:
-        return
-    if message.agent in ["Supervisor", "Archivist"]:
-        return
-    background_tasks.add_task(ingest_context, message)
+    in_messages = [
+        m for m in messages if m.content and m.agent not in ["Supervisor", "Archivist"]
+    ]
+    ingest_context(in_messages)
+    # background_tasks.add_task(ingest_context, messages)
     return
 
 
@@ -228,9 +228,9 @@ def get_context_search(query: str, top_k: int = 10):
 
     return [
         ContextChunk(
-            timestamp=datetime.fromisoformat(r.meta["timestamp"]),
-            agent=r.meta["agent"],
-            content=r.content,
+            timestamp=datetime.fromisoformat(r.metadata["timestamp"]),
+            agent=r.metadata["agent"],
+            content=r.text,
         )
         for r in results
     ]

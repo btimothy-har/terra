@@ -1,3 +1,5 @@
+import json
+
 import requests
 from config import API_ENDPOINT
 from config import authorization_header
@@ -28,13 +30,15 @@ class ThreadMessage(models.ThreadMessage):
 class ContextMessage(models.ContextMessage):
     @classmethod
     def save(cls, messages: list[dict]):
-        for m in messages:
-            msg = ContextMessage(
+        msgs = [
+            ContextMessage(
                 content=m["content"],
                 agent=m["agent"],
             )
-            put_context = requests.post(
-                url=f"{API_ENDPOINT}/threads/context/save",
-                data=msg.model_dump_json(),
-            )
-            put_context.raise_for_status()
+            for m in messages
+        ]
+        put_context = requests.post(
+            url=f"{API_ENDPOINT}/threads/context/save",
+            data=json.dumps([m.model_dump() for m in msgs]),
+        )
+        put_context.raise_for_status()
