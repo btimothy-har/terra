@@ -1,5 +1,6 @@
 import base64
 import json
+import uuid
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -83,6 +84,6 @@ class Session(models.Session):
         st.session_state.cookie_manager.set(
             cookie=name,
             val=val,
-            key=self.id,
+            key=str(uuid.uuid4()),
             expires_at=expires_at,
         )
