@@ -210,8 +210,7 @@ def post_context_save(
     in_messages = [
         m for m in messages if m.content and m.agent not in ["Supervisor", "Archivist"]
     ]
-    ingest_context(in_messages)
-    # background_tasks.add_task(ingest_context, messages)
+    background_tasks.add_task(ingest_context, in_messages)
     return
 
 
