@@ -25,7 +25,7 @@ class Session(models.Session):
         new_session = cls(
             id=session_id, timestamp=datetime.now(timezone.utc), user=None
         )
-        new_session.set_cookie(cookie=SESSION_COOKIE, val=session_id)
+        new_session.set_cookie(SESSION_COOKIE, session_id)
         return new_session
 
     @classmethod
