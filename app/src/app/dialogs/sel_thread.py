@@ -25,26 +25,24 @@ def open_thread():
                 date_group = thread.last_used.strftime("%B %Y")
                 st.caption(date_group)
 
-            is_current_thread = (
-                thread.thread_id == st.session_state.current_thread.thread_id
-            )
+            is_current_thread = thread.id == st.session_state.current_thread.id
 
             with st.expander(thread.summary, expanded=is_current_thread):
                 _, col_resume, col_delete = st.columns([50, 25, 25])
 
                 select_thread = col_resume.button(
                     label="Open",
-                    key=f"convselect_{thread.thread_id}",
+                    key=f"convselect_{thread.id}",
                     type="secondary",
-                    on_click=partial(set_active_conversation, thread.thread_id),
+                    on_click=partial(set_active_conversation, thread.id),
                     disabled=is_current_thread,
                     use_container_width=True,
                 )
 
                 delete_thread = col_delete.button(
                     label="Delete",
-                    key=f"convdelete_{thread.thread_id}",
-                    on_click=partial(delete_conversation, thread.thread_id),
+                    key=f"convdelete_{thread.id}",
+                    on_click=partial(delete_conversation, thread.id),
                     use_container_width=True,
                 )
                 if select_thread:

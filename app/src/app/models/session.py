@@ -1,53 +1,36 @@
 import json
-import os
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 from typing import Optional
-from typing import Union
 
 import extra_streamlit_components as stx
 import requests
+import streamlit as st
 from clients.fernet import get_encryption_client
 from config import API_ENDPOINT
+from config import SESSION_COOKIE
 from google.oauth2.credentials import Credentials
 
-from shared.models.session import Session
-from shared.models.user import User
+import shared.models as models
 
 
-class AppSession(Session):
-    user: Optional[User]
-    credentials: Optional[Union[Credentials, bytes]]
+def cookie_manager(session_id: str) -> stx.CookieManager:
+    return stx.CookieManager(key=session_id)
 
-    _cookies = None
 
-    @property
-    def cookies(self) -> stx.CookieManager:
-        if not self._cookies:
-            self._cookies = stx.CookieManager(key=self.id)
-        return self._cookies
-
-    @property
-    def authorized(self) -> bool:
-        if self.user and getattr(self.user, "email", None) in os.getenv(
-            "AUTH_USERS", ""
-        ).split(","):
-            return True
-        return False
-
+class Session(models.Session):
     @classmethod
     def create(cls, session_id: str):
-        return cls(
-            id=session_id,
-            timestamp=datetime.now(timezone.utc),
-            user=None,
-            credentials=None,
+        new_session = cls(
+            id=session_id, timestamp=datetime.now(timezone.utc), user=None
         )
+        new_session.set_cookie(cookie=SESSION_COOKIE, val=session_id)
+        return new_session
 
     @classmethod
-    def resume(cls, session_id: str) -> Optional["AppSession"]:
-        find_session = requests.get(url=f"{API_ENDPOINT}/users/session/{session_id}")
+    def resume(cls, session_id: str) -> Optional["Session"]:
+        find_session = requests.get(url=f"{API_ENDPOINT}/session/{session_id}")
         find_session.raise_for_status()
 
         try:
@@ -57,8 +40,6 @@ class AppSession(Session):
 
         if session_data:
             fernet = get_encryption_client()
-
-            session_data["user"] = User(**session_data["user"])
             session_data["credentials"] = Credentials.from_authorized_user_info(
                 json.loads(fernet.decrypt(session_data["credentials"]))
             )
@@ -74,14 +55,25 @@ class AppSession(Session):
         )
 
         put_save = requests.put(
-            url=f"{API_ENDPOINT}/users/session/save",
+            url=f"{API_ENDPOINT}/session/save",
             data=copy_session.model_dump_json(),
         )
         put_save.raise_for_status()
 
-    def set_cookie(self):
-        self.cookies.set(
-            cookie=os.getenv("COOKIE_NAME"),
-            val=self.id,
-            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+    def set_cookie(
+        self,
+        name: str,
+        val: str,
+        expires_at: datetime | None = None,
+    ):
+        if not expires_at:
+            expires_at = datetime.now(timezone.utc) + timedelta(days=90)
+
+        if "cookie_manager" not in st.session_state:
+            st.session_state.cookie_manager = cookie_manager(self.id)
+
+        st.session_state.cookie_manager.set(
+            cookie=name,
+            val=val,
+            expires_at=expires_at,
         )

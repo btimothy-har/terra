@@ -1,8 +1,8 @@
 import os
 
 import streamlit as st
-from chat.states import AgentAction
-from chat.states import ChatState
+from conversation.states import AgentAction
+from conversation.states import ChatState
 from langchain_community.chat_models import ChatPerplexity
 
 from .base import BaseAgent
@@ -44,7 +44,7 @@ and unbiased information.
         status_text.caption(f"{self.title} is working...")
 
         supervisor_context = [
-            m for m in state["workspace"].copy() if m["title"] == "Supervisor"
+            m for m in state["workspace"].copy() if m["agent"] == "Supervisor"
         ]
 
         messages = [
@@ -65,6 +65,6 @@ and unbiased information.
         return {
             "role": "assistant",
             "name": self.name,
-            "title": self.title,
+            "agent": self.title,
             "content": response.content,
         }

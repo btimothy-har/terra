@@ -40,7 +40,7 @@ class ArchivistAgent(BaseAgent):
 
         search_request = requests.get(
             url=f"{API_ENDPOINT}/threads/context/search",
-            params={"query": query, "top_k": 3},
+            params={"query": query, "top_k": 6},
         )
         search_request.raise_for_status()
         search_docs = search_request.json()
@@ -48,5 +48,5 @@ class ArchivistAgent(BaseAgent):
         if len(search_docs) == 0:
             return "No relevant information was found in the archive."
 
-        doc_return = [f"**{doc['title']}**\n{doc['content']}" for doc in search_docs]
+        doc_return = [f"**{doc['agent']}**\n{doc['content']}" for doc in search_docs]
         return "\n\n".join(doc_return)

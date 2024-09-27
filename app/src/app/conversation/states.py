@@ -3,7 +3,7 @@ from typing import Optional
 from typing import TypedDict
 
 from langchain_core.messages import BaseMessage
-from models.message import AppMessage
+from models.message import ThreadMessage
 
 
 class AgentConfig(TypedDict):
@@ -14,7 +14,7 @@ class AgentConfig(TypedDict):
 class ChatState(TypedDict):
     loop_count: int = 0
     agent: AgentConfig | dict
-    conversation: list[AppMessage]
+    conversation: list[ThreadMessage]
     workspace: list[BaseMessage] = []
     agent_logs: list[BaseMessage] = []
     use_multi_agent: bool = True

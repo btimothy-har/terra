@@ -3,12 +3,13 @@ from copy import deepcopy
 from typing import Optional
 
 import streamlit as st
-from chat.states import AgentAction
-from chat.states import ChatState
 from clients.ai import OpenRouterModels
 from clients.ai import get_client
 from langchain_core.tools import tool
 from typing_extensions import Annotated
+
+from ..states import AgentAction
+from ..states import ChatState
 
 model = get_client(model=OpenRouterModels.OPENAI_GPT4O_MINI.value)
 
@@ -158,6 +159,6 @@ class BaseAgent:
         return {
             "role": "assistant",
             "name": self.name,
-            "title": self.title,
+            "agent": self.title,
             "content": ai_msg.content,
         }
