@@ -1,3 +1,4 @@
+import base64
 import json
 from datetime import datetime
 from datetime import timedelta
@@ -40,8 +41,11 @@ class Session(models.Session):
 
         if session_data:
             fernet = get_encryption_client()
+            encrypted_credentials = base64.b64decode(session_data["credentials"])
+            decrypted_credentials = fernet.decrypt(encrypted_credentials)
+
             session_data["credentials"] = Credentials.from_authorized_user_info(
-                json.loads(fernet.decrypt(session_data["credentials"]))
+                json.loads(decrypted_credentials)
             )
             return cls(**session_data)
         return None
@@ -50,8 +54,12 @@ class Session(models.Session):
         copy_session = self.model_copy()
 
         fernet = get_encryption_client()
-        copy_session.credentials = fernet.encrypt(
+        encrypted_credentials = fernet.encrypt(
             copy_session.credentials.to_json().encode()
+        )
+
+        copy_session.credentials = base64.b64encode(encrypted_credentials).decode(
+            "utf-8"
         )
 
         put_save = requests.put(
@@ -75,5 +83,6 @@ class Session(models.Session):
         st.session_state.cookie_manager.set(
             cookie=name,
             val=val,
+            key=self.id,
             expires_at=expires_at,
         )

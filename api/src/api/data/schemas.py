@@ -33,7 +33,7 @@ class SessionSchema(Base):
 
     id = Column(String, primary_key=True)
     timestamp = Column(TIMESTAMP(timezone=True), nullable=False)
-    credentials = Column(BYTEA, nullable=True)
+    credentials = Column(String, nullable=True)
 
 
 class ThreadSchema(Base):
