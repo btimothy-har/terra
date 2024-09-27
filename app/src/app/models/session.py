@@ -1,6 +1,5 @@
 import base64
 import json
-import uuid
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -81,9 +80,11 @@ class Session(models.Session):
         if "cookie_manager" not in st.session_state:
             st.session_state.cookie_manager = cookie_manager(self.id)
 
-        st.session_state.cookie_manager.set(
-            cookie=name,
-            val=val,
-            key=str(uuid.uuid4()),
-            expires_at=expires_at,
-        )
+        try:
+            st.session_state.cookie_manager.set(
+                cookie=name,
+                val=val,
+                expires_at=expires_at,
+            )
+        except Exception:
+            pass
