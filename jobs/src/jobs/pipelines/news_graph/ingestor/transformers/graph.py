@@ -1,4 +1,5 @@
 import asyncio
+from typing import ClassVar
 from typing import List
 
 from llama_index.core.graph_stores import EntityNode
@@ -8,7 +9,7 @@ from llama_index.core.graph_stores.types import KG_RELATIONS_KEY
 from llama_index.core.schema import BaseNode
 from llama_index.core.schema import TransformComponent
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.dialects.postgresql import select as pg_select
+from sqlalchemy.sql import select as pg_select
 
 from jobs.database import database_session
 from jobs.database.schemas import NewsEntitySchema
@@ -18,8 +19,8 @@ from jobs.pipelines.news_graph.models import Relationship
 
 
 class GraphTransformer(TransformComponent):
-    PROCESS_LOCK = asyncio.Lock()
-    DATABASE_LOCK = asyncio.Lock()
+    PROCESS_LOCK: ClassVar[asyncio.Lock] = asyncio.Lock()
+    DATABASE_LOCK: ClassVar[asyncio.Lock] = asyncio.Lock()
 
     def __call__(self, nodes: List[BaseNode], **kwargs) -> List[BaseNode]:
         return asyncio.run(self.acall(nodes, **kwargs))
@@ -32,20 +33,42 @@ class GraphTransformer(TransformComponent):
         async with self.PROCESS_LOCK:
             entities = node.metadata.pop("entities", None)
             relationships = node.metadata.pop("relationships", None)
+            claims = node.metadata.pop("claims", None)
 
-            entity_tasks = [
-                self.construct_entity_node(node, entity) for entity in entities
-            ]
-            entity_nodes = await asyncio.gather(*entity_tasks)
+            if entities:
+                entity_tasks = [
+                    self.construct_entity_node(node, entity) for entity in entities
+                ]
+                entity_nodes = await asyncio.gather(*entity_tasks)
+            else:
+                entity_nodes = []
 
-            relationship_tasks = [
-                self.construct_relation_node(node, relationship)
-                for relationship in relationships
-            ]
-            relationship_nodes = await asyncio.gather(*relationship_tasks)
+            if relationships:
+                relationship_tasks = [
+                    self.construct_relation_node(node, relationship)
+                    for relationship in relationships
+                ]
+                relationship_nodes = await asyncio.gather(*relationship_tasks)
+            else:
+                relationship_nodes = []
 
             node.metadata[KG_NODES_KEY] = entity_nodes
             node.metadata[KG_RELATIONS_KEY] = relationship_nodes
+
+            if claims:
+                claims_data = [c.model_dump(exclude={"sources"}) for c in claims]
+                node.metadata["claims"] = claims_data
+
+            node.excluded_embed_metadata_keys = [
+                KG_NODES_KEY,
+                KG_RELATIONS_KEY,
+                "url",
+                "author",
+                "authors",
+                "publish_date",
+                "sentiment",
+            ]
+            node.excluded_llm_metadata_keys = [KG_NODES_KEY, KG_RELATIONS_KEY]
             return node
 
     async def construct_entity_node(
@@ -53,7 +76,9 @@ class GraphTransformer(TransformComponent):
     ) -> EntityNode:
         async with self.DATABASE_LOCK:
             async with database_session() as session:
-                entity_id = entity.name.replace('"', " ")
+                entity_id = (
+                    entity.name.replace('"', " ") + "_" + entity.entity_type.value
+                )
 
                 existing_entity = await session.execute(
                     pg_select(NewsEntitySchema).where(NewsEntitySchema.id == entity_id)
@@ -77,6 +102,11 @@ class GraphTransformer(TransformComponent):
                         if existing_entity
                         else {attr.name: attr.value for attr in entity.attributes}
                     ),
+                    "sources": (
+                        existing_entity.sources + [parent_node.node_id]
+                        if existing_entity
+                        else [parent_node.node_id]
+                    ),
                 }
 
                 insert_stmt = pg_insert(NewsEntitySchema).values(**entity_values)
@@ -96,7 +126,7 @@ class GraphTransformer(TransformComponent):
             name=entity_values["name"],
             label=entity_values["entity_type"],
             properties={
-                "source": parent_node.doc_id,
+                "sources": entity_values["sources"],
                 "description": entity_values["description"],
                 **entity_values["attributes"],
             },
@@ -135,6 +165,11 @@ class GraphTransformer(TransformComponent):
                         if existing_relation
                         else relation.strength
                     ),
+                    "sources": (
+                        existing_relation.sources + [parent_node.node_id]
+                        if existing_relation
+                        else [parent_node.node_id]
+                    ),
                 }
 
                 insert_stmt = pg_insert(NewsRelationshipSchema).values(
@@ -158,7 +193,7 @@ class GraphTransformer(TransformComponent):
             source_id=relation_values["source_entity"],
             target_id=relation_values["target_entity"],
             properties={
-                "source": parent_node.doc_id,
+                "sources": relation_values["sources"],
                 "description": relation_values["description"],
                 "strength": relation_values["strength"],
             },

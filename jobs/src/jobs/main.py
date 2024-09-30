@@ -3,7 +3,7 @@ import signal
 import sys
 
 from jobs.database import init_db
-from jobs.pipelines.news_graph import NewsScraper
+from jobs.pipelines.news_graph import NewsGraphPipeline
 
 
 class JobsOrchestrator:
@@ -60,7 +60,7 @@ async def main():
             sig, lambda s=sig: asyncio.create_task(shutdown(s, loop, orchestrator))
         )
 
-    orchestrator.add_scraper(NewsScraper())
+    orchestrator.add_job(NewsGraphPipeline())
     await orchestrator.start()
 
 

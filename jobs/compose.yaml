@@ -11,6 +11,8 @@ networks:
     external: true
   services_net_redis:
     external: true
+  services_net_neo4j:
+    external: true
 
 services:
   jobs:
@@ -26,3 +28,4 @@ services:
     networks:
       - services_net_postgres
       - services_net_redis
+      - services_net_neo4j

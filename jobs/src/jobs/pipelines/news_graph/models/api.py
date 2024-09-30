@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from llama_index.core.schema import Document
 from pydantic import BaseModel
@@ -23,7 +24,10 @@ class NewsItem(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def convert_keys(cls, data: dict):
+    def convert_keys(cls, data: Any):
+        if not isinstance(data, dict):
+            return data
+
         if "id" in data:
             data["item_id"] = str(data.pop("id"))
         if "text" in data:
@@ -37,16 +41,10 @@ class NewsItem(BaseModel):
             doc_id=self.item_id,
             text=self.content,
             metadata=self.model_dump(
-                exclude={"content", "item_id", "image", "video", "language"}
+                mode="json",
+                exclude={"content", "item_id", "image", "video", "language"},
             ),
         )
-        document.excluded_embed_metadata_keys = [
-            "url",
-            "author",
-            "authors",
-            "publish_date",
-            "sentiment",
-        ]
         return document
 
 

@@ -40,9 +40,7 @@ class Entity(BaseModel):
     name: str = Field(
         title="Name",
         description=(
-            "The name of the entity, in upper case. "
-            "Entity names should be full and complete versions, unabbreviated. "
-            "(Example: UNITED NATIONS instead of UN)"
+            "The name of the entity, in upper case. DO NOT use abbreviations. "
         ),
     )
     entity_type: DefaultEntityTypes = Field(
@@ -65,7 +63,9 @@ class Entity(BaseModel):
         description=(
             "List of attributes of the entity. "
             "Attributes are additional details or characteristics that "
-            "provide context about the entity."
+            "provide context about the entity. "
+            "Attributes should be relatively permanent in nature. "
+            "For example, a date of birth is an attribute, but age is not. "
         ),
     )
 

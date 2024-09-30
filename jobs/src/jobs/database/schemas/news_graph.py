@@ -1,6 +1,5 @@
 from sqlalchemy import Column
 from sqlalchemy import Float
-from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import JSONB
@@ -35,10 +34,11 @@ class NewsEntitySchema(Base):
     __table_args__ = {"schema": "news"}
 
     id = Column(String, primary_key=True, nullable=False)
-    name = Column(String, unique=True, nullable=False)
+    name = Column(String, nullable=False)
     entity_type = Column(String, nullable=False)
     description = Column(String, nullable=False)
     attributes = Column(JSONB)
+    sources = Column(ARRAY(String))
 
 
 class NewsRelationshipSchema(Base):
@@ -46,8 +46,9 @@ class NewsRelationshipSchema(Base):
     __table_args__ = {"schema": "news"}
 
     id = Column(String, primary_key=True, nullable=False)
-    source_entity = Column(Integer, nullable=False)
-    target_entity = Column(Integer, nullable=False)
+    source_entity = Column(String, nullable=False)
+    target_entity = Column(String, nullable=False)
     relation_type = Column(String, nullable=False)
     description = Column(String, nullable=False)
     strength = Column(Float, nullable=False)
+    sources = Column(ARRAY(String))

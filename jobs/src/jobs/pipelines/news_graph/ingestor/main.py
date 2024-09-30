@@ -1,5 +1,3 @@
-import asyncio
-
 from llama_index.core.graph_stores.types import KG_NODES_KEY
 from llama_index.core.graph_stores.types import KG_RELATIONS_KEY
 from llama_index.core.indices import PropertyGraphIndex
@@ -15,56 +13,41 @@ from .extractors import ClaimsExtractor
 from .extractors import EntityExtractor
 from .extractors import RelationshipExtractor
 from .stores import article_store
-from .stores import claims_store
 from .stores import graph_store
 from .stores import sources_store
-from .transformers import ClaimsTransformer
 from .transformers import GraphTransformer
-from .transformers import SourcesTransformer
 
 graph_extractor = IngestionPipeline(
     name="news_graph_extraction",
     project_name="news_graph",
     transformations=[
+        splitter,
         EntityExtractor(),
         RelationshipExtractor(),
         ClaimsExtractor(),
         GraphTransformer(),
+        embeddings,
     ],
     docstore=article_store,
+    vector_store=sources_store,
     docstore_strategy=DocstoreStrategy.UPSERTS,
 )
 
 
-sources_extractor = IngestionPipeline(
-    name="claims_extraction",
-    project_name="news_graph",
-    transformations=[SourcesTransformer(), splitter, embeddings],
-    vector_store=sources_store,
-)
-
-claims_extractor = IngestionPipeline(
-    name="claims_extraction",
-    project_name="news_graph",
-    transformations=[ClaimsTransformer(), splitter, embeddings],
-    vector_store=claims_store,
-)
-
-
 async def ingest_to_graph(items: list[NewsItem]):
-    async def insert_node(node):
-        await asyncio.to_thread(graph_store.upsert_nodes, node.metadata[KG_NODES_KEY])
-        await asyncio.to_thread(
-            graph_store.upsert_relations, node.metadata[KG_RELATIONS_KEY]
-        )
+    if len(items) == 0:
+        return
 
     documents = [item.as_document() for item in items]
-    extracted = await graph_extractor.arun(documents)
+    extracted = await graph_extractor.arun(
+        documents=documents,
+        show_progress=True,
+    )
     for node in extracted:
-        await insert_node(node)
-
-    await sources_extractor.arun(extracted)
-    await claims_extractor.arun(extracted)
+        if node.metadata[KG_NODES_KEY]:
+            graph_store.upsert_nodes(node.metadata[KG_NODES_KEY])
+        if node.metadata[KG_RELATIONS_KEY]:
+            graph_store.upsert_relations(node.metadata[KG_RELATIONS_KEY])
 
 
 # load from existing graph/vector store

@@ -9,21 +9,20 @@ from datetime import timedelta
 from pydantic import BaseModel
 from pydantic import Field
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.dialects.postgresql import select as pg_select
+from sqlalchemy.sql import select as pg_select
 
 from jobs.database import cache_client
 from jobs.database import database_session
 from jobs.database.schemas import NewsItemSchema
 from jobs.pipelines.base import BaseAsyncScraper
 from jobs.pipelines.exceptions import PipelineFetchError
+from jobs.pipelines.news_graph.config import SOURCES
+from jobs.pipelines.news_graph.config import llm
+from jobs.pipelines.news_graph.ingestor import ingest_to_graph
+from jobs.pipelines.news_graph.models import NewsAPIResponse
+from jobs.pipelines.news_graph.models import NewsItem
+from jobs.pipelines.news_graph.prompts import FILTER_LANGUAGE_PROMPT
 from jobs.pipelines.utils import check_and_set_next_run
-from jobs.pipelines.utils import openrouter_limiter
-from news_graph.config import SOURCES
-from news_graph.config import llm
-from news_graph.ingestor import ingest_to_graph
-from news_graph.models import NewsAPIResponse
-from news_graph.models import NewsItem
-from news_graph.prompts import FILTER_LANGUAGE_PROMPT
 
 
 class LanguageClassifier(BaseModel):
@@ -31,7 +30,7 @@ class LanguageClassifier(BaseModel):
     confidence: float = Field(title="Confidence of the classification")
 
 
-class NewsScraper(BaseAsyncScraper):
+class NewsGraphPipeline(BaseAsyncScraper):
     def __init__(self):
         super().__init__(
             namespace="news",
@@ -112,7 +111,9 @@ class NewsScraper(BaseAsyncScraper):
             schema_text=LanguageClassifier.model_json_schema()
         )
 
-        llm_with_output = self.llm.with_structured_output(LanguageClassifier)
+        llm_with_output = self.llm.with_structured_output(
+            LanguageClassifier, method="json_mode", include_raw=True
+        )
 
         async def process_one(article: dict):
             async with self._concurrency:
@@ -140,8 +141,8 @@ class NewsScraper(BaseAsyncScraper):
                     },
                 ]
                 try:
-                    async with openrouter_limiter:
-                        output = await llm_with_output.ainvoke(messages)
+                    raw_output = await llm_with_output.ainvoke(messages)
+                    output = raw_output["parsed"]
                 except Exception as e:
                     error_data = {
                         "article": article.model_dump_json(),
@@ -153,7 +154,7 @@ class NewsScraper(BaseAsyncScraper):
                     self.log.error(f"Error processing article {article.item_id}: {e}")
                     return None
 
-                if output.is_english:
+                if getattr(output, "is_english", True):
                     return article
                 else:
                     return None
@@ -193,7 +194,6 @@ class NewsScraper(BaseAsyncScraper):
             batch_ids = json.loads(batch_ids)
 
         if not batch_ids:
-            self.log.info("No batches to ingest.")
             return
 
         async def ingest_one(batch_id: str):
@@ -210,7 +210,11 @@ class NewsScraper(BaseAsyncScraper):
                     for item in items
                 ]
 
-                await ingest_to_graph(news_items)
+                try:
+                    await ingest_to_graph(news_items)
+                except Exception as e:
+                    self.log.error(f"Error ingesting batch {batch_id}: {e}")
+                    return
 
                 async with cache_client() as cache:
                     current_loaded = await cache.get(f"jobs:loaded:{self.namespace}")
@@ -224,6 +228,10 @@ class NewsScraper(BaseAsyncScraper):
                         f"jobs:loaded:{self.namespace}",
                         json.dumps(list(current_loaded)),
                     )
+
+                self.log.info(
+                    f"Ingested batch {batch_id} with {len(news_items)} items."
+                )
 
         tasks = [ingest_one(batch_id) for batch_id in batch_ids]
         await asyncio.gather(*tasks)
