@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai import OpenAIEmbeddings
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -8,9 +8,9 @@ from typing import Any
 import aiohttp
 from aiolimiter import AsyncLimiter
 
+from jobs.database import cache_client
 from jobs.logger import logger
-from scrapers.utils.funcs import cache_client
-from scrapers.utils.funcs import check_and_set_next_run
+from jobs.pipelines.utils import check_and_set_next_run
 
 
 class ScraperFetchError(Exception):
@@ -58,6 +58,11 @@ class BaseAsyncScraper(ABC):
         return data if data else None
 
     @abstractmethod
+    @check_and_set_next_run()
+    async def run(self):
+        pass
+
+    @abstractmethod
     async def process(self):
         pass
 
@@ -65,7 +70,5 @@ class BaseAsyncScraper(ABC):
     async def load(self):
         pass
 
-    @abstractmethod
-    @check_and_set_next_run()
-    async def run(self):
-        pass
+    async def ingest(self):
+        raise NotImplementedError("Ingest method must be implemented in subclass.")

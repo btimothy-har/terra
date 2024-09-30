@@ -2,19 +2,26 @@ import asyncio
 import signal
 import sys
 
-from scrapers import NewsScraper
-from scrapers import init_db
+from jobs.database import init_db
+from jobs.pipelines.news_graph import NewsScraper
 
 
 class JobsOrchestrator:
     def __init__(self):
-        self.scrapers = []
+        self.jobs = []
         self.running = True
         self.task = None
         self.iter_count = 0
 
-    def add_scraper(self, scraper):
-        self.scrapers.append(scraper)
+    def add_job(self, job):
+        self.jobs.append(job)
+
+    async def run_job(self, job):
+        await job.run()
+        try:
+            await job.ingest()
+        except NotImplementedError:
+            pass
 
     async def _loop(self):
         while self.running:
@@ -22,8 +29,8 @@ class JobsOrchestrator:
                 await asyncio.sleep(60)
 
             tasks = []
-            for scraper in self.scrapers:
-                tasks.append(asyncio.create_task(scraper.run()))
+            for job in self.jobs:
+                tasks.append(asyncio.create_task(self.run_job(job)))
 
             await asyncio.gather(*tasks)
             self.iter_count += 1
