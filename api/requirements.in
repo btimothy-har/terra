@@ -13,12 +13,7 @@ asyncpg==0.29.0
 cryptography~=43.0.1
 pyjwt~=2.9
 pgvector
-torch~=2.4.1
-pyvis~=0.3.2
-retry~=0.9.2
 llama-index-core~=0.11.14
-llama-index-llms-openrouter
 llama-index-embeddings-openai
 llama-index-storage-docstore-postgres
 llama-index-vector-stores-postgres
-llama-index-graph-stores-neo4j
