@@ -1,3 +1,3 @@
-from .main import NewsGraphPipeline
+from .main import NewsGraphPipeline as Pipeline
 
-__all__ = ["NewsGraphPipeline"]
+__all__ = ["Pipeline"]

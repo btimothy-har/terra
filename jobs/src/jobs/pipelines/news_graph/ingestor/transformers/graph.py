@@ -1,5 +1,4 @@
 import asyncio
-from typing import ClassVar
 from typing import List
 
 from llama_index.core.graph_stores import EntityNode
@@ -12,115 +11,111 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.sql import select as pg_select
 
 from jobs.database import database_session
-from jobs.database.schemas import NewsEntitySchema
-from jobs.database.schemas import NewsRelationshipSchema
 from jobs.pipelines.news_graph.models import Entity
+from jobs.pipelines.news_graph.models import NewsEntitySchema
+from jobs.pipelines.news_graph.models import NewsRelationshipSchema
 from jobs.pipelines.news_graph.models import Relationship
+from jobs.pipelines.utils import sequential_task
+from jobs.pipelines.utils import tqdm_iterable
 
 
 class GraphTransformer(TransformComponent):
-    PROCESS_LOCK: ClassVar[asyncio.Lock] = asyncio.Lock()
-    DATABASE_LOCK: ClassVar[asyncio.Lock] = asyncio.Lock()
-
     def __call__(self, nodes: List[BaseNode], **kwargs) -> List[BaseNode]:
-        return asyncio.run(self.acall(nodes, **kwargs))
+        asyncio.run(self.acall(nodes, **kwargs))
 
     async def acall(self, nodes: List[BaseNode], **kwargs) -> List[BaseNode]:
-        node_tasks = [self.transform_node(node, **kwargs) for node in nodes]
-        return await asyncio.gather(*node_tasks)
+        tasks = [asyncio.create_task(self.transform_node(node)) for node in nodes]
 
+        transformed = []
+        async for task in tqdm_iterable(tasks, "Transforming nodes..."):
+            transformed.append(await task)
+
+        return transformed
+
+    @sequential_task()
     async def transform_node(self, node: BaseNode, **kwargs) -> BaseNode:
-        async with self.PROCESS_LOCK:
-            entities = node.metadata.pop("entities", None)
-            relationships = node.metadata.pop("relationships", None)
-            claims = node.metadata.pop("claims", None)
+        entities = node.metadata.pop("entities", None)
+        relationships = node.metadata.pop("relationships", None)
+        claims = node.metadata.pop("claims", None)
 
-            if entities:
-                entity_tasks = [
-                    self.construct_entity_node(node, entity) for entity in entities
-                ]
-                entity_nodes = await asyncio.gather(*entity_tasks)
-            else:
-                entity_nodes = []
+        entity_nodes = []
+        if entities:
+            for e in entities:
+                entity_node = await self.construct_entity_node(node, e)
+                entity_nodes.append(entity_node)
 
-            if relationships:
-                relationship_tasks = [
-                    self.construct_relation_node(node, relationship)
-                    for relationship in relationships
-                ]
-                relationship_nodes = await asyncio.gather(*relationship_tasks)
-            else:
-                relationship_nodes = []
+        relationship_nodes = []
+        if relationships:
+            for r in relationships:
+                relationship_node = await self.construct_relation_node(node, r)
+                relationship_nodes.append(relationship_node)
 
-            node.metadata[KG_NODES_KEY] = entity_nodes
-            node.metadata[KG_RELATIONS_KEY] = relationship_nodes
+        node.metadata[KG_NODES_KEY] = entity_nodes
+        node.metadata[KG_RELATIONS_KEY] = relationship_nodes
 
-            if claims:
-                claims_data = [c.model_dump(exclude={"sources"}) for c in claims]
-                node.metadata["claims"] = claims_data
+        if claims:
+            claims_data = [c.model_dump(exclude={"sources"}) for c in claims]
+            node.metadata["claims"] = claims_data
 
-            node.excluded_embed_metadata_keys = [
-                KG_NODES_KEY,
-                KG_RELATIONS_KEY,
-                "url",
-                "author",
-                "authors",
-                "publish_date",
-                "sentiment",
-            ]
-            node.excluded_llm_metadata_keys = [KG_NODES_KEY, KG_RELATIONS_KEY]
-            return node
+        node.excluded_embed_metadata_keys = [
+            KG_NODES_KEY,
+            KG_RELATIONS_KEY,
+            "url",
+            "author",
+            "authors",
+            "publish_date",
+            "sentiment",
+        ]
+        node.excluded_llm_metadata_keys = [KG_NODES_KEY, KG_RELATIONS_KEY]
+        return node
 
     async def construct_entity_node(
         self, parent_node: BaseNode, entity: Entity
     ) -> EntityNode:
-        async with self.DATABASE_LOCK:
-            async with database_session() as session:
-                entity_id = (
-                    entity.name.replace('"', " ") + "_" + entity.entity_type.value
-                )
+        async with database_session() as session:
+            entity_id = entity.name.replace('"', " ") + "_" + entity.entity_type.value
 
-                existing_entity = await session.execute(
-                    pg_select(NewsEntitySchema).where(NewsEntitySchema.id == entity_id)
-                )
-                existing_entity = existing_entity.scalar_one_or_none()
+            existing_entity = await session.execute(
+                pg_select(NewsEntitySchema).where(NewsEntitySchema.id == entity_id)
+            )
+            existing_entity = existing_entity.scalar_one_or_none()
 
-                entity_values = {
-                    "id": entity_id,
-                    "name": entity.name,
-                    "entity_type": entity.entity_type.value,
-                    "description": (
-                        f"{existing_entity.description} {entity.description}"
-                        if existing_entity
-                        else entity.description
-                    ),
-                    "attributes": (
-                        {
-                            **existing_entity.attributes,
-                            **{attr.name: attr.value for attr in entity.attributes},
-                        }
-                        if existing_entity
-                        else {attr.name: attr.value for attr in entity.attributes}
-                    ),
-                    "sources": (
-                        existing_entity.sources + [parent_node.node_id]
-                        if existing_entity
-                        else [parent_node.node_id]
-                    ),
-                }
+            entity_values = {
+                "id": entity_id,
+                "name": entity.name,
+                "entity_type": entity.entity_type.value,
+                "description": (
+                    f"{existing_entity.description} {entity.description}"
+                    if existing_entity
+                    else entity.description
+                ),
+                "attributes": (
+                    {
+                        **existing_entity.attributes,
+                        **{attr.name: attr.value for attr in entity.attributes},
+                    }
+                    if existing_entity
+                    else {attr.name: attr.value for attr in entity.attributes}
+                ),
+                "sources": (
+                    existing_entity.sources + [parent_node.node_id]
+                    if existing_entity
+                    else [parent_node.node_id]
+                ),
+            }
 
-                insert_stmt = pg_insert(NewsEntitySchema).values(**entity_values)
-                update_stmt = insert_stmt.on_conflict_do_update(
-                    index_elements=["id"],
-                    set_={
-                        "name": insert_stmt.excluded.name,
-                        "entity_type": insert_stmt.excluded.entity_type,
-                        "description": insert_stmt.excluded.description,
-                        "attributes": insert_stmt.excluded.attributes,
-                    },
-                )
-                await session.execute(update_stmt)
-                await session.commit()
+            insert_stmt = pg_insert(NewsEntitySchema).values(**entity_values)
+            update_stmt = insert_stmt.on_conflict_do_update(
+                index_elements=["id"],
+                set_={
+                    "name": insert_stmt.excluded.name,
+                    "entity_type": insert_stmt.excluded.entity_type,
+                    "description": insert_stmt.excluded.description,
+                    "attributes": insert_stmt.excluded.attributes,
+                },
+            )
+            await session.execute(update_stmt)
+            await session.commit()
 
         return EntityNode(
             name=entity_values["name"],
@@ -135,58 +130,55 @@ class GraphTransformer(TransformComponent):
     async def construct_relation_node(
         self, parent_node: BaseNode, relation: Relationship
     ) -> Relation:
-        async with self.DATABASE_LOCK:
-            async with database_session() as session:
-                relation_id = (
-                    f"{relation.source_entity.replace('"', " ")}_"
-                    f"{relation.relation_type}_"
-                    f"{relation.target_entity.replace('"', " ")}"
-                )
+        async with database_session() as session:
+            relation_id = (
+                f"{relation.source_entity.replace('"', " ")}_"
+                f"{relation.relation_type}_"
+                f"{relation.target_entity.replace('"', " ")}"
+            )
 
-                existing_relation = await session.execute(
-                    pg_select(NewsRelationshipSchema).where(
-                        NewsRelationshipSchema.id == relation_id
-                    )
+            existing_relation = await session.execute(
+                pg_select(NewsRelationshipSchema).where(
+                    NewsRelationshipSchema.id == relation_id
                 )
-                existing_relation = existing_relation.scalar_one_or_none()
+            )
+            existing_relation = existing_relation.scalar_one_or_none()
 
-                relation_values = {
-                    "id": relation_id,
-                    "source_entity": relation.source_entity.replace('"', " "),
-                    "target_entity": relation.target_entity.replace('"', " "),
-                    "relation_type": relation.relation_type,
-                    "description": (
-                        f"{existing_relation.description} {relation.description}"
-                        if existing_relation
-                        else relation.description
-                    ),
-                    "strength": (
-                        (existing_relation.strength + relation.strength) / 2
-                        if existing_relation
-                        else relation.strength
-                    ),
-                    "sources": (
-                        existing_relation.sources + [parent_node.node_id]
-                        if existing_relation
-                        else [parent_node.node_id]
-                    ),
-                }
+            relation_values = {
+                "id": relation_id,
+                "source_entity": relation.source_entity.replace('"', " "),
+                "target_entity": relation.target_entity.replace('"', " "),
+                "relation_type": relation.relation_type,
+                "description": (
+                    f"{existing_relation.description} {relation.description}"
+                    if existing_relation
+                    else relation.description
+                ),
+                "strength": (
+                    (existing_relation.strength + relation.strength) / 2
+                    if existing_relation
+                    else relation.strength
+                ),
+                "sources": (
+                    existing_relation.sources + [parent_node.node_id]
+                    if existing_relation
+                    else [parent_node.node_id]
+                ),
+            }
 
-                insert_stmt = pg_insert(NewsRelationshipSchema).values(
-                    **relation_values
-                )
-                update_stmt = insert_stmt.on_conflict_do_update(
-                    index_elements=["id"],
-                    set_={
-                        "source_entity": insert_stmt.excluded.source_entity,
-                        "target_entity": insert_stmt.excluded.target_entity,
-                        "relation_type": insert_stmt.excluded.relation_type,
-                        "description": insert_stmt.excluded.description,
-                        "strength": insert_stmt.excluded.strength,
-                    },
-                )
-                await session.execute(update_stmt)
-                await session.commit()
+            insert_stmt = pg_insert(NewsRelationshipSchema).values(**relation_values)
+            update_stmt = insert_stmt.on_conflict_do_update(
+                index_elements=["id"],
+                set_={
+                    "source_entity": insert_stmt.excluded.source_entity,
+                    "target_entity": insert_stmt.excluded.target_entity,
+                    "relation_type": insert_stmt.excluded.relation_type,
+                    "description": insert_stmt.excluded.description,
+                    "strength": insert_stmt.excluded.strength,
+                },
+            )
+            await session.execute(update_stmt)
+            await session.commit()
 
         return Relation(
             label=relation_values["relation_type"],

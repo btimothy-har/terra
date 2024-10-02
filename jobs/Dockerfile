@@ -11,3 +11,4 @@ COPY ./src/jobs ./jobs
 RUN uv pip install --system -e .
 
 ENTRYPOINT ["python", "jobs/main.py"]
+CMD []

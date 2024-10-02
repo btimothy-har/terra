@@ -24,9 +24,3 @@ sources_store = PGVectorStore.from_params(
     table_name="sources",
     schema_name="news",
 )
-
-claims_store = PGVectorStore.from_params(
-    **VECTOR_STORE_PARAMS,
-    table_name="claims",
-    schema_name="news",
-)

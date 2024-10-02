@@ -1,30 +1,38 @@
-from datetime import UTC
-from datetime import datetime
+import asyncio
 from functools import wraps
 
 from aiolimiter import AsyncLimiter
-
-from jobs.database import cache_client
-
-openrouter_limiter = AsyncLimiter(20, 1)
+from tqdm.asyncio import tqdm_asyncio
 
 
-def check_and_set_next_run():
+def rate_limited_task(max_rate: int = 10, interval: int = 1):
+    task_limiter = AsyncLimiter(max_rate, interval)
+
     def decorator(func):
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
-            async with cache_client() as cache:
-                next_run = await cache.get(f"jobs:nextrun:{self.namespace}")
-                next_run = datetime.fromisoformat(next_run) if next_run else None
-
-                if not next_run or datetime.now(UTC) > next_run:
-                    next_run = await func(self, *args, **kwargs)
-                    await cache.set(
-                        f"jobs:nextrun:{self.namespace}", next_run.isoformat()
-                    )
-
-            return next_run
+            async with task_limiter:
+                return await func(self, *args, **kwargs)
 
         return wrapper
 
     return decorator
+
+
+def sequential_task(concurrent_tasks: int = 1):
+    sem = asyncio.Semaphore(concurrent_tasks)
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(self, *args, **kwargs):
+            async with sem:
+                return await func(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+async def tqdm_iterable(iterable, desc: str):
+    async for item in tqdm_asyncio(iterable, desc=desc):
+        yield item

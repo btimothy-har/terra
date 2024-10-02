@@ -1,4 +1,7 @@
-class NewsGraphError(Exception):
+from jobs.pipelines.exceptions import PipelineError
+
+
+class NewsGraphError(PipelineError):
     pass
 
 

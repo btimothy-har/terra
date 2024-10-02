@@ -5,17 +5,17 @@ from datetime import datetime
 
 import pydantic
 from llama_index.core.extractors import BaseExtractor
-from llama_index.core.utils import get_tqdm_iterable
 from pydantic import BaseModel
 from pydantic import Field
-from retry import retry
+from retry_async import retry
 
 from jobs.pipelines.news_graph.config import llm
 from jobs.pipelines.news_graph.exceptions import NewsGraphExtractionError
 from jobs.pipelines.news_graph.exceptions import NewsGraphLLMError
 from jobs.pipelines.news_graph.models import Relationship
 from jobs.pipelines.news_graph.prompts import EXTRACT_RELATIONSHIPS_PROMPT
-from jobs.pipelines.utils import openrouter_limiter
+from jobs.pipelines.utils import rate_limited_task
+from jobs.pipelines.utils import tqdm_iterable
 
 RELATIONSHIP_EXTRACTION_MESSAGE = """
 ENTITIES
@@ -41,7 +41,14 @@ output_llm = llm.with_structured_output(
 
 
 class RelationshipExtractor(BaseExtractor):
-    @retry((NewsGraphExtractionError, NewsGraphLLMError), tries=3, delay=1, backoff=2)
+    @retry(
+        (NewsGraphExtractionError, NewsGraphLLMError),
+        is_async=True,
+        tries=3,
+        delay=1,
+        backoff=2,
+    )
+    @rate_limited_task()
     async def invoke_and_parse_results(self, node, prompt):
         if not node.metadata.get("entities"):
             return None
@@ -67,8 +74,7 @@ class RelationshipExtractor(BaseExtractor):
             {"role": "user", "content": node_content},
         ]
         try:
-            async with openrouter_limiter:
-                result = await output_llm.ainvoke(llm_input)
+            result = await output_llm.ainvoke(llm_input)
         except Exception as e:
             raise NewsGraphLLMError(f"Failed to invoke LLM: {e}") from e
 
@@ -95,15 +101,21 @@ class RelationshipExtractor(BaseExtractor):
             return relationships
 
     async def aextract(self, nodes):
+        relationships = []
+
         prompt = EXTRACT_RELATIONSHIPS_PROMPT.format(
             current_date=datetime.now(UTC).strftime("%Y-%m-%d"),
             output_schema=RelationshipOutput.model_json_schema(),
         )
-        nodes_with_progress = get_tqdm_iterable(nodes, True, "Extracting relationships")
         tasks = [
-            self.invoke_and_parse_results(node, prompt) for node in nodes_with_progress
+            asyncio.create_task(self.invoke_and_parse_results(node, prompt))
+            for node in nodes
         ]
+        async for task in tqdm_iterable(tasks, "Extracting relationships"):
+            try:
+                raw_results = await task
+                relationships.append({"relationships": raw_results})
+            except Exception:
+                relationships.append({"relationships": None})
 
-        raw_results = await asyncio.gather(*tasks, return_exceptions=True)
-        relationships = [None if isinstance(r, Exception) else r for r in raw_results]
-        return [{"relationships": r} for r in relationships]
+        return relationships

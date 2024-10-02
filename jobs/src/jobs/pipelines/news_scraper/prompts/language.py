@@ -5,5 +5,5 @@ You are an expert in language classification. Given the title and text of a news
 
 If the title and text are not in the same language, return False.
 
-Provide your response in in JSON format following the schema: {schema_text}
+Provide your response in JSON following this schema: {schema_text}
 """

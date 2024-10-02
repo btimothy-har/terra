@@ -21,6 +21,6 @@ From the text provided, identify the named entities. For each identified entity,
 - description: Comprehensive description of the entity's attributes and activities.
 - attributes: List of attributes of the entity.
 
-Provide your response in in JSON format following the schema:
+Provide your response in JSON following this schema:
 {output_schema}
 """

@@ -1,25 +1,6 @@
 import os
 
 from langchain_openai import ChatOpenAI
-from llama_index.core.node_parser import SemanticSplitterNodeParser
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-
-PROJECT_NAME = "news_graph"
-
-EMBED_DIM = 1024
-EMBED_MODEL = "dunzhang/stella_en_1.5B_v5"
-
-VECTOR_STORE_PARAMS = {
-    "host": "postgres",
-    "port": "5432",
-    "database": "terra",
-    "user": os.getenv("POSTGRES_USER"),
-    "password": os.getenv("POSTGRES_PASSWORD"),
-    "hybrid_search": True,
-    "embed_dim": EMBED_DIM,
-    "use_jsonb": True,
-    "hnsw_kwargs": {"hnsw_ef_construction": 400, "hnsw_m": 16, "hnsw_ef_search": 100},
-}
 
 SOURCES = [
     "cnn.com",
@@ -76,12 +57,4 @@ llm = ChatOpenAI(
     temperature=0,
     api_key=os.getenv("OPENROUTER_API_KEY"),
     base_url="https://openrouter.ai/api/v1",
-)
-
-embeddings = HuggingFaceEmbedding(model_name=EMBED_MODEL)
-
-splitter = SemanticSplitterNodeParser(
-    buffer_size=2,
-    embed_model=embeddings,
-    breakpoint_percentile_threshold=90,
 )

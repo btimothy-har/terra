@@ -5,17 +5,17 @@ from datetime import datetime
 
 import pydantic
 from llama_index.core.extractors import BaseExtractor
-from llama_index.core.utils import get_tqdm_iterable
 from pydantic import BaseModel
 from pydantic import Field
-from retry import retry
+from retry_async import retry
 
 from jobs.pipelines.news_graph.config import llm
 from jobs.pipelines.news_graph.exceptions import NewsGraphExtractionError
 from jobs.pipelines.news_graph.exceptions import NewsGraphLLMError
 from jobs.pipelines.news_graph.models import Entity
 from jobs.pipelines.news_graph.prompts import EXTRACT_ENTITIES_PROMPT
-from jobs.pipelines.utils import openrouter_limiter
+from jobs.pipelines.utils import rate_limited_task
+from jobs.pipelines.utils import tqdm_iterable
 
 
 class EntityOutput(BaseModel):
@@ -30,15 +30,21 @@ output_llm = llm.with_structured_output(
 
 
 class EntityExtractor(BaseExtractor):
-    @retry((NewsGraphExtractionError, NewsGraphLLMError), tries=3, delay=1, backoff=2)
+    @retry(
+        (NewsGraphExtractionError, NewsGraphLLMError),
+        is_async=True,
+        tries=3,
+        delay=1,
+        backoff=2,
+    )
+    @rate_limited_task()
     async def invoke_and_parse_results(self, node, prompt):
         llm_input = [
             {"role": "system", "content": prompt},
             {"role": "user", "content": node.text},
         ]
         try:
-            async with openrouter_limiter:
-                result = await output_llm.ainvoke(llm_input)
+            result = await output_llm.ainvoke(llm_input)
         except Exception as e:
             raise NewsGraphLLMError(f"Failed to invoke LLM: {e}") from e
 
@@ -69,15 +75,21 @@ class EntityExtractor(BaseExtractor):
             return entities
 
     async def aextract(self, nodes):
+        entities = []
+
         prompt = EXTRACT_ENTITIES_PROMPT.format(
             current_date=datetime.now(UTC).strftime("%Y-%m-%d"),
             output_schema=EntityOutput.model_json_schema(),
         )
-        nodes_with_progress = get_tqdm_iterable(nodes, True, "Extracting entities")
         tasks = [
-            self.invoke_and_parse_results(node, prompt) for node in nodes_with_progress
+            asyncio.create_task(self.invoke_and_parse_results(node, prompt))
+            for node in nodes
         ]
+        async for task in tqdm_iterable(tasks, "Extracting entities"):
+            try:
+                raw_results = await task
+                entities.append({"entities": raw_results})
+            except Exception:
+                entities.append({"entities": None})
 
-        raw_results = await asyncio.gather(*tasks, return_exceptions=True)
-        entities = [None if isinstance(r, Exception) else r for r in raw_results]
-        return [{"entities": e} for e in entities]
+        return entities

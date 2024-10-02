@@ -20,7 +20,6 @@ For each pair of related entities, extract the following information formatted i
 - description: explanation of the relationship between the source and target entities
 - strength: a numeric float in 2 decimal places from 0.0 to 1.0 indicating the strength of the relationship
 
-Provide your output following the JSON schema provided to you:
-
+Provide your response in JSON following this schema:
 {output_schema}
 """

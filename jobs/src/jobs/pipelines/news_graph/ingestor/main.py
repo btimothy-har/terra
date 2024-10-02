@@ -7,7 +7,7 @@ from llama_index.core.ingestion import IngestionPipeline
 from jobs.pipelines.news_graph.config import embeddings
 from jobs.pipelines.news_graph.config import llm
 from jobs.pipelines.news_graph.config import splitter
-from jobs.pipelines.news_graph.models import NewsItem
+from jobs.pipelines.news_scraper.models import NewsItem
 
 from .extractors import ClaimsExtractor
 from .extractors import EntityExtractor

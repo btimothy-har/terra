@@ -40,6 +40,7 @@ decorator==5.1.1
     # via
     #   ipython
     #   retry
+    #   retry-async
 deprecated==1.2.14
     # via llama-index-core
 dirtyjson==1.0.8
@@ -243,6 +244,8 @@ requests==2.32.2
     #   tiktoken
     #   transformers
 retry==0.9.2
+    # via -r jobs/requirements.in
+retry-async==0.1.4
     # via -r jobs/requirements.in
 safetensors==0.4.5
     # via transformers

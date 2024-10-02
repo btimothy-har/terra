@@ -3,6 +3,12 @@ from enum import Enum
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_validator
+from sqlalchemy import Column
+from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import JSONB
+
+from jobs.database.schemas import Base
 
 
 class DefaultEntityTypes(Enum):
@@ -88,3 +94,15 @@ class Entity(BaseModel):
         data = super().model_dump(*args, **kwargs)
         data["entity_type"] = data["entity_type"].value
         return data
+
+
+class NewsEntitySchema(Base):
+    __tablename__ = "entities"
+    __table_args__ = {"schema": "news"}
+
+    id = Column(String, primary_key=True, nullable=False)
+    name = Column(String, nullable=False)
+    entity_type = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    attributes = Column(JSONB)
+    sources = Column(ARRAY(String))
