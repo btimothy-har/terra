@@ -1,22 +1,20 @@
 import asyncio
-import json
 from typing import List
 
 from llama_index.core.schema import BaseNode
 from llama_index.core.schema import TransformComponent
 from retry_async import retry
 
-from jobs.pipelines.news_graph.config import llm
-from jobs.pipelines.news_graph.exceptions import NewsGraphExtractionError
 from jobs.pipelines.news_graph.exceptions import NewsGraphLLMError
 from jobs.pipelines.news_graph.models import CommunityReport
 from jobs.pipelines.news_graph.prompts import COMMUNITY_REPORT
+from jobs.pipelines.utils import get_llm
 from jobs.pipelines.utils import rate_limited_task
 from jobs.pipelines.utils import tqdm_iterable
 
-output_llm = llm.with_structured_output(
-    CommunityReport, method="json_mode", include_raw=True
-)
+llm = get_llm("openai/gpt-4o-mini")
+
+output_llm = llm.with_structured_output(CommunityReport, method="json_schema")
 
 prompt = COMMUNITY_REPORT.format(output_schema=CommunityReport.model_json_schema())
 
@@ -43,7 +41,7 @@ class CommunityReportGenerator(TransformComponent):
         return transformed
 
     @retry(
-        (NewsGraphExtractionError, NewsGraphLLMError),
+        (NewsGraphLLMError),
         is_async=True,
         tries=3,
         delay=1,
@@ -58,24 +56,9 @@ class CommunityReportGenerator(TransformComponent):
             {"role": "user", "content": raw_text},
         ]
         try:
-            raw_result = await output_llm.ainvoke(llm_input)
+            result = await output_llm.ainvoke(llm_input)
         except Exception as e:
             raise NewsGraphLLMError(f"Failed to invoke LLM: {e}") from e
-
-        result = raw_result["parsed"]
-        if result is None:
-            raw_response = raw_result["raw"].content
-            if not raw_response:
-                raise NewsGraphExtractionError(
-                    "Failed to parse LLM output. Did not receive a response."
-                )
-            parsed_raw = json.loads(raw_response)
-            try:
-                result = CommunityReport(**parsed_raw["properties"])
-            except Exception as e:
-                raise NewsGraphExtractionError(
-                    f"Failed to parse LLM output. Received: {raw_response}"
-                ) from e
 
         node.text = result.summary
         node.metadata["title"] = result.title

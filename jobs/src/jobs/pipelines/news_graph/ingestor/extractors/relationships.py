@@ -9,11 +9,11 @@ from pydantic import BaseModel
 from pydantic import Field
 from retry_async import retry
 
-from jobs.pipelines.news_graph.config import llm
 from jobs.pipelines.news_graph.exceptions import NewsGraphExtractionError
 from jobs.pipelines.news_graph.exceptions import NewsGraphLLMError
 from jobs.pipelines.news_graph.models import Relationship
 from jobs.pipelines.news_graph.prompts import EXTRACT_RELATIONSHIPS_PROMPT
+from jobs.pipelines.utils import get_llm
 from jobs.pipelines.utils import rate_limited_task
 from jobs.pipelines.utils import tqdm_iterable
 
@@ -26,6 +26,8 @@ TEXT
 ----------
 {text_unit}
 """
+
+llm = get_llm("qwen/qwen-2.5-72b-instruct")
 
 
 class RelationshipOutput(BaseModel):

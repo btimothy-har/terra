@@ -1,3 +1,5 @@
+import asyncio
+
 from llama_index.core.graph_stores.types import KG_NODES_KEY
 from llama_index.core.graph_stores.types import KG_RELATIONS_KEY
 from llama_index.core.indices import PropertyGraphIndex
@@ -5,9 +7,9 @@ from llama_index.core.ingestion import DocstoreStrategy
 from llama_index.core.ingestion import IngestionPipeline
 
 from jobs.pipelines.news_graph.config import embeddings
-from jobs.pipelines.news_graph.config import llm
 from jobs.pipelines.news_graph.config import splitter
 from jobs.pipelines.news_scraper.models import NewsItem
+from jobs.pipelines.utils import get_llm
 
 from .extractors import ClaimsExtractor
 from .extractors import EntityExtractor
@@ -19,6 +21,8 @@ from .stores import nodes_store
 from .stores import raw_communities_store
 from .transformers import CommunityReportGenerator
 from .transformers import GraphTransformer
+
+llm = get_llm("qwen/qwen-2.5-72b-instruct")
 
 graph_extractor = IngestionPipeline(
     name="news_graph_extraction",
@@ -55,11 +59,20 @@ async def ingest_to_graph(items: list[NewsItem]):
         documents=documents,
         show_progress=True,
     )
+
     for node in extracted:
         if node.metadata[KG_NODES_KEY]:
             graph_store.upsert_nodes(node.metadata[KG_NODES_KEY])
         if node.metadata[KG_RELATIONS_KEY]:
             graph_store.upsert_relations(node.metadata[KG_RELATIONS_KEY])
+
+    community_info = await asyncio.to_thread(graph_store.generate_communities)
+
+    await index_communities_store.aclear()
+    await community_transformer.arun(
+        documents=list(community_info.values()),
+        show_progress=True,
+    )
 
 
 # load from existing graph/vector store

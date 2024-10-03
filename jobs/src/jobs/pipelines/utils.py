@@ -1,8 +1,19 @@
 import asyncio
+import os
 from functools import wraps
 
 from aiolimiter import AsyncLimiter
+from langchain_openai import ChatOpenAI
 from tqdm.asyncio import tqdm_asyncio
+
+
+def get_llm(model: str):
+    return ChatOpenAI(
+        model=model,
+        temperature=0,
+        api_key=os.getenv("OPENROUTER_API_KEY"),
+        base_url="https://openrouter.ai/api/v1",
+    )
 
 
 def rate_limited_task(max_rate: int = 10, interval: int = 1):

@@ -13,13 +13,15 @@ from jobs.database import database_session
 from jobs.pipelines.base import BaseAsyncPipeline
 from jobs.pipelines.exceptions import PipelineFetchError
 from jobs.pipelines.news_scraper.config import SOURCES
-from jobs.pipelines.news_scraper.config import llm
 from jobs.pipelines.news_scraper.models import NewsAPIResponse
 from jobs.pipelines.news_scraper.models import NewsItem
 from jobs.pipelines.news_scraper.models import NewsItemSchema
 from jobs.pipelines.news_scraper.prompts import FILTER_LANGUAGE_PROMPT
+from jobs.pipelines.utils import get_llm
 from jobs.pipelines.utils import rate_limited_task
 from jobs.pipelines.utils import tqdm_iterable
+
+llm = get_llm("qwen/qwen-2.5-72b-instruct")
 
 
 class LanguageClassifier(BaseModel):

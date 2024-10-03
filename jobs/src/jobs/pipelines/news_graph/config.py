@@ -1,6 +1,5 @@
 import os
 
-from langchain_openai import ChatOpenAI
 from llama_index.core.node_parser import SemanticSplitterNodeParser
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.embeddings.openai import OpenAIEmbeddingMode
@@ -10,12 +9,6 @@ PROJECT_NAME = "news_graph"
 EMBED_DIM = 1536
 EMBED_MODEL = "text-embedding-3-small"
 
-llm = ChatOpenAI(
-    model="qwen/qwen-2.5-72b-instruct",
-    temperature=0,
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-    base_url="https://openrouter.ai/api/v1",
-)
 
 embeddings = OpenAIEmbedding(
     mode=OpenAIEmbeddingMode.TEXT_SEARCH_MODE,

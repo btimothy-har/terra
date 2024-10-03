@@ -1,4 +1,3 @@
-import asyncio
 import uuid
 
 from pydantic import BaseModel
@@ -9,12 +8,12 @@ from sqlalchemy.sql import update
 from jobs.database import database_session
 from jobs.pipelines.base import BaseAsyncPipeline
 from jobs.pipelines.exceptions import PipelineFetchError
-from jobs.pipelines.news_graph.config import llm
-from jobs.pipelines.news_graph.ingestor import community_transformer
-from jobs.pipelines.news_graph.ingestor import graph_store
 from jobs.pipelines.news_graph.ingestor import ingest_to_graph
 from jobs.pipelines.news_scraper.models import NewsItem
 from jobs.pipelines.news_scraper.models import NewsItemSchema
+from jobs.pipelines.utils import get_llm
+
+llm = get_llm("qwen/qwen-2.5-72b-instruct")
 
 
 class LanguageClassifier(BaseModel):
@@ -33,18 +32,6 @@ class NewsGraphPipeline(BaseAsyncPipeline):
         self._processed = None
 
     async def run(self):
-        self.log.info("Running news graph pipeline...")
-
-        community_info = await asyncio.to_thread(graph_store.generate_communities)
-        print(type(community_info))
-        print(len(list(community_info.values())))
-
-        p = await community_transformer.arun(
-            documents=list(community_info.values()),
-            show_progress=True,
-        )
-        print(len(p))
-        return
         try:
             articles = await self.fetch()
         except PipelineFetchError as e:
