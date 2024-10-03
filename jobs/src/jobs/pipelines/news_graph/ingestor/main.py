@@ -14,7 +14,10 @@ from .extractors import EntityExtractor
 from .extractors import RelationshipExtractor
 from .stores import article_store
 from .stores import graph_store
-from .stores import sources_store
+from .stores import index_communities_store
+from .stores import nodes_store
+from .stores import raw_communities_store
+from .transformers import CommunityReportGenerator
 from .transformers import GraphTransformer
 
 graph_extractor = IngestionPipeline(
@@ -29,8 +32,17 @@ graph_extractor = IngestionPipeline(
         embeddings,
     ],
     docstore=article_store,
-    vector_store=sources_store,
+    vector_store=nodes_store,
     docstore_strategy=DocstoreStrategy.UPSERTS,
+)
+
+community_transformer = IngestionPipeline(
+    name="news_graph_community_extraction",
+    project_name="news_graph",
+    transformations=[CommunityReportGenerator(), embeddings],
+    docstore=raw_communities_store,
+    vector_store=index_communities_store,
+    docstore_strategy=DocstoreStrategy.UPSERTS_AND_DELETE,
 )
 
 

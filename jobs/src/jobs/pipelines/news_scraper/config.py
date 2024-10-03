@@ -53,7 +53,7 @@ SOURCES = [
 ]
 
 llm = ChatOpenAI(
-    model="qwen/qwen-2.5-72b-instruct",
+    model="liquid/lfm-40b",
     temperature=0,
     api_key=os.getenv("OPENROUTER_API_KEY"),
     base_url="https://openrouter.ai/api/v1",

@@ -2,12 +2,33 @@ import os
 
 from langchain_openai import ChatOpenAI
 from llama_index.core.node_parser import SemanticSplitterNodeParser
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.embeddings.openai import OpenAIEmbeddingMode
 
 PROJECT_NAME = "news_graph"
 
-EMBED_DIM = 1024
-EMBED_MODEL = "dunzhang/stella_en_1.5B_v5"
+EMBED_DIM = 1536
+EMBED_MODEL = "text-embedding-3-small"
+
+llm = ChatOpenAI(
+    model="qwen/qwen-2.5-72b-instruct",
+    temperature=0,
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+    base_url="https://openrouter.ai/api/v1",
+)
+
+embeddings = OpenAIEmbedding(
+    mode=OpenAIEmbeddingMode.TEXT_SEARCH_MODE,
+    model="text-embedding-3-small",
+    dimensions=EMBED_DIM,
+    api_key=os.getenv("OPENAI_API_KEY"),
+)
+
+splitter = SemanticSplitterNodeParser(
+    buffer_size=2,
+    embed_model=embeddings,
+    breakpoint_percentile_threshold=90,
+)
 
 VECTOR_STORE_PARAMS = {
     "host": "postgres",
@@ -70,18 +91,3 @@ SOURCES = [
     "dailywire.com",
     "reuters.com",
 ]
-
-llm = ChatOpenAI(
-    model="qwen/qwen-2.5-72b-instruct",
-    temperature=0,
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-    base_url="https://openrouter.ai/api/v1",
-)
-
-embeddings = HuggingFaceEmbedding(model_name=EMBED_MODEL)
-
-splitter = SemanticSplitterNodeParser(
-    buffer_size=2,
-    embed_model=embeddings,
-    breakpoint_percentile_threshold=90,
-)
