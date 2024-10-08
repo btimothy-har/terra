@@ -1,28 +1,5 @@
 volumes:
-  chat_src:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./app/src/app
-  api_src:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./api/src/api
-  jobs_src:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./jobs/src/jobs
-  shared:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./shared
+  llm_logs:
 
 networks:
   internal:
@@ -33,12 +10,12 @@ networks:
     external: true
 
 services:
-  chat:
-    container_name: terra_chat
-    image: terra_chat:latest
+  app:
+    container_name: terra_app
+    image: terra_app:latest
     build:
-      context: ./app
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./app/Dockerfile
     restart: always
     env_file:
       - ./.env
@@ -46,9 +23,6 @@ services:
       - 8501:8501
     depends_on:
       - api
-    volumes:
-      - chat_src:/src/app
-      - shared:/src/app/shared
     networks:
       - internal
   
@@ -56,14 +30,11 @@ services:
     container_name: terra_api
     image: terra_api:latest
     build:
-      context: ./api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./api/Dockerfile
     restart: always
     env_file:
       - ./.env
-    volumes:
-      - api_src:/src/api
-      - shared:/src/shared
     networks:
       - internal
       - services_net_postgres
