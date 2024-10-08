@@ -5,10 +5,14 @@ from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 
+import ell
+import pydantic
 from pydantic import BaseModel
 from pydantic import Field
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
+from jobs.config import openrouter_client
+from jobs.config import openrouter_extra_body
 from jobs.database import database_session
 from jobs.pipelines.base import BaseAsyncPipeline
 from jobs.pipelines.exceptions import PipelineFetchError
@@ -17,11 +21,8 @@ from jobs.pipelines.news_scraper.models import NewsAPIResponse
 from jobs.pipelines.news_scraper.models import NewsItem
 from jobs.pipelines.news_scraper.models import NewsItemSchema
 from jobs.pipelines.news_scraper.prompts import FILTER_LANGUAGE_PROMPT
-from jobs.pipelines.utils import get_llm
 from jobs.pipelines.utils import rate_limited_task
 from jobs.pipelines.utils import tqdm_iterable
-
-llm = get_llm("qwen/qwen-2.5-72b-instruct")
 
 
 class LanguageClassifier(BaseModel):
@@ -37,8 +38,23 @@ class NewsScraperPipeline(BaseAsyncPipeline):
             request_interval=1,
         )
         self.url = "https://api.worldnewsapi.com/search-news"
-        self.llm = llm
         self._processed = None
+
+    @ell.complex(
+        model="meta-llama/llama-3.1-70b-instruct",
+        client=openrouter_client,
+        response_format={"type": "json_object"},
+        extra_body=openrouter_extra_body,
+    )
+    def language_classifier(self, title: str, text: str):
+        return [
+            ell.system(
+                FILTER_LANGUAGE_PROMPT.format(
+                    schema_text=LanguageClassifier.model_json_schema()
+                )
+            ),
+            ell.user(f"Title: {title}\nText: {text}"),
+        ]
 
     async def run(self):
         self.log.info("Running news scraper pipeline...")
@@ -99,31 +115,19 @@ class NewsScraperPipeline(BaseAsyncPipeline):
         return retrieved_articles
 
     async def process(self, data: list[dict]):
-        prompt = FILTER_LANGUAGE_PROMPT.format(
-            schema_text=LanguageClassifier.model_json_schema()
-        )
-
-        llm_with_output = self.llm.with_structured_output(
-            LanguageClassifier, method="json_mode", include_raw=True
-        )
-
         @rate_limited_task()
         async def process_one(article):
             try:
                 article = NewsItem.model_validate(article)
-                messages = [
-                    {
-                        "role": "system",
-                        "content": prompt,
-                    },
-                    {
-                        "role": "user",
-                        "content": f"Title: {article.title}\nText: {article.content}",
-                    },
-                ]
-                raw_output = await llm_with_output.ainvoke(messages)
+                raw_output = await asyncio.to_thread(
+                    self.language_classifier, article.title, article.content
+                )
 
-                output = raw_output["parsed"]
+                try:
+                    output = LanguageClassifier.model_validate(raw_output.text_only)
+                except pydantic.ValidationError:
+                    output = None
+
                 if getattr(output, "is_english", True):
                     return article
                 return None

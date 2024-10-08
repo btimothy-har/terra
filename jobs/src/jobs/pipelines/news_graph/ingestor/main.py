@@ -9,7 +9,6 @@ from llama_index.core.ingestion import IngestionPipeline
 from jobs.pipelines.news_graph.config import embeddings
 from jobs.pipelines.news_graph.config import splitter
 from jobs.pipelines.news_scraper.models import NewsItem
-from jobs.pipelines.utils import get_llm
 
 from .extractors import ClaimsExtractor
 from .extractors import EntityExtractor
@@ -21,8 +20,6 @@ from .stores import nodes_store
 from .stores import raw_communities_store
 from .transformers import CommunityReportGenerator
 from .transformers import GraphTransformer
-
-llm = get_llm("qwen/qwen-2.5-72b-instruct")
 
 graph_extractor = IngestionPipeline(
     name="news_graph_extraction",
@@ -77,7 +74,6 @@ async def ingest_to_graph(items: list[NewsItem]):
 
 # load from existing graph/vector store
 index = PropertyGraphIndex.from_existing(
-    llm=llm,
     kg_extractors=[
         EntityExtractor(),
         RelationshipExtractor(),

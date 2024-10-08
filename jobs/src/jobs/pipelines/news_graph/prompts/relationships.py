@@ -16,10 +16,10 @@ You are ONLY to extract the entities that are clearly related to each other AND 
 For each pair of related entities, extract the following information formatted in this schema:
 - source_entity: name of the source entity
 - target_entity: name of the target entity
-- relation_type: type of relationship between the source and target entities (e.g. "is_part_of", "is_related_to", "is_same_as", etc.)
+- relation_type: type of relationship between the source and target entities (e.g. "is_member_of", "belongs_to", "capital_of" etc.). Relation_types should be as specific as possible.
 - description: explanation of the relationship between the source and target entities
 - strength: a numeric float in 2 decimal places from 0.0 to 1.0 indicating the strength of the relationship
 
-Provide your response in JSON following this schema:
+Your response should ONLY contain JSON, following this schema:
 {output_schema}
 """

@@ -11,9 +11,6 @@ from jobs.pipelines.exceptions import PipelineFetchError
 from jobs.pipelines.news_graph.ingestor import ingest_to_graph
 from jobs.pipelines.news_scraper.models import NewsItem
 from jobs.pipelines.news_scraper.models import NewsItemSchema
-from jobs.pipelines.utils import get_llm
-
-llm = get_llm("qwen/qwen-2.5-72b-instruct")
 
 
 class LanguageClassifier(BaseModel):
@@ -28,7 +25,6 @@ class NewsGraphPipeline(BaseAsyncPipeline):
             request_limit=2,
             request_interval=1,
         )
-        self.llm = llm
         self._processed = None
 
     async def run(self):
@@ -49,7 +45,7 @@ class NewsGraphPipeline(BaseAsyncPipeline):
                 select(NewsItemSchema)
                 .where(NewsItemSchema.batch_id.is_(None))
                 .order_by(NewsItemSchema.publish_date.asc())
-                .limit(100)
+                .limit(10)
             )
             result = await session.execute(query)
             retrieved_articles = result.scalars().all()

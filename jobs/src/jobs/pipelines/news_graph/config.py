@@ -20,7 +20,7 @@ embeddings = OpenAIEmbedding(
 splitter = SemanticSplitterNodeParser(
     buffer_size=2,
     embed_model=embeddings,
-    breakpoint_percentile_threshold=90,
+    breakpoint_percentile_threshold=95,
 )
 
 VECTOR_STORE_PARAMS = {

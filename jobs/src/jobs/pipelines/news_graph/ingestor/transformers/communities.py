@@ -1,22 +1,33 @@
 import asyncio
 from typing import List
 
+import ell
 from llama_index.core.schema import BaseNode
 from llama_index.core.schema import TransformComponent
 from retry_async import retry
 
+from jobs.config import openrouter_client
+from jobs.config import openrouter_extra_body
 from jobs.pipelines.news_graph.exceptions import NewsGraphLLMError
 from jobs.pipelines.news_graph.models import CommunityReport
 from jobs.pipelines.news_graph.prompts import COMMUNITY_REPORT
-from jobs.pipelines.utils import get_llm
 from jobs.pipelines.utils import rate_limited_task
 from jobs.pipelines.utils import tqdm_iterable
 
-llm = get_llm("openai/gpt-4o-mini")
 
-output_llm = llm.with_structured_output(CommunityReport, method="json_schema")
-
-prompt = COMMUNITY_REPORT.format(output_schema=CommunityReport.model_json_schema())
+@ell.complex(
+    model="openai/gpt-4o-mini",
+    client=openrouter_client,
+    response_format=CommunityReport,
+    extra_body=openrouter_extra_body,
+)
+def generate_community_report(community_text: str) -> CommunityReport:
+    return [
+        ell.system(
+            COMMUNITY_REPORT.format(output_schema=CommunityReport.model_json_schema())
+        ),
+        ell.user(community_text),
+    ]
 
 
 class CommunityReportGenerator(TransformComponent):
@@ -51,14 +62,12 @@ class CommunityReportGenerator(TransformComponent):
     async def summarize_community(self, node: BaseNode, **kwargs) -> BaseNode:
         node.metadata["raw"] = raw_text = node.text
 
-        llm_input = [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": raw_text},
-        ]
         try:
-            result = await output_llm.ainvoke(llm_input)
+            raw_result = await asyncio.to_thread(generate_community_report, raw_text)
         except Exception as e:
             raise NewsGraphLLMError(f"Failed to invoke LLM: {e}") from e
+
+        result = raw_result.parsed
 
         node.text = result.summary
         node.metadata["title"] = result.title

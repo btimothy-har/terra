@@ -3,17 +3,19 @@ import json
 from datetime import UTC
 from datetime import datetime
 
+import ell
 import pydantic
 from llama_index.core.extractors import BaseExtractor
 from pydantic import BaseModel
 from pydantic import Field
 from retry_async import retry
 
+from jobs.config import openrouter_client
+from jobs.config import openrouter_extra_body
 from jobs.pipelines.news_graph.exceptions import NewsGraphExtractionError
 from jobs.pipelines.news_graph.exceptions import NewsGraphLLMError
 from jobs.pipelines.news_graph.models import Relationship
 from jobs.pipelines.news_graph.prompts import EXTRACT_RELATIONSHIPS_PROMPT
-from jobs.pipelines.utils import get_llm
 from jobs.pipelines.utils import rate_limited_task
 from jobs.pipelines.utils import tqdm_iterable
 
@@ -27,8 +29,6 @@ TEXT
 {text_unit}
 """
 
-llm = get_llm("qwen/qwen-2.5-72b-instruct")
-
 
 class RelationshipOutput(BaseModel):
     relationships: list[Relationship] = Field(
@@ -37,9 +37,27 @@ class RelationshipOutput(BaseModel):
     )
 
 
-output_llm = llm.with_structured_output(
-    RelationshipOutput, method="json_mode", include_raw=True
+@ell.complex(
+    model="meta-llama/llama-3.1-70b-instruct",
+    client=openrouter_client,
+    response_format={"type": "json_object"},
+    extra_body=openrouter_extra_body,
 )
+def extract_relationships(entities_json: str, text_unit: str):
+    return [
+        ell.system(
+            EXTRACT_RELATIONSHIPS_PROMPT.format(
+                current_date=datetime.now(UTC).strftime("%Y-%m-%d"),
+                output_schema=RelationshipOutput.model_json_schema(),
+            )
+        ),
+        ell.user(
+            RELATIONSHIP_EXTRACTION_MESSAGE.format(
+                entities_json=entities_json,
+                text_unit=text_unit,
+            )
+        ),
+    ]
 
 
 class RelationshipExtractor(BaseExtractor):
@@ -51,47 +69,39 @@ class RelationshipExtractor(BaseExtractor):
         backoff=2,
     )
     @rate_limited_task()
-    async def invoke_and_parse_results(self, node, prompt):
+    async def invoke_and_parse_results(self, node):
         if not node.metadata.get("entities"):
             return None
 
-        node_content = RELATIONSHIP_EXTRACTION_MESSAGE.format(
-            entities_json="\n".join(
-                [
-                    m.model_dump_json(
-                        include={
-                            "name",
-                            "entity_type",
-                            "description",
-                        }
-                    )
-                    for m in node.metadata["entities"]
-                ]
-            ),
-            text_unit=node.text,
+        relationships = []
+        entities_json = "\n".join(
+            [
+                m.model_dump_json(
+                    include={
+                        "name",
+                        "entity_type",
+                        "description",
+                    }
+                )
+                for m in node.metadata["entities"]
+            ]
         )
 
-        llm_input = [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": node_content},
-        ]
         try:
-            result = await output_llm.ainvoke(llm_input)
+            raw_result = await asyncio.to_thread(
+                extract_relationships, entities_json, node.text
+            )
         except Exception as e:
             raise NewsGraphLLMError(f"Failed to invoke LLM: {e}") from e
 
-        if result["parsed"]:
-            return result["parsed"].relationships
-
         try:
-            raw_relationships = json.loads(result["raw"].content)
+            raw_relationships = json.loads(raw_result.text_only)
         except json.JSONDecodeError as e:
             raise NewsGraphExtractionError(
                 f"Failed to parse relationships from LLM output: "
-                f"{result['raw'].content}"
+                f"{raw_result.text_only}"
             ) from e
         else:
-            relationships = []
             for r in raw_relationships["relationships"]:
                 if isinstance(r, dict):
                     try:
@@ -100,18 +110,13 @@ class RelationshipExtractor(BaseExtractor):
                         raise NewsGraphExtractionError(
                             "Failed to validate relationship"
                         ) from e
-            return relationships
+        return relationships
 
     async def aextract(self, nodes):
         relationships = []
 
-        prompt = EXTRACT_RELATIONSHIPS_PROMPT.format(
-            current_date=datetime.now(UTC).strftime("%Y-%m-%d"),
-            output_schema=RelationshipOutput.model_json_schema(),
-        )
         tasks = [
-            asyncio.create_task(self.invoke_and_parse_results(node, prompt))
-            for node in nodes
+            asyncio.create_task(self.invoke_and_parse_results(node)) for node in nodes
         ]
         async for task in tqdm_iterable(tasks, "Extracting relationships"):
             try:
