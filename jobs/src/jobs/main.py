@@ -4,6 +4,7 @@ import importlib
 import signal
 import sys
 
+from jobs.config import init_ell
 from jobs.database import init_db
 
 cli = argparse.ArgumentParser(description="Job Orchestrator CLI")
@@ -60,4 +61,5 @@ async def main():
 
 
 if __name__ == "__main__":
+    init_ell()
     asyncio.run(main())
