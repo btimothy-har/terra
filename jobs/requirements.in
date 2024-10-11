@@ -26,3 +26,5 @@ llama-index-embeddings-openai
 networkx~=3.3
 graspologic~=3.4.1
 future
+
+file:///Users/btimothyhar/GitHub/fargs

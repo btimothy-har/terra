@@ -6,7 +6,6 @@ from llama_index.core.schema import BaseNode
 from llama_index.core.schema import TransformComponent
 from retry_async import retry
 
-from jobs.config import openrouter_client
 from jobs.config import openrouter_extra_body
 from jobs.pipelines.news_graph.exceptions import NewsGraphLLMError
 from jobs.pipelines.news_graph.models import CommunityReport
@@ -17,7 +16,6 @@ from jobs.pipelines.utils import tqdm_iterable
 
 @ell.complex(
     model="openai/gpt-4o-mini",
-    client=openrouter_client,
     response_format=CommunityReport,
     extra_body=openrouter_extra_body,
 )

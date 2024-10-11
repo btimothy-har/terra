@@ -7,6 +7,6 @@ docker run \
   --network services_net_postgres \
   --network services_net_redis \
   --network services_net_neo4j \
-  --volume services_terra_llm_logs:/src/logdir \
+  --volume terra_llm_logs:/src/logdir \
   terra_jobs \
   "$@"

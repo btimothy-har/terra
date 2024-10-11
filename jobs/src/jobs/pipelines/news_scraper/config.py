@@ -1,7 +1,3 @@
-import os
-
-from langchain_openai import ChatOpenAI
-
 SOURCES = [
     "cnn.com",
     "bbc.co.uk",
@@ -51,10 +47,3 @@ SOURCES = [
     "dailywire.com",
     "reuters.com",
 ]
-
-llm = ChatOpenAI(
-    model="liquid/lfm-40b",
-    temperature=0,
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-    base_url="https://openrouter.ai/api/v1",
-)

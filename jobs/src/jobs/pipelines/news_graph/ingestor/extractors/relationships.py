@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from pydantic import Field
 from retry_async import retry
 
-from jobs.config import openrouter_client
 from jobs.config import openrouter_extra_body
 from jobs.pipelines.news_graph.exceptions import NewsGraphExtractionError
 from jobs.pipelines.news_graph.exceptions import NewsGraphLLMError
@@ -39,7 +38,6 @@ class RelationshipOutput(BaseModel):
 
 @ell.complex(
     model="meta-llama/llama-3.1-70b-instruct",
-    client=openrouter_client,
     response_format={"type": "json_object"},
     extra_body=openrouter_extra_body,
 )

@@ -1,6 +1,3 @@
-volumes:
-  llm_logs:
-
 networks:
   internal:
     driver: bridge

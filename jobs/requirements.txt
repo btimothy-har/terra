@@ -87,6 +87,8 @@ email-validator==2.2.0
     # via fastapi
 executing==2.1.0
     # via stack-data
+fargs @ file:///Users/btimothyhar/GitHub/fargs
+    # via -r jobs/requirements.in
 fastapi==0.111.1
     # via ell-ai
 fastapi-cli==0.0.5
