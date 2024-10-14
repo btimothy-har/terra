@@ -6,7 +6,6 @@ from datetime import datetime
 from datetime import timedelta
 
 import ell
-import pydantic
 from pydantic import BaseModel
 from pydantic import Field
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -126,11 +125,11 @@ class NewsScraperPipeline(BaseAsyncPipeline):
                 )
 
                 try:
-                    output = LanguageClassifier.model_validate(raw_output.text_only)
-                except pydantic.ValidationError:
-                    output = None
+                    parsed_output = json.loads(raw_output)
+                except json.JSONDecodeError:
+                    parsed_output = None
 
-                if getattr(output, "is_english", True):
+                if parsed_output and parsed_output.get("is_english", True):
                     return article
                 return None
 
