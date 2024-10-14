@@ -31,7 +31,7 @@ class BaseAsyncPipeline(ABC):
     @retry(
         (ScraperFetchError),
         is_async=True,
-        tries=-1,
+        tries=10,
         delay=1,
         backoff=2,
     )
@@ -43,6 +43,7 @@ class BaseAsyncPipeline(ABC):
                         response.raise_for_status()
                         content = await response.text()
             except Exception as e:
+                self.log.error(f"Failed to fetch {url}: {e}")
                 raise ScraperFetchError(f"Failed to fetch {url}: {e}") from e
 
         await self.save_state(
