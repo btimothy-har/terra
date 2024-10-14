@@ -65,7 +65,7 @@ class NewsScraperPipeline(BaseAsyncPipeline):
         last_fetch = (
             datetime.fromisoformat(last_fetch)
             if last_fetch
-            else (datetime.now(UTC) - timedelta(days=10))
+            else (datetime.now(UTC) - timedelta(days=3))
         )
 
         try:
