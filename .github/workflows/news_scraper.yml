@@ -1,0 +1,67 @@
+name: News Scraper
+
+on:
+  schedule:
+    - cron: "0 7,19 * * *"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+  
+    - name: Run News Scraper
+      uses: appleboy/ssh-action@v0.1.3
+      env:
+        ENV: ${{ vars.ENV }}
+        APP_URL: ${{ vars.APP_URL }}
+        FARGS_LLM_RATE_LIMIT: ${{ vars.FARGS_LLM_RATE_LIMIT }}
+        ELL_DIR: ${{ vars.ELL_DIR }}
+        POSTGRES_DB: ${{ vars.POSTGRES_DB }}
+        POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+        POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+      with:
+        host: ${{ secrets.HOST_ADDRESS }}
+        username: ${{ secrets.HOST_USERNAME }}
+        key: ${{ secrets.HOST_SSH_KEY }}
+        envs: |
+          ENV,
+          APP_URL,
+          FARGS_LLM_RATE_LIMIT,
+          ELL_DIR,
+          POSTGRES_DB,
+          POSTGRES_USER,
+          POSTGRES_PASSWORD,
+          NEWS_API_KEY,
+          OPENROUTER_API_KEY,
+          OPENAI_API_KEY,
+          NEO4J_PASSWORD
+        script: |
+          docker run \
+            --rm \
+            --name terra_jobs_$(date +%s) \
+            -e ENV=${ENV} \
+            -e APP_URL=${APP_URL} \
+            -e ELL_DIR=${ELL_DIR} \
+            -e FARGS_LLM_RATE_LIMIT=${FARGS_LLM_RATE_LIMIT} \
+            -e POSTGRES_DB=${POSTGRES_DB} \
+            -e POSTGRES_USER=${POSTGRES_USER} \
+            -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
+            -e NEWS_API_KEY=${NEWS_API_KEY} \
+            -e OPENROUTER_API_KEY=${OPENROUTER_API_KEY} \
+            -e OPENAI_API_KEY=${OPENAI_API_KEY} \
+            -e NEO4J_PASSWORD=${NEO4J_PASSWORD} \
+            --network services_net_postgres \
+            --network services_net_redis \
+            --network services_net_neo4j \
+            --volume terra_llm_logs:${ELL_DIR} \
+            terra_jobs:latest \
+            news_scraper
