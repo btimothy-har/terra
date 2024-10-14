@@ -6,6 +6,7 @@ from typing import Any
 
 import aiohttp
 from aiolimiter import AsyncLimiter
+from retry_async import retry
 
 from jobs.database import cache_client
 from jobs.logger import logger
@@ -27,6 +28,13 @@ class BaseAsyncPipeline(ABC):
 
         self._limiter = AsyncLimiter(request_limit, request_interval)
 
+    @retry(
+        (ScraperFetchError),
+        is_async=True,
+        tries=-1,
+        delay=1,
+        backoff=2,
+    )
     async def download(self, url: str, method: str = "GET", **request_args):
         async with self._limiter:
             try:
