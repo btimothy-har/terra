@@ -8,7 +8,7 @@ from sqlalchemy.sql import update
 from jobs.database import database_session
 from jobs.pipelines.base import BaseAsyncPipeline
 from jobs.pipelines.exceptions import PipelineFetchError
-from jobs.pipelines.news_graph.ingestor import ingest_to_graph
+from jobs.pipelines.news_graph.engine import fargs
 from jobs.pipelines.news_scraper.models import NewsItem
 from jobs.pipelines.news_scraper.models import NewsItemSchema
 
@@ -45,7 +45,7 @@ class NewsGraphPipeline(BaseAsyncPipeline):
                 select(NewsItemSchema)
                 .where(NewsItemSchema.batch_id.is_(None))
                 .order_by(NewsItemSchema.publish_date.asc())
-                .limit(10)
+                .limit(1)
             )
             result = await session.execute(query)
             retrieved_articles = result.scalars().all()
@@ -59,11 +59,8 @@ class NewsGraphPipeline(BaseAsyncPipeline):
     async def load(self):
         batch_id = str(uuid.uuid4())
 
-        try:
-            await ingest_to_graph(self._processed)
-        except Exception as e:
-            self.log.error(f"Error ingesting news items: {e}")
-            return
+        as_documents = [item.as_document() for item in self._processed]
+        await fargs.ingest(as_documents)
 
         async with database_session() as session:
             ids = [item.item_id for item in self._processed]

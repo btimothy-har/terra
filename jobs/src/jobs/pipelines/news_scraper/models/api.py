@@ -68,10 +68,13 @@ class NewsItem(BaseModel):
         document = Document(
             doc_id=self.item_id,
             text=self.content,
-            metadata=self.model_dump(
-                mode="json",
-                exclude={"content", "item_id", "image", "video", "language"},
-            ),
+            metadata={
+                **self.model_dump(
+                    mode="json",
+                    exclude={"content", "item_id", "image", "video", "language"},
+                ),
+                "doc_id": self.item_id,
+            },
         )
         return document
 

@@ -5,6 +5,7 @@ import requests
 from openai import OpenAI
 
 ENV = os.getenv("ENV", "dev")
+ELL_DIR = os.getenv("ELL_DIR", "./logdir")
 
 openrouter_client = OpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY"),
@@ -32,9 +33,10 @@ def _get_models():
 
 def init_ell():
     ell.init(
-        store="/src/logdir",
-        autocommit=True,
+        store=ELL_DIR,
+        lazy_versioning=False,
         default_client=openrouter_client,
+        autocommit_model="openai/gpt-4o-mini",
     )
     openrouter_models = _get_models()["data"]
     for model in openrouter_models:
