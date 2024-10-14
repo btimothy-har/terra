@@ -31,4 +31,5 @@ jobs:
         username: ${{ secrets.HOST_USERNAME }}
         key: ${{ secrets.HOST_SSH_KEY }}
         script: |
+          cd terra_jobs/jobs
           docker build -t terra_jobs:latest .
