@@ -61,10 +61,11 @@ class NewsScraperPipeline(BaseAsyncPipeline):
 
         run_timestamp = datetime.now(UTC)
         last_fetch = await self.get_state("last_fetch")
+        last_fetch = None
         last_fetch = (
             datetime.fromisoformat(last_fetch)
             if last_fetch
-            else (datetime.now(UTC) - timedelta(days=1))
+            else (datetime.now(UTC) - timedelta(days=10))
         )
 
         try:
@@ -73,13 +74,14 @@ class NewsScraperPipeline(BaseAsyncPipeline):
             self.log.error(f"Error fetching news articles: {e}")
             return
 
-        await self.save_state("last_fetch", run_timestamp.isoformat())
         articles = list({article["id"]: article for article in articles}.values())
 
         self.log.info(f"Retrieved {len(articles)} news articles.")
         if len(articles) > 0:
             await self.process(articles)
             await self.load()
+
+        await self.save_state("last_fetch", run_timestamp.isoformat())
 
     async def fetch(self, from_date: datetime, to_date: datetime):
         retrieved_articles = []
