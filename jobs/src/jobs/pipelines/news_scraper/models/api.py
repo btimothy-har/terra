@@ -11,6 +11,7 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 
 from jobs.database.schemas import Base
+from jobs.pipelines.utils import clean_string
 
 
 class NewsItemSchema(Base):
@@ -52,9 +53,11 @@ class NewsItem(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def convert_keys(cls, data: Any):
+    def clean_data(cls, data: Any):
         if not isinstance(data, dict):
             return data
+
+        data = clean_string(data)
 
         if "id" in data:
             data["item_id"] = str(data.pop("id"))

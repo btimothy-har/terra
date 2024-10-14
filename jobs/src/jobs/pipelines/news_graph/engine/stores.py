@@ -7,7 +7,7 @@ from llama_index.vector_stores.postgres import PGVectorStore
 from jobs.pipelines.news_graph.config import VECTOR_STORE_PARAMS
 
 article_store = PostgresDocumentStore.from_uri(
-    uri=f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/terra",
+    uri=f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/{os.getenv('POSTGRES_DB')}",
     table_name="articles",
     schema_name="news",
     use_jsonb=True,
@@ -15,7 +15,7 @@ article_store = PostgresDocumentStore.from_uri(
 
 
 raw_communities_store = PostgresDocumentStore.from_uri(
-    uri=f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/terra",
+    uri=f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/{os.getenv('POSTGRES_DB')}",
     table_name="raw_communities",
     schema_name="news",
     use_jsonb=True,

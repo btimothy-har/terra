@@ -11,7 +11,7 @@ openrouter_client = OpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY"),
     base_url="https://openrouter.ai/api/v1",
     default_headers={
-        "HTTP-Referer": os.getenv("GITHUB_URL"),
+        "HTTP-Referer": os.getenv("APP_URL"),
         "X-Title": f"terra-jobs-{ENV}",
     },
 )
