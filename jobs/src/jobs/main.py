@@ -1,61 +1,65 @@
+import argparse
 import asyncio
+import importlib
 import signal
 import sys
 
-from scrapers import NewsScraper
-from scrapers import init_db
+from jobs.config import init_ell
+from jobs.database import init_db
+
+cli = argparse.ArgumentParser(description="Job Orchestrator CLI")
+cli.add_argument("jobs", nargs="*", help="List of job names to run (e.g., news_graph)")
 
 
 class JobsOrchestrator:
     def __init__(self):
-        self.scrapers = []
+        self.jobs = []
         self.running = True
         self.task = None
         self.iter_count = 0
 
-    def add_scraper(self, scraper):
-        self.scrapers.append(scraper)
+    def add_job(self, job):
+        self.jobs.append(job)
 
-    async def _loop(self):
-        while self.running:
-            if self.iter_count > 0:
-                await asyncio.sleep(60)
+    async def run(self, job: str):
+        module = importlib.import_module(f"jobs.pipelines.{job}")
+        pipeline = module.Pipeline()
+        await init_db()
 
-            tasks = []
-            for scraper in self.scrapers:
-                tasks.append(asyncio.create_task(scraper.run()))
-
-            await asyncio.gather(*tasks)
-            self.iter_count += 1
-
-    async def start(self):
-        self.task = asyncio.create_task(self._loop())
-        await self.task
-
-    def stop(self):
-        self.running = False
+        await pipeline.run()
 
 
-async def shutdown(signal, loop, orchestrator):
+async def shutdown(signal, loop):
     print(f"Received {signal.name}, shutting down...")
-    orchestrator.stop()
     loop.stop()
     sys.exit(0)
 
 
 async def main():
     loop = asyncio.get_running_loop()
-    await init_db()
     orchestrator = JobsOrchestrator()
 
     for sig in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(
-            sig, lambda s=sig: asyncio.create_task(shutdown(s, loop, orchestrator))
+            sig, lambda s=sig: asyncio.create_task(shutdown(s, loop))
+        )
+    args = cli.parse_args()
+
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(
+            sig, lambda s=sig: asyncio.create_task(shutdown(s, loop))
         )
 
-    orchestrator.add_scraper(NewsScraper())
-    await orchestrator.start()
+    if args.jobs:
+        tasks = [
+            asyncio.create_task(orchestrator.run(job_name)) for job_name in args.jobs
+        ]
+        await asyncio.gather(*tasks)
+    else:
+        print("No jobs specified. Available jobs are:")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
+    init_ell()
     asyncio.run(main())

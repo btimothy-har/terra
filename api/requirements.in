@@ -13,8 +13,7 @@ asyncpg==0.29.0
 cryptography~=43.0.1
 pyjwt~=2.9
 pgvector
-llama-index~=0.11.12
-llama-index-core~=0.11.12
-llama-index-embeddings-openai==0.2.5
+llama-index-core~=0.11.14
+llama-index-embeddings-openai
 llama-index-storage-docstore-postgres
 llama-index-vector-stores-postgres

@@ -1,4 +1,3 @@
-import asyncio
 from abc import ABC
 from abc import abstractmethod
 from datetime import UTC
@@ -8,32 +7,27 @@ from typing import Any
 import aiohttp
 from aiolimiter import AsyncLimiter
 
+from jobs.database import cache_client
 from jobs.logger import logger
-from scrapers.utils.funcs import cache_client
-from scrapers.utils.funcs import check_and_set_next_run
 
 
 class ScraperFetchError(Exception):
     pass
 
 
-class BaseAsyncScraper(ABC):
+class BaseAsyncPipeline(ABC):
     def __init__(
         self,
         namespace: str,
-        task_concurrency: int = 1,
         request_limit: float = 1,
         request_interval: int = 60,
     ):
         self.namespace = namespace
         self.log = logger.getChild(f"scraper.{namespace}")
 
-        self._concurrency = asyncio.Semaphore(task_concurrency)
         self._limiter = AsyncLimiter(request_limit, request_interval)
-        self._last_fetch = None
-        self._iter_count = 0
 
-    async def fetch(self, url: str, method: str = "GET", **request_args):
+    async def download(self, url: str, method: str = "GET", **request_args):
         async with self._limiter:
             try:
                 async with aiohttp.ClientSession() as session:
@@ -58,14 +52,17 @@ class BaseAsyncScraper(ABC):
         return data if data else None
 
     @abstractmethod
+    async def fetch(self):
+        pass
+
+    @abstractmethod
+    async def run(self):
+        pass
+
+    @abstractmethod
     async def process(self):
         pass
 
     @abstractmethod
     async def load(self):
-        pass
-
-    @abstractmethod
-    @check_and_set_next_run()
-    async def run(self):
         pass
