@@ -28,23 +28,22 @@ class NewsGraphPipeline(BaseAsyncPipeline):
         self._processed = None
 
     async def run(self):
-        total_articles = 0
-        while total_articles < 1000:
-            try:
-                articles = await self.fetch()
-            except PipelineFetchError as e:
-                self.log.error(f"Error fetching articles from database: {e}")
-                return
+        try:
+            articles = await self.fetch()
+        except PipelineFetchError as e:
+            self.log.error(f"Error fetching articles from database: {e}")
+            return
 
-            if len(articles) == 0:
-                break
+        if len(articles) == 0:
+            self.log.info("No articles found.")
+            return
 
-            total_articles += len(articles)
+        await self.process(articles)
 
-            await self.process(articles)
-            await self.load()
+        await self.process(articles)
+        await self.load()
 
-        self.log.info(f"Ingested {total_articles} news items.")
+        self.log.info(f"Ingested {len(articles)} news items.")
 
     async def fetch(self):
         async with database_session() as session:
