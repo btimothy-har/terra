@@ -40,9 +40,9 @@ class NewsScraperPipeline(BaseAsyncPipeline):
         self._processed = None
 
     @ell.complex(
-        model="meta-llama/llama-3.1-70b-instruct",
+        model="openai/gpt-4o-mini",
         client=openrouter_client,
-        response_format={"type": "json_object"},
+        response_format=LanguageClassifier,
         extra_body=openrouter_extra_body,
     )
     def language_classifier(self, title: str, text: str):
@@ -143,16 +143,18 @@ class NewsScraperPipeline(BaseAsyncPipeline):
         async def process_one(article):
             try:
                 article = NewsItem.model_validate(article)
-                raw_output = await asyncio.to_thread(
-                    self.language_classifier, article.title, article.content
-                )
 
                 try:
-                    parsed_output = json.loads(raw_output.text_only)
-                except json.JSONDecodeError:
-                    parsed_output = None
+                    raw_output = await asyncio.to_thread(
+                        self.language_classifier, article.title, article.content
+                    )
+                except Exception as e:
+                    self.log.error(f"Error classifying language: {e}")
+                    return article
 
-                if parsed_output and parsed_output.get("is_english", True):
+                parsed_output = raw_output.parsed
+
+                if getattr(parsed_output, "is_english", True):
                     return article
                 return None
 
