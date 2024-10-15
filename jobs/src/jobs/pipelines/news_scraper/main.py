@@ -148,7 +148,7 @@ class NewsScraperPipeline(BaseAsyncPipeline):
                 )
 
                 try:
-                    parsed_output = json.loads(raw_output)
+                    parsed_output = json.loads(raw_output.text_only)
                 except json.JSONDecodeError:
                     parsed_output = None
 
