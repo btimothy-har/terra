@@ -60,11 +60,10 @@ class NewsScraperPipeline(BaseAsyncPipeline):
 
         run_timestamp = datetime.now(UTC)
         last_fetch = await self.get_state("last_fetch")
-        last_fetch = None
         last_fetch = (
             datetime.fromisoformat(last_fetch)
             if last_fetch
-            else (datetime.now(UTC) - timedelta(days=3))
+            else (datetime.now(UTC) - timedelta(days=1))
         )
 
         total_articles = 0
