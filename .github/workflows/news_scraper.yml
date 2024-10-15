@@ -1,8 +1,8 @@
 name: News Scraper
 
 on:
-#   schedule:
-#     - cron: "0 7,19 * * *"
+  schedule:
+    - cron: "0 7,19 * * *"
   workflow_dispatch:
 
 jobs:
@@ -65,4 +65,4 @@ jobs:
             --volume terra_llm_logs:${ELL_DIR} \
             terra_jobs:latest \
             news_scraper
-        command_timeout: "4h"
+        command_timeout: "1h"
