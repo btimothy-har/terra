@@ -124,11 +124,12 @@ class NewsScraperPipeline(BaseAsyncPipeline):
 
         resp_data, resp_headers = await self.download(self.url, **args)
 
-        if resp_headers.get("X-API-Quota-Left", 0) <= 10:
+        if int(resp_headers.get("X-API-Quota-Left", 0)) <= 10:
             self.log.warning("News API quota is low.")
         else:
             self.log.info(
-                f"News API quota remaining: {resp_headers.get('X-API-Quota-Left', 0)}"
+                f"News API quota remaining: "
+                f"{int(resp_headers.get('X-API-Quota-Left', 0))}"
             )
 
         response = NewsAPIResponse.model_validate(json.loads(resp_data))
