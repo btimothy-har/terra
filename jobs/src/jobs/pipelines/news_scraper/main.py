@@ -94,18 +94,23 @@ class NewsScraperPipeline(BaseAsyncPipeline):
             total_articles += len(articles)
 
             if len(articles) == 0:
-                has_articles = False
-            else:
-                try:
-                    await self.process(articles)
-                    await self.load()
-                except Exception as e:
-                    self.log.error(f"Error processing news articles: {e}")
+                self.log.info("No articles found.")
+                continue
 
-                has_articles = available_articles > total_articles
+            try:
+                await self.process(articles)
+                await self.load()
+            except Exception as e:
+                self.log.error(f"Error processing news articles: {e}")
+
+            has_articles = available_articles > total_articles
 
         if not extract_id:
             await self.save_state("last_fetch", run_timestamp.isoformat())
+
+        self.log.info(
+            f"Completed news scraper pipeline. Total: {total_articles} articles."
+        )
 
     async def fetch(self, from_date: datetime, to_date: datetime, offset: int = 0):
         args = {
