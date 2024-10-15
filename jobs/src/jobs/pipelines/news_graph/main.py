@@ -29,7 +29,7 @@ class NewsGraphPipeline(BaseAsyncPipeline):
 
     async def run(self):
         total_articles = 0
-        while True:
+        while total_articles < 1000:
             try:
                 articles = await self.fetch()
             except PipelineFetchError as e:
