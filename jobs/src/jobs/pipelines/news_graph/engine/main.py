@@ -8,7 +8,6 @@ from .components import TerraClaimsExtractor
 from .components import TerraCommunitySummarizer
 from .components import TerraEntityExtractor
 from .components import TerraRelationshipExtractor
-from .stores import article_store
 from .stores import graph_store
 from .stores import index_communities_store
 from .stores import nodes_store
@@ -23,10 +22,6 @@ fargs = Fargs(
     graph_store=graph_store,
     nodes_vector_store=nodes_store,
     community_vector_store=index_communities_store,
-    extraction_config={
-        "docstore": article_store,
-        "docstore_strategy": DocstoreStrategy.UPSERTS,
-    },
     extraction_llm_model={
         "model": "qwen/qwen-2.5-72b-instruct",
         "temperature": 0,

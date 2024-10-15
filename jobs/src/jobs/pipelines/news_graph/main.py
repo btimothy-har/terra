@@ -39,8 +39,6 @@ class NewsGraphPipeline(BaseAsyncPipeline):
             return
 
         await self.process(articles)
-
-        await self.process(articles)
         await self.load()
 
         self.log.info(f"Ingested {len(articles)} news items.")
@@ -78,4 +76,6 @@ class NewsGraphPipeline(BaseAsyncPipeline):
             await session.execute(stmt)
             await session.commit()
 
-        self.log.info(f"Ingested {len(self._processed)} news items.")
+        self.log.info(
+            f"Ingested {len(self._processed)} news items with batch ID {batch_id}."
+        )
