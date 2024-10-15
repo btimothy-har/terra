@@ -46,9 +46,11 @@ class BaseAsyncPipeline(ABC):
                 self.log.error(f"Failed to fetch {url}: {e}")
                 raise ScraperFetchError(f"Failed to fetch {url}: {e}") from e
 
-        await self.save_state(
-            f"extract:{datetime.now(UTC).isoformat()}", content, ex=259_200
-        )
+        extract_id = f"extract:{datetime.now(UTC).isoformat()}"
+
+        await self.save_state(extract_id, content, ex=259_200)
+        self.log.info(f"Saved extract ID: {extract_id}.")
+
         return content, response.headers
 
     async def save_state(self, key: str, value: Any, **kwargs):

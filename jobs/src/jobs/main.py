@@ -1,4 +1,5 @@
 import argparse
+import ast
 import asyncio
 import importlib
 import signal
@@ -8,7 +9,23 @@ from jobs.config import init_ell
 from jobs.database import init_db
 
 cli = argparse.ArgumentParser(description="Job Orchestrator CLI")
-cli.add_argument("jobs", nargs="*", help="List of job names to run (e.g., news_graph)")
+cli.add_argument("job", help="Name of the job to run (e.g., news_graph).")
+cli.add_argument(
+    "--args", nargs=argparse.REMAINDER, help="Additional job-specific arguments."
+)
+
+
+def parse_args(args: list[str]) -> dict[str, str]:
+    kwargs = dict()
+
+    for arg in args:
+        if "=" in arg:
+            key, value = arg.split("=", 1)
+            try:
+                kwargs[key] = ast.literal_eval(value)
+            except (ValueError, SyntaxError):
+                kwargs[key] = value
+    return kwargs
 
 
 class JobsOrchestrator:
@@ -21,12 +38,13 @@ class JobsOrchestrator:
     def add_job(self, job):
         self.jobs.append(job)
 
-    async def run(self, job: str):
+    async def run(self, job: str, args: list[str]):
         module = importlib.import_module(f"jobs.pipelines.{job}")
         pipeline = module.Pipeline()
-        await init_db()
+        kwargs = parse_args(args)
 
-        await pipeline.run()
+        await init_db()
+        await pipeline.run(**kwargs)
 
 
 async def shutdown(signal, loop):
@@ -50,13 +68,11 @@ async def main():
             sig, lambda s=sig: asyncio.create_task(shutdown(s, loop))
         )
 
-    if args.jobs:
-        tasks = [
-            asyncio.create_task(orchestrator.run(job_name)) for job_name in args.jobs
-        ]
-        await asyncio.gather(*tasks)
+    if len(args.job):
+        await orchestrator.run(args.job, args.args)
+
     else:
-        print("No jobs specified. Available jobs are:")
+        print("No job specified.")
         sys.exit(1)
 
 
