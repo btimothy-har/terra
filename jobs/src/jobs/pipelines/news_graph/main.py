@@ -41,8 +41,6 @@ class NewsGraphPipeline(BaseAsyncPipeline):
         await self.process(articles)
         await self.load()
 
-        self.log.info(f"Ingested {len(articles)} news items.")
-
     async def fetch(self):
         async with database_session() as session:
             query = (
