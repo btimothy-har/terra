@@ -15,8 +15,11 @@ cli.add_argument(
 )
 
 
-def parse_args(args: list[str]) -> dict[str, str]:
+def parse_args(args: list[str] | None = None) -> dict[str, str]:
     kwargs = dict()
+
+    if not args:
+        return kwargs
 
     for arg in args:
         if "=" in arg:
