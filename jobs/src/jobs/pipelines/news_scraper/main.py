@@ -122,7 +122,10 @@ class NewsScraperPipeline(BaseAsyncPipeline):
             }
         }
 
-        resp_data, resp_headers = await self.download(self.url, **args)
+        try:
+            resp_data, resp_headers = await self.download(self.url, **args)
+        except Exception as e:
+            raise PipelineFetchError(f"Error fetching news articles: {e}") from e
 
         if float(resp_headers.get("X-API-Quota-Left", 0)) <= 10:
             self.log.warning(

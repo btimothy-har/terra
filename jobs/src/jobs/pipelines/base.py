@@ -43,7 +43,6 @@ class BaseAsyncPipeline(ABC):
                         response.raise_for_status()
                         content = await response.text()
             except Exception as e:
-                self.log.error(f"Failed to fetch {url}: {e}")
                 raise ScraperFetchError(f"Failed to fetch {url}: {e}") from e
 
         extract_id = f"extract:{datetime.now(UTC).isoformat()}"
