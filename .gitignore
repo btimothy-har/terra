@@ -37,3 +37,6 @@ MANIFEST
 
 #Oauth
 .oauth_client.json
+
+jobs/build.sh
+jobs/run.sh
