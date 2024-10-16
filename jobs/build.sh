@@ -1,1 +1,0 @@
-docker build -t terra_jobs:latest .
