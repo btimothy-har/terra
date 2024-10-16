@@ -19,5 +19,3 @@ COPY ./src/jobs /src/jobs
 RUN uv pip install --system -e .
 
 ENTRYPOINT ["python", "jobs/main.py"]
-
-#ENTRYPOINT ["python", "jobs/pipelines/news_graph/query.py"]
