@@ -6,6 +6,7 @@ from fargs.components import RelationshipExtractor
 from fargs.components.claims import CLAIM_EXTRACTION_MESSAGE
 from fargs.components.communities import CommunityReport
 from fargs.components.relationships import RELATIONSHIP_EXTRACTION_MESSAGE
+from fargs.components.relationships import RelationshipOutput
 
 from jobs.config import openrouter_extra_body
 
@@ -13,10 +14,9 @@ from jobs.config import openrouter_extra_body
 class TerraEntityExtractor(EntityExtractor):
     def _construct_function(self):
         @ell.complex(
-            model="qwen/qwen-2.5-72b-instruct",
+            model="gpt-4o-mini",
             temperature=0,
-            response_format={"type": "json_object"},
-            extra_body=openrouter_extra_body,
+            response_format=self._output_model,
         )
         def extract_entities(node_text: str):
             return [
@@ -30,10 +30,9 @@ class TerraEntityExtractor(EntityExtractor):
 class TerraRelationshipExtractor(RelationshipExtractor):
     def _construct_function(self):
         @ell.complex(
-            model="qwen/qwen-2.5-72b-instruct",
+            model="gpt-4o-mini",
             temperature=0,
-            response_format={"type": "json_object"},
-            extra_body=openrouter_extra_body,
+            response_format=RelationshipOutput,
         )
         def extract_relationships(entities_json: str, text_unit: str):
             return [
@@ -52,10 +51,9 @@ class TerraRelationshipExtractor(RelationshipExtractor):
 class TerraClaimsExtractor(ClaimsExtractor):
     def _construct_function(self):
         @ell.complex(
-            model="qwen/qwen-2.5-72b-instruct",
+            model="gpt-4o-mini",
             temperature=0,
-            response_format={"type": "json_object"},
-            extra_body=openrouter_extra_body,
+            response_format=self._output_model,
         )
         def extract_claims(entities_json: str, text_unit: str):
             return [

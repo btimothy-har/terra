@@ -21,9 +21,19 @@ openrouter_extra_body = {
     "transforms": [],
 }
 
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def _get_models():
+
+def _get_openrouter_models():
     response = requests.get("https://openrouter.ai/api/v1/models")
+    return response.json()
+
+
+def _get_openai_models():
+    response = requests.get(
+        "https://api.openai.com/v1/models",
+        headers={"Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}"},
+    )
     return response.json()
 
 
@@ -34,8 +44,12 @@ def init_ell():
         ),
         lazy_versioning=False,
         default_client=openrouter_client,
-        autocommit_model="openai/gpt-4o-mini",
+        autocommit_model="gpt-4o-mini",
     )
-    openrouter_models = _get_models()["data"]
+    openrouter_models = _get_openrouter_models()["data"]
     for model in openrouter_models:
         ell.config.register_model(model["id"], openrouter_client)
+
+    openai_models = _get_openai_models()["data"]
+    for model in openai_models:
+        ell.config.register_model(model["id"], openai_client)

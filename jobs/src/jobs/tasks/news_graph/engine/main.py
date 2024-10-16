@@ -23,7 +23,7 @@ fargs = Fargs(
     nodes_vector_store=nodes_store,
     community_vector_store=index_communities_store,
     extraction_llm_model={
-        "model": "qwen/qwen-2.5-72b-instruct",
+        "model": "gpt-4o-mini",
         "temperature": 0,
     },
     summarization_config={
@@ -31,7 +31,7 @@ fargs = Fargs(
         "docstore_strategy": DocstoreStrategy.UPSERTS_AND_DELETE,
     },
     summarization_llm_model={
-        "model": "openai/gpt-4o",
+        "model": "gpt-4o",
         "temperature": 0,
     },
     excluded_embed_metadata_keys=[

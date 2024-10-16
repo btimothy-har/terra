@@ -10,8 +10,6 @@ from pydantic import BaseModel
 from pydantic import Field
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from jobs.config import openrouter_client
-from jobs.config import openrouter_extra_body
 from jobs.database import database_session
 from jobs.tasks.base import BaseAsyncPipeline
 from jobs.tasks.exceptions import PipelineFetchError
@@ -40,10 +38,8 @@ class NewsScraperPipeline(BaseAsyncPipeline):
         self._processed = None
 
     @ell.complex(
-        model="openai/gpt-4o-mini",
-        client=openrouter_client,
+        model="gpt-4o-mini",
         response_format=LanguageClassifier,
-        extra_body=openrouter_extra_body,
     )
     def language_classifier(self, title: str, text: str):
         return [
