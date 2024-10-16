@@ -6,7 +6,6 @@ from ell.stores.sql import PostgresStore
 from openai import OpenAI
 
 ENV = os.getenv("ENV", "dev")
-ELL_DIR = os.getenv("ELL_DIR", "./logdir")
 
 openrouter_client = OpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY"),
@@ -31,7 +30,7 @@ def _get_models():
 def init_ell():
     ell.init(
         store=PostgresStore(
-            db_uri=f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/ell_studio"
+            db_uri=f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/{os.getenv('ELL_DB')}"
         ),
         lazy_versioning=False,
         default_client=openrouter_client,
