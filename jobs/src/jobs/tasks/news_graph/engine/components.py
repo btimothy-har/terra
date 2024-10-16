@@ -12,6 +12,7 @@ from fargs.components.graph import SUMMARIZE_NODE_MESSAGE
 from fargs.components.graph import SUMMARIZE_NODE_PROMPT
 from fargs.components.relationships import RELATIONSHIP_EXTRACTION_MESSAGE
 from fargs.components.relationships import RelationshipOutput
+from retry_async import retry
 
 
 class TerraEntityExtractor(EntityExtractor):
@@ -90,6 +91,12 @@ class TerraCommunitySummarizer(CommunitySummarizer):
 
 class TerraGraphLoader(GraphLoader):
     def _construct_function(self):
+        @retry(
+            Exception,
+            tries=3,
+            delay=1,
+            backoff=2,
+        )
         @ell.complex(model="gpt-4o-mini", temperature=0)
         def summarize_node(
             node_type: Literal["entity", "relation"],
