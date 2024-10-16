@@ -5,6 +5,7 @@ from pydantic import Field
 from sqlalchemy.sql import select
 from sqlalchemy.sql import update
 
+from jobs.config import ENV
 from jobs.database import database_session
 from jobs.tasks.base import BaseAsyncPipeline
 from jobs.tasks.exceptions import PipelineFetchError
@@ -26,6 +27,7 @@ class NewsGraphPipeline(BaseAsyncPipeline):
             request_interval=1,
         )
         self._processed = None
+        self._fetch_count = 1 if ENV == "dev" else 100
 
     async def run(self):
         try:
@@ -47,7 +49,7 @@ class NewsGraphPipeline(BaseAsyncPipeline):
                 select(NewsItemSchema)
                 .where(NewsItemSchema.batch_id.is_(None))
                 .order_by(NewsItemSchema.publish_date.asc())
-                .limit(1)
+                .limit(self._fetch_count)
             )
             result = await session.execute(query)
             retrieved_articles = result.scalars().all()
