@@ -65,7 +65,6 @@ jobs:
             --network services_net_postgres \
             --network services_net_redis \
             --network services_net_neo4j \
-            --volume terra_llm_logs:${ELL_DIR} \
             terra_jobs:latest \
             news_graph
         command_timeout: "4h"
