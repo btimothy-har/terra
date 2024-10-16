@@ -87,7 +87,7 @@ ell-ai==0.0.14
     #   fargs
 email-validator==2.2.0
     # via fastapi
-fargs @ git+https://github.com/btimothy-har/fargs.git@c4692b8ba8cf11a7a99607419bd2941c13ab45ff
+fargs @ git+https://github.com/btimothy-har/fargs.git@e17ef7b1f948e8e5e4407d4933d30a4dd99d24cf
     # via -r jobs/requirements.in
 fastapi==0.111.1
     # via ell-ai
