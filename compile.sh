@@ -1,8 +1,8 @@
 #!/bin/bash
 
-uv pip compile api/requirements.in -o api/requirements.txt
-uv pip compile app/requirements.in -o app/requirements.txt
-uv pip compile jobs/requirements.in -o jobs/requirements.txt
+uv pip compile api/requirements.in -q -U -o api/requirements.txt
+uv pip compile app/requirements.in -q -U -o app/requirements.txt
+uv pip compile jobs/requirements.in -q -U -o jobs/requirements.txt
 
 uv sync
 

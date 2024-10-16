@@ -87,7 +87,7 @@ ell-ai==0.0.14
     #   fargs
 email-validator==2.2.0
     # via fastapi
-fargs @ git+https://github.com/btimothy-har/fargs.git@e17ef7b1f948e8e5e4407d4933d30a4dd99d24cf
+fargs @ git+https://github.com/btimothy-har/fargs.git@1f3173baf01689b0846eaf863eea26b7edbfbd5c
     # via -r jobs/requirements.in
 fastapi==0.111.1
     # via ell-ai
@@ -127,7 +127,7 @@ h11==0.14.0
     #   uvicorn
 httpcore==1.0.6
     # via httpx
-httptools==0.6.1
+httptools==0.6.2
     # via uvicorn
 httpx==0.27.2
     # via
@@ -165,7 +165,7 @@ joblib==1.4.2
     #   scikit-learn
 kiwisolver==1.4.7
     # via matplotlib
-llama-index-core==0.11.17
+llama-index-core==0.11.18
     # via
     #   -r jobs/requirements.in
     #   fargs
@@ -185,7 +185,7 @@ llama-index-graph-stores-neo4j==0.3.3
     # via
     #   -r jobs/requirements.in
     #   fargs
-llama-index-llms-openai==0.2.13
+llama-index-llms-openai==0.2.14
     # via llama-index-llms-openai-like
 llama-index-llms-openai-like==0.2.0
     # via llama-index-llms-openrouter
@@ -476,7 +476,7 @@ uvicorn==0.30.6
     #   ell-ai
     #   fastapi
     #   fastapi-cli
-uvloop==0.20.0
+uvloop==0.21.0
     # via uvicorn
 watchfiles==0.24.0
     # via uvicorn
@@ -487,5 +487,5 @@ wrapt==1.16.0
     #   deprecated
     #   llama-index-core
     #   smart-open
-yarl==1.15.2
+yarl==1.15.3
     # via aiohttp

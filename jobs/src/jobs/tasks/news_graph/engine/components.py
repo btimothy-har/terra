@@ -1,14 +1,17 @@
+from typing import Literal
+
 import ell
 from fargs.components import ClaimsExtractor
 from fargs.components import CommunitySummarizer
 from fargs.components import EntityExtractor
+from fargs.components import GraphLoader
 from fargs.components import RelationshipExtractor
 from fargs.components.claims import CLAIM_EXTRACTION_MESSAGE
 from fargs.components.communities import CommunityReport
+from fargs.components.graph import SUMMARIZE_NODE_MESSAGE
+from fargs.components.graph import SUMMARIZE_NODE_PROMPT
 from fargs.components.relationships import RELATIONSHIP_EXTRACTION_MESSAGE
 from fargs.components.relationships import RelationshipOutput
-
-from jobs.config import openrouter_extra_body
 
 
 class TerraEntityExtractor(EntityExtractor):
@@ -72,10 +75,9 @@ class TerraClaimsExtractor(ClaimsExtractor):
 class TerraCommunitySummarizer(CommunitySummarizer):
     def _construct_function(self):
         @ell.complex(
-            model="openai/gpt-4o",
+            model="gpt-4o",
             temperature=0,
             response_format=CommunityReport,
-            extra_body=openrouter_extra_body,
         )
         def generate_community_report(community_text: str):
             return [
@@ -84,3 +86,23 @@ class TerraCommunitySummarizer(CommunitySummarizer):
             ]
 
         return generate_community_report
+
+
+class TerraGraphLoader(GraphLoader):
+    def _construct_function(self):
+        @ell.complex(model="gpt-4o-mini", temperature=0)
+        def summarize_node(
+            node_type: Literal["entity", "relation"],
+            title: str,
+            description: str,
+        ):
+            return [
+                ell.system(SUMMARIZE_NODE_PROMPT),
+                ell.user(
+                    SUMMARIZE_NODE_MESSAGE.format(
+                        type=node_type, title=title, description=description
+                    )
+                ),
+            ]
+
+        return summarize_node
