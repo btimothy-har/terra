@@ -2,6 +2,7 @@ import os
 
 import ell
 import requests
+from ell.stores.sql import PostgresStore
 from openai import OpenAI
 
 ENV = os.getenv("ENV", "dev")
@@ -29,7 +30,9 @@ def _get_models():
 
 def init_ell():
     ell.init(
-        store=ELL_DIR,
+        store=PostgresStore(
+            db_uri=f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/ell_studio"
+        ),
         lazy_versioning=False,
         default_client=openrouter_client,
         autocommit_model="openai/gpt-4o-mini",

@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 
 from jobs.database.schemas import Base
-from jobs.pipelines.utils import clean_string
+from jobs.tasks.utils import clean_string
 
 
 class NewsItemSchema(Base):

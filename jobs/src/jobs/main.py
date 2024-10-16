@@ -42,7 +42,7 @@ class JobsOrchestrator:
         self.jobs.append(job)
 
     async def run(self, job: str, args: list[str]):
-        module = importlib.import_module(f"jobs.pipelines.{job}")
+        module = importlib.import_module(f"jobs.tasks.{job}")
         pipeline = module.Pipeline()
         kwargs = parse_args(args)
 

@@ -1,8 +1,8 @@
 from fargs import Fargs
 from llama_index.core.ingestion import DocstoreStrategy
 
-from jobs.pipelines.news_graph.config import embeddings
-from jobs.pipelines.news_graph.config import splitter
+from jobs.tasks.news_graph.config import embeddings
+from jobs.tasks.news_graph.config import splitter
 
 from .components import TerraClaimsExtractor
 from .components import TerraCommunitySummarizer
