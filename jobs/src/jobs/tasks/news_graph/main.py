@@ -6,11 +6,11 @@ from sqlalchemy.sql import select
 from sqlalchemy.sql import update
 
 from jobs.database import database_session
-from jobs.pipelines.base import BaseAsyncPipeline
-from jobs.pipelines.exceptions import PipelineFetchError
-from jobs.pipelines.news_graph.engine import fargs
-from jobs.pipelines.news_scraper.models import NewsItem
-from jobs.pipelines.news_scraper.models import NewsItemSchema
+from jobs.tasks.base import BaseAsyncPipeline
+from jobs.tasks.exceptions import PipelineFetchError
+from jobs.tasks.news_graph.engine import fargs
+from jobs.tasks.news_scraper.models import NewsItem
+from jobs.tasks.news_scraper.models import NewsItemSchema
 
 
 class LanguageClassifier(BaseModel):
@@ -47,7 +47,7 @@ class NewsGraphPipeline(BaseAsyncPipeline):
                 select(NewsItemSchema)
                 .where(NewsItemSchema.batch_id.is_(None))
                 .order_by(NewsItemSchema.publish_date.asc())
-                .limit(100)
+                .limit(1)
             )
             result = await session.execute(query)
             retrieved_articles = result.scalars().all()

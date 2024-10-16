@@ -13,15 +13,15 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from jobs.config import openrouter_client
 from jobs.config import openrouter_extra_body
 from jobs.database import database_session
-from jobs.pipelines.base import BaseAsyncPipeline
-from jobs.pipelines.exceptions import PipelineFetchError
-from jobs.pipelines.news_scraper.config import SOURCES
-from jobs.pipelines.news_scraper.models import NewsAPIResponse
-from jobs.pipelines.news_scraper.models import NewsItem
-from jobs.pipelines.news_scraper.models import NewsItemSchema
-from jobs.pipelines.news_scraper.prompts import FILTER_LANGUAGE_PROMPT
-from jobs.pipelines.utils import rate_limited_task
-from jobs.pipelines.utils import tqdm_iterable
+from jobs.tasks.base import BaseAsyncPipeline
+from jobs.tasks.exceptions import PipelineFetchError
+from jobs.tasks.news_scraper.config import SOURCES
+from jobs.tasks.news_scraper.models import NewsAPIResponse
+from jobs.tasks.news_scraper.models import NewsItem
+from jobs.tasks.news_scraper.models import NewsItemSchema
+from jobs.tasks.news_scraper.prompts import FILTER_LANGUAGE_PROMPT
+from jobs.tasks.utils import rate_limited_task
+from jobs.tasks.utils import tqdm_iterable
 
 
 class LanguageClassifier(BaseModel):
