@@ -18,7 +18,7 @@ embeddings = OpenAIEmbedding(
 )
 
 splitter = SemanticSplitterNodeParser(
-    buffer_size=2,
+    buffer_size=3,
     embed_model=embeddings,
     breakpoint_percentile_threshold=95,
 )
