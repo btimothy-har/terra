@@ -19,7 +19,7 @@ jobs:
       env:
         ENV: ${{ vars.ENV }}
         APP_URL: ${{ vars.APP_URL }}
-        FARGS_LLM_RATE_LIMIT: ${{ vars.FARGS_LLM_RATE_LIMIT }}
+        FARGS_LLM_TOKEN_LIMIT: ${{ vars.FARGS_LLM_TOKEN_LIMIT }}
         ELL_DB: ${{ vars.ELL_DB }}
         POSTGRES_DB: ${{ vars.POSTGRES_DB }}
         POSTGRES_USER: ${{ vars.POSTGRES_USER }}
@@ -35,7 +35,7 @@ jobs:
         envs: |
           ENV,
           APP_URL,
-          FARGS_LLM_RATE_LIMIT,
+          FARGS_LLM_TOKEN_LIMIT,
           ELL_DB,
           POSTGRES_DB,
           POSTGRES_USER,
@@ -50,7 +50,7 @@ jobs:
             --name terra_jobs_$(date +%s) \
             -e ENV=${ENV} \
             -e ELL_DB=${ELL_DB} \
-            -e FARGS_LLM_RATE_LIMIT=${FARGS_LLM_RATE_LIMIT} \
+            -e FARGS_LLM_TOKEN_LIMIT=${FARGS_LLM_TOKEN_LIMIT} \
             -e POSTGRES_DB=${POSTGRES_DB} \
             -e POSTGRES_USER=${POSTGRES_USER} \
             -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \

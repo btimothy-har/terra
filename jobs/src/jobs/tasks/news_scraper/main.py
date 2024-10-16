@@ -142,7 +142,7 @@ class NewsScraperPipeline(BaseAsyncPipeline):
         return response.news, response.available
 
     async def process(self, data: list[dict]):
-        @rate_limited_task()
+        @rate_limited_task(max_rate=30)
         async def process_one(article):
             try:
                 article = NewsItem.model_validate(article)

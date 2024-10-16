@@ -87,7 +87,7 @@ ell-ai==0.0.14
     #   fargs
 email-validator==2.2.0
     # via fastapi
-fargs @ git+https://github.com/btimothy-har/fargs.git@1f3173baf01689b0846eaf863eea26b7edbfbd5c
+fargs @ git+https://github.com/btimothy-har/fargs.git@4d9ccf09b8f9e072aca7321ae5289599a709e8aa
     # via -r jobs/requirements.in
 fastapi==0.111.1
     # via ell-ai
@@ -387,7 +387,7 @@ scipy==1.12.0
     #   umap-learn
 seaborn==0.13.2
     # via graspologic
-setuptools==75.1.0
+setuptools==75.2.0
     # via torch
 shellingham==1.5.4
     # via typer
@@ -424,7 +424,9 @@ tenacity==8.5.0
 threadpoolctl==3.5.0
     # via scikit-learn
 tiktoken==0.8.0
-    # via llama-index-core
+    # via
+    #   fargs
+    #   llama-index-core
 tokenizers==0.20.1
     # via
     #   anthropic

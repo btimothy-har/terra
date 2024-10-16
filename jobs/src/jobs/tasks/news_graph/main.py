@@ -64,7 +64,7 @@ class NewsGraphPipeline(BaseAsyncPipeline):
         batch_id = str(uuid.uuid4())
 
         as_documents = [item.as_document() for item in self._processed]
-        await fargs.ingest(as_documents)
+        await fargs.ingest(documents=as_documents)
 
         async with database_session() as session:
             ids = [item.item_id for item in self._processed]
