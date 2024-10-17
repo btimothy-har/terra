@@ -26,7 +26,7 @@ splitter = SemanticSplitterNodeParser(
 VECTOR_STORE_PARAMS = {
     "host": "postgres",
     "port": "5432",
-    "database": "terra",
+    "database": os.getenv("POSTGRES_DB"),
     "user": os.getenv("POSTGRES_USER"),
     "password": os.getenv("POSTGRES_PASSWORD"),
     "hybrid_search": True,

@@ -7,6 +7,7 @@ from jobs.tasks.news_graph.config import splitter
 from .components import TerraClaimsExtractor
 from .components import TerraCommunitySummarizer
 from .components import TerraEntityExtractor
+from .components import TerraGraphLoader
 from .components import TerraRelationshipExtractor
 from .stores import graph_store
 from .stores import index_communities_store
@@ -53,3 +54,4 @@ fargs._components["entities"] = TerraEntityExtractor
 fargs._components["relationships"] = TerraRelationshipExtractor
 fargs._components["claims"] = TerraClaimsExtractor
 fargs._components["communities"] = TerraCommunitySummarizer
+fargs._components["graph"] = TerraGraphLoader

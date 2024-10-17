@@ -6,6 +6,8 @@ from datetime import datetime
 from datetime import timedelta
 
 import ell
+from fargs.utils import rate_limited_task
+from fargs.utils import tqdm_iterable
 from pydantic import BaseModel
 from pydantic import Field
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -18,8 +20,6 @@ from jobs.tasks.news_scraper.models import NewsAPIResponse
 from jobs.tasks.news_scraper.models import NewsItem
 from jobs.tasks.news_scraper.models import NewsItemSchema
 from jobs.tasks.news_scraper.prompts import FILTER_LANGUAGE_PROMPT
-from jobs.tasks.utils import rate_limited_task
-from jobs.tasks.utils import tqdm_iterable
 
 
 class LanguageClassifier(BaseModel):
