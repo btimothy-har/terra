@@ -87,7 +87,7 @@ ell-ai==0.0.14
     #   fargs
 email-validator==2.2.0
     # via fastapi
-fargs @ git+https://github.com/btimothy-har/fargs.git@4ccfb1631eac0c7ea389aa77a0087b6007ceffb9
+fargs @ git+https://github.com/btimothy-har/fargs.git@33907c196a41bdcc5531a599a363dbf5157871a0
     # via -r jobs/requirements.in
 fastapi==0.111.1
     # via ell-ai
@@ -209,7 +209,7 @@ markdown-it-py==3.0.0
     # via rich
 markupsafe==3.0.1
     # via jinja2
-marshmallow==3.22.0
+marshmallow==3.23.0
     # via dataclasses-json
 matplotlib==3.9.2
     # via
@@ -265,7 +265,7 @@ numpy==1.26.4
     #   statsmodels
     #   transformers
     #   umap-learn
-openai==1.51.2
+openai==1.52.0
     # via
     #   ell-ai
     #   llama-index-embeddings-openai

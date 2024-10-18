@@ -31,7 +31,10 @@ def _get_openrouter_models():
     raw_models = None
     with cache_client() as cache:
         try:
-            response = requests.get("https://openrouter.ai/api/v1/models")
+            response = requests.get(
+                "https://openrouter.ai/api/v1/models",
+                headers={"Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}"},
+            )
             response.raise_for_status()
             raw_models = response.text
         except Exception:
