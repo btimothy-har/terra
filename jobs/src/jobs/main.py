@@ -57,8 +57,8 @@ async def shutdown(signal, loop):
 
 
 async def main():
+    await init_ell()
     loop = asyncio.get_running_loop()
-    orchestrator = JobsOrchestrator()
 
     for sig in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(
@@ -72,6 +72,7 @@ async def main():
         )
 
     if len(args.job):
+        orchestrator = JobsOrchestrator()
         await orchestrator.run(args.job, args.args)
 
     else:
@@ -80,5 +81,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    init_ell()
     asyncio.run(main())
