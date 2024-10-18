@@ -24,7 +24,7 @@ fargs = Fargs(
     nodes_vector_store=nodes_store,
     community_vector_store=index_communities_store,
     extraction_llm_model={
-        "model": "qwen/qwen-2.5-72b-instruct",
+        "model": "gpt-4o-mini",
         "temperature": 0,
     },
     summarization_config={
