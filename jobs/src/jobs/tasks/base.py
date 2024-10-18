@@ -8,7 +8,7 @@ import aiohttp
 from aiolimiter import AsyncLimiter
 from retry_async import retry
 
-from jobs.database import cache_client
+from jobs.database import async_cache_client
 from jobs.logger import logger
 
 
@@ -53,11 +53,11 @@ class BaseAsyncPipeline(ABC):
         return content, response.headers
 
     async def save_state(self, key: str, value: Any, **kwargs):
-        async with cache_client() as cache:
+        async with async_cache_client() as cache:
             await cache.set(f"jobs:{self.namespace}:{key}", value, **kwargs)
 
     async def get_state(self, key: Any, **kwargs) -> Any:
-        async with cache_client() as cache:
+        async with async_cache_client() as cache:
             data = await cache.get(f"jobs:{self.namespace}:{key}", **kwargs)
         return data if data else None
 

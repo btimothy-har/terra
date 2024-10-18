@@ -1,7 +1,8 @@
+import json
 import os
 
-import aiohttp
 import ell
+import requests
 from ell.stores.sql import PostgresStore
 from openai import OpenAI
 
@@ -26,48 +27,44 @@ openrouter_extra_body = {
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-async def _get_openrouter_models():
-    models = None
-    async with cache_client() as cache:
+def _get_openrouter_models():
+    raw_models = None
+    with cache_client() as cache:
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    "https://openrouter.ai/api/v1/models"
-                ) as response:
-                    response.raise_for_status()
-                    models = await response.json()
+            response = requests.get("https://openrouter.ai/api/v1/models")
+            response.raise_for_status()
+            raw_models = response.text
         except Exception:
-            models = await cache.get("openrouter_models")
+            raw_models = cache.get("openrouter_models")
         else:
-            await cache.set("openrouter_models", models)
+            cache.set("openrouter_models", raw_models)
 
-    if not models:
+    if not raw_models:
         raise Exception("Failed to fetch openrouter models")
-    return models
+    return json.loads(raw_models)
 
 
-async def _get_openai_models():
-    models = None
-    async with cache_client() as cache:
+def _get_openai_models():
+    raw_models = None
+    with cache_client() as cache:
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    "https://api.openai.com/v1/models",
-                    headers={"Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}"},
-                ) as response:
-                    response.raise_for_status()
-                    models = await response.json()
+            response = requests.get(
+                "https://api.openai.com/v1/models",
+                headers={"Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}"},
+            )
+            response.raise_for_status()
+            raw_models = response.text
         except Exception:
-            models = await cache.get("openai_models")
+            raw_models = cache.get("openai_models")
         else:
-            await cache.set("openai_models", models)
+            cache.set("openai_models", raw_models)
 
-    if not models:
+    if not raw_models:
         raise Exception("Failed to fetch openai models")
-    return models
+    return json.loads(raw_models)
 
 
-async def init_ell():
+def init_ell():
     ell.init(
         store=PostgresStore(
             db_uri=f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/{os.getenv('ELL_DB')}"
@@ -76,10 +73,10 @@ async def init_ell():
         default_client=openrouter_client,
         autocommit_model="gpt-4o-mini",
     )
-    openrouter_models = await _get_openrouter_models()["data"]
+    openrouter_models = _get_openrouter_models()["data"]
     for model in openrouter_models:
         ell.config.register_model(model["id"], openrouter_client)
 
-    openai_models = await _get_openai_models()["data"]
+    openai_models = _get_openai_models()["data"]
     for model in openai_models:
         ell.config.register_model(model["id"], openai_client)

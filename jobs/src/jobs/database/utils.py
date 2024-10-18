@@ -1,7 +1,9 @@
 import os
 from contextlib import asynccontextmanager
+from contextlib import contextmanager
 
-from redis.asyncio import Redis
+from redis import Redis
+from redis.asyncio import Redis as AsyncRedis
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -18,9 +20,18 @@ async def database_session():
         yield session
 
 
+@contextmanager
+def cache_client():
+    redis = Redis(host="redis", port=6379, decode_responses=True)
+    try:
+        yield redis
+    finally:
+        redis.close()
+
+
 @asynccontextmanager
-async def cache_client():
-    redis = Redis(
+async def async_cache_client():
+    redis = AsyncRedis(
         host="redis",
         port=6379,
         decode_responses=True,

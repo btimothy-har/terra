@@ -57,7 +57,6 @@ async def shutdown(signal, loop):
 
 
 async def main():
-    await init_ell()
     loop = asyncio.get_running_loop()
 
     for sig in (signal.SIGTERM, signal.SIGINT):
@@ -81,4 +80,5 @@ async def main():
 
 
 if __name__ == "__main__":
+    init_ell()
     asyncio.run(main())
