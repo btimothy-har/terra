@@ -87,7 +87,7 @@ ell-ai==0.0.14
     #   fargs
 email-validator==2.2.0
     # via fastapi
-fargs @ git+https://github.com/btimothy-har/fargs.git@33907c196a41bdcc5531a599a363dbf5157871a0
+fargs @ git+https://github.com/btimothy-har/fargs.git@b212f56408250a406e417d6b4c84bd771eb6904a
     # via -r jobs/requirements.in
 fastapi==0.111.1
     # via ell-ai
@@ -100,11 +100,11 @@ filelock==3.16.1
     #   transformers
 fonttools==4.54.1
     # via matplotlib
-frozenlist==1.4.1
+frozenlist==1.5.0
     # via
     #   aiohttp
     #   aiosignal
-fsspec==2024.9.0
+fsspec==2024.10.0
     # via
     #   huggingface-hub
     #   llama-index-core
@@ -136,7 +136,7 @@ httpx==0.27.2
     #   groq
     #   llama-index-core
     #   openai
-huggingface-hub==0.25.2
+huggingface-hub==0.26.1
     # via
     #   tokenizers
     #   transformers
@@ -165,7 +165,7 @@ joblib==1.4.2
     #   scikit-learn
 kiwisolver==1.4.7
     # via matplotlib
-llama-index-core==0.11.18
+llama-index-core==0.11.19
     # via
     #   -r jobs/requirements.in
     #   fargs
@@ -185,7 +185,7 @@ llama-index-graph-stores-neo4j==0.3.3
     # via
     #   -r jobs/requirements.in
     #   fargs
-llama-index-llms-openai==0.2.15
+llama-index-llms-openai==0.2.16
     # via llama-index-llms-openai-like
 llama-index-llms-openai-like==0.2.0
     # via llama-index-llms-openrouter
@@ -207,7 +207,7 @@ llvmlite==0.43.0
     #   pynndescent
 markdown-it-py==3.0.0
     # via rich
-markupsafe==3.0.1
+markupsafe==3.0.2
     # via jinja2
 marshmallow==3.23.0
     # via dataclasses-json
@@ -231,7 +231,7 @@ neo4j==5.25.0
     # via llama-index-graph-stores-neo4j
 nest-asyncio==1.6.0
     # via llama-index-core
-networkx==3.4.1
+networkx==3.4.2
     # via
     #   fargs
     #   graspologic
@@ -265,7 +265,7 @@ numpy==1.26.4
     #   statsmodels
     #   transformers
     #   umap-learn
-openai==1.52.0
+openai==1.52.2
     # via
     #   ell-ai
     #   llama-index-embeddings-openai
@@ -365,7 +365,7 @@ retry2==0.9.5
     # via
     #   -r jobs/requirements.in
     #   fargs
-rich==13.9.2
+rich==13.9.3
     # via typer
 safetensors==0.4.5
     # via transformers
@@ -489,5 +489,5 @@ wrapt==1.16.0
     #   deprecated
     #   llama-index-core
     #   smart-open
-yarl==1.15.4
+yarl==1.16.0
     # via aiohttp
