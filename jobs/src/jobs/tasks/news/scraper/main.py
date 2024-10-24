@@ -15,11 +15,12 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from jobs.database import database_session
 from jobs.tasks.base import BaseAsyncPipeline
 from jobs.tasks.exceptions import PipelineFetchError
-from jobs.tasks.news_scraper.config import SOURCES
-from jobs.tasks.news_scraper.models import NewsAPIResponse
-from jobs.tasks.news_scraper.models import NewsItem
-from jobs.tasks.news_scraper.models import NewsItemSchema
-from jobs.tasks.news_scraper.prompts import FILTER_LANGUAGE_PROMPT
+
+from ..models import NewsAPIResponse
+from ..models import NewsItem
+from ..models import NewsItemSchema
+from .config import SOURCES
+from .prompts import FILTER_LANGUAGE_PROMPT
 
 
 class LanguageClassifier(BaseModel):

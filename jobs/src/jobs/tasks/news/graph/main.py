@@ -9,9 +9,11 @@ from jobs.config import ENV
 from jobs.database import database_session
 from jobs.tasks.base import BaseAsyncPipeline
 from jobs.tasks.exceptions import PipelineFetchError
-from jobs.tasks.news_graph.engine import fargs
-from jobs.tasks.news_scraper.models import NewsItem
-from jobs.tasks.news_scraper.models import NewsItemSchema
+
+from ..models import NewsItem
+from ..models import NewsItemSchema
+from .config import PROJECT_NAME
+from .engine import fargs
 
 
 class LanguageClassifier(BaseModel):
@@ -22,7 +24,7 @@ class LanguageClassifier(BaseModel):
 class NewsGraphPipeline(BaseAsyncPipeline):
     def __init__(self):
         super().__init__(
-            namespace="news_graph",
+            namespace=PROJECT_NAME,
             request_limit=2,
             request_interval=1,
         )

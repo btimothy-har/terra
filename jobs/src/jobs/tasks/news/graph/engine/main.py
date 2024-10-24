@@ -1,8 +1,9 @@
 from fargs import Fargs
 from llama_index.core.ingestion import DocstoreStrategy
 
-from jobs.tasks.news_graph.config import embeddings
-from jobs.tasks.news_graph.config import splitter
+from jobs.tasks.news.graph.config import PROJECT_NAME
+from jobs.tasks.news.graph.config import embeddings
+from jobs.tasks.news.graph.config import splitter
 
 from .components import TerraClaimsExtractor
 from .components import TerraCommunitySummarizer
@@ -17,7 +18,7 @@ from .types import ClaimTypes
 from .types import EntityTypes
 
 fargs = Fargs(
-    project_name="news_graph",
+    project_name=PROJECT_NAME,
     pre_split_strategy=splitter,
     embedding_strategy=embeddings,
     graph_store=graph_store,

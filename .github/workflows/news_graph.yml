@@ -66,5 +66,5 @@ jobs:
             --network services_net_redis \
             --network services_net_neo4j \
             terra_jobs:latest \
-            news_graph
+            news.graph
         command_timeout: "4h"
