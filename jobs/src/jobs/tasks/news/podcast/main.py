@@ -1,7 +1,5 @@
 import uuid
 
-from pydantic import BaseModel
-from pydantic import Field
 from sqlalchemy.sql import select
 from sqlalchemy.sql import update
 
@@ -13,15 +11,10 @@ from jobs.tasks.exceptions import PipelineFetchError
 from ..models import NewsItem
 from ..models import NewsItemSchema
 from .config import PROJECT_NAME
-from .engine import fargs
+from .graph import graph_engine
 
 
-class LanguageClassifier(BaseModel):
-    is_english: bool = Field(title="Is the text in English?")
-    confidence: float = Field(title="Confidence of the classification")
-
-
-class NewsGraphPipeline(BaseAsyncPipeline):
+class NewsPodcastPipeline(BaseAsyncPipeline):
     def __init__(self):
         super().__init__(
             namespace=PROJECT_NAME,
@@ -66,7 +59,7 @@ class NewsGraphPipeline(BaseAsyncPipeline):
         batch_id = str(uuid.uuid4())
 
         as_documents = [item.as_document() for item in self._processed]
-        await fargs.ingest(documents=as_documents)
+        await graph_engine.ingest(documents=as_documents)
 
         async with database_session() as session:
             ids = [item.item_id for item in self._processed]

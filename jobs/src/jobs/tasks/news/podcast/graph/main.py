@@ -1,10 +1,9 @@
 from fargs import Fargs
 from llama_index.core.ingestion import DocstoreStrategy
 
-from jobs.tasks.news.graph.config import PROJECT_NAME
-from jobs.tasks.news.graph.config import embeddings
-from jobs.tasks.news.graph.config import splitter
-
+from ..config import PROJECT_NAME
+from ..config import embeddings
+from ..config import splitter
 from .components import TerraClaimsExtractor
 from .components import TerraCommunitySummarizer
 from .components import TerraEntityExtractor
@@ -17,7 +16,7 @@ from .stores import raw_communities_store
 from .types import ClaimTypes
 from .types import EntityTypes
 
-fargs = Fargs(
+graph_engine = Fargs(
     project_name=PROJECT_NAME,
     pre_split_strategy=splitter,
     embedding_strategy=embeddings,
@@ -33,7 +32,7 @@ fargs = Fargs(
         "docstore_strategy": DocstoreStrategy.UPSERTS_AND_DELETE,
     },
     summarization_llm_model={
-        "model": "qwen/qwen-2.5-72b-instruct",
+        "model": "gpt-4o",
         "temperature": 0,
     },
     excluded_embed_metadata_keys=[
@@ -51,8 +50,8 @@ fargs = Fargs(
     entity_types=EntityTypes,
     claim_types=ClaimTypes,
 )
-fargs._components["entities"] = TerraEntityExtractor
-fargs._components["relationships"] = TerraRelationshipExtractor
-fargs._components["claims"] = TerraClaimsExtractor
-fargs._components["communities"] = TerraCommunitySummarizer
-fargs._components["graph"] = TerraGraphLoader
+graph_engine._components["entities"] = TerraEntityExtractor
+graph_engine._components["relationships"] = TerraRelationshipExtractor
+graph_engine._components["claims"] = TerraClaimsExtractor
+graph_engine._components["communities"] = TerraCommunitySummarizer
+graph_engine._components["graph"] = TerraGraphLoader

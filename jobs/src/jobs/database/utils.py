@@ -44,7 +44,7 @@ async def async_cache_client():
 
 
 async def init_db():
-    from .schemas import Base
+    from .base import Base
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
