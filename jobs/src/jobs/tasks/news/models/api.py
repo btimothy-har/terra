@@ -10,7 +10,7 @@ from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 
-from jobs.database.schemas import Base
+from jobs.database import Base
 from jobs.tasks.utils import clean_string
 
 
