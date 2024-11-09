@@ -46,7 +46,7 @@ class NewsPodcastPipeline(BaseAsyncPipeline):
         )
 
         try:
-            articles = await self.fetch()
+            articles = await self.fetch(last_fetch)
         except PipelineFetchError as e:
             self.log.error(f"Error fetching articles from database: {e}")
             return
