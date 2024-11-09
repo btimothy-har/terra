@@ -1,45 +1,45 @@
-import os
+from typing import Any
 
 import ell
 from pydantic import BaseModel
 from pydantic import Field
-from tavily import TavilyClient
 
-tavily_client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
+from jobs.config import pplx_client
+
+from .prompts import RESEARCH_PROMPT
 
 
 class AgentToolResponse(BaseModel):
     function: str
-    response: str | None
+    response: Any
 
 
-@ell.tool()
-def search_context(
-    query: str = Field(description="The query to search the episode context for."),
-) -> AgentToolResponse:
-    """
-    Search the episode context for more information about the topic.
-    """
-    print(f"Searching context for: {query}")
-    response = AgentToolResponse(
-        function="search_context",
-        response=tavily_client.qna_search(query, search_depth="advanced"),
-    )
-
-    return response.model_dump()
+@ell.complex(
+    model="llama-3.1-sonar-large-128k-online",
+    client=pplx_client,
+    exempt_from_tracking=True,
+)
+def pplx_search(query: str):
+    return [
+        ell.system(RESEARCH_PROMPT),
+        ell.user(f"{query}"),
+    ]
 
 
 @ell.tool()
 def search_knowledge_base(
-    query: str = Field(description="The query to search the knowledge base for."),
+    query: str = Field(
+        description="The query to search the knowledge base for, phrased as a question."
+    ),
 ) -> AgentToolResponse:
     """
     Search a public knowledge base for information.
     """
-    print(f"Searching knowledge base for: {query}")
+
+    pplx_response = pplx_search(query)
     response = AgentToolResponse(
         function="search_knowledge_base",
-        response=tavily_client.qna_search(query, search_depth="advanced"),
+        response=pplx_response[0].text_only,
     )
 
     return response.model_dump()
@@ -54,7 +54,6 @@ def invite_expert(
     """
     Invite an expert to the podcast. You may only have one expert at a time.
     """
-    print(f"Inviting expert: {profile_description}")
     response = AgentToolResponse(
         function="invite_expert",
         response=profile_description,

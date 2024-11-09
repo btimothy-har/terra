@@ -1,9 +1,11 @@
+import asyncio
 from datetime import UTC
 from datetime import datetime
 
 import ell
 
 from .base import BaseStudioAgent
+from .base import invoke_llm
 from .prompts import EXPERT_PROMPT
 from .tools import AgentToolResponse
 from .tools import search_knowledge_base
@@ -13,31 +15,44 @@ from .tools import speak_in_podcast
 class ExpertAgent(BaseStudioAgent):
     @ell.complex(
         model="gpt-4o-mini",
-        temperature=1,
         tools=[search_knowledge_base, speak_in_podcast],
+        exempt_from_tracking=True,
+        temperature=1,
         tool_choice="required",
     )
-    def agent(self, **kwargs):
+    def expert_agent(self, **kwargs):
         return [
             ell.system(
                 EXPERT_PROMPT.format(
-                    date=datetime.now(UTC).strftime("%-d %B %Y"),
-                    podcast_topic=self.state.community.metadata["title"],
-                    topic_description=self.state.community.text,
-                    expert_profile=self.state.expert,
+                    date=kwargs.get("date", datetime.now(UTC).strftime("%-d %B %Y")),
+                    expert_profile=kwargs.get("expert_profile"),
+                    podcast_topic=kwargs.get("podcast_topic"),
+                    topic_description=kwargs.get("brief"),
                 )
             ),
-            ell.user(f"The podcast so far: {self.state.conversation}"),
+            ell.user(f"The podcast so far: {kwargs.get('transcript', '')}"),
         ] + kwargs.get("tool_messages", [])
 
-    def _run_agent(self, **kwargs):
+    async def _run_agent(self, **kwargs):
         step_active = True
         tool_messages = []
 
         while step_active:
-            expert_response = self.agent(tool_messages=tool_messages, **kwargs)
+            args = {
+                "date": datetime.now(UTC).strftime("%-d %B %Y"),
+                "expert_profile": self.state.expert,
+                "podcast_topic": self.state.community.metadata["title"],
+                "brief": self.state.brief,
+                "transcript": self.state.conversation_text,
+                "tool_messages": tool_messages,
+            }
+            expert_response = await invoke_llm(self.expert_agent, **args)
+            expert_response = expert_response[0]
+            tool_messages = []
 
-            tool_responses = expert_response.call_tools_and_collect_as_message()
+            tool_responses = await asyncio.to_thread(
+                expert_response.call_tools_and_collect_as_message
+            )
             tool_messages = [expert_response, tool_responses]
 
             for r in tool_responses.content:

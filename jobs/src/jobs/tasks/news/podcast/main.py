@@ -1,7 +1,13 @@
-import uuid
+from datetime import UTC
+from datetime import datetime
+from datetime import timedelta
 
+from fargs.utils import tqdm_iterable
+from llama_index.core.vector_stores import FilterOperator
+from llama_index.core.vector_stores import MetadataFilter
+from llama_index.core.vector_stores import MetadataFilters
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.sql import select
-from sqlalchemy.sql import update
 
 from jobs.config import ENV
 from jobs.database import database_session
@@ -10,67 +16,116 @@ from jobs.tasks.exceptions import PipelineFetchError
 
 from ..models import NewsItem
 from ..models import NewsItemSchema
-from .config import PROJECT_NAME
+from ..models import PodcastSchema
 from .graph import graph_engine
+from .graph import graph_stores
+from .studio.main import PodcastStudioFlow
+
+podcast_flow = PodcastStudioFlow(timeout=None, verbose=False)
 
 
 class NewsPodcastPipeline(BaseAsyncPipeline):
     def __init__(self):
         super().__init__(
-            namespace=PROJECT_NAME,
+            namespace="news.podcast",
             request_limit=2,
             request_interval=1,
         )
         self._processed = None
-        self._fetch_count = 1 if ENV == "dev" else 100
+        self.graph_engine = graph_engine
 
     async def run(self):
+        self.log.info("Running news podcast pipeline...")
+
+        run_timestamp = datetime.now(UTC)
+        last_fetch = await self.get_state("last_fetch")
+        last_fetch = (
+            datetime.fromisoformat(last_fetch)
+            if last_fetch
+            else (datetime.now(UTC) - timedelta(hours=12))
+        )
+
         try:
             articles = await self.fetch()
         except PipelineFetchError as e:
             self.log.error(f"Error fetching articles from database: {e}")
             return
 
-        if len(articles) == 0:
+        if len(articles) > 0:
+            await self.process(articles)
+            await self.load()
+        else:
             self.log.info("No articles found.")
-            return
 
-        await self.process(articles)
-        await self.load()
+        await self.save_state("last_fetch", run_timestamp.isoformat())
 
-    async def fetch(self):
+    async def fetch(self, last_fetch: datetime):
         async with database_session() as session:
-            query = (
-                select(NewsItemSchema)
-                .where(NewsItemSchema.batch_id.is_(None))
-                .order_by(NewsItemSchema.publish_date.asc())
-                .limit(self._fetch_count)
-            )
+            if ENV == "dev":
+                query = (
+                    select(NewsItemSchema)
+                    .where(NewsItemSchema.batch_id.is_(None))
+                    .order_by(NewsItemSchema.publish_date.asc())
+                    .limit(300)
+                )
+            else:
+                query = (
+                    select(NewsItemSchema)
+                    .where(NewsItemSchema.batch_id.is_(None))
+                    .where(NewsItemSchema.publish_date > last_fetch)
+                    .order_by(NewsItemSchema.publish_date.asc())
+                )
             result = await session.execute(query)
             retrieved_articles = result.scalars().all()
         return retrieved_articles
 
     async def process(self, data: list[NewsItemSchema]):
-        self._processed = [
-            NewsItem.model_validate(item, from_attributes=True) for item in data
+        news_items = [
+            NewsItem.model_validate(item, from_attributes=True).as_document()
+            for item in data
         ]
 
-    async def load(self):
-        batch_id = str(uuid.uuid4())
-
-        as_documents = [item.as_document() for item in self._processed]
-        await graph_engine.ingest(documents=as_documents)
-
-        async with database_session() as session:
-            ids = [item.item_id for item in self._processed]
-            stmt = (
-                update(NewsItemSchema)
-                .where(NewsItemSchema.item_id.in_(ids))
-                .values(batch_id=batch_id)
-            )
-            await session.execute(stmt)
-            await session.commit()
-
-        self.log.info(
-            f"Ingested {len(self._processed)} news items with batch ID {batch_id}."
+        await graph_engine.ingest(
+            documents=news_items,
+            show_progress=True if ENV == "dev" else False,
         )
+
+        self._processed = await graph_engine.summarize(max_cluster_size=100)
+
+    async def load(self):
+        async for community in tqdm_iterable(
+            self._processed, desc="Preparing podcasts"
+        ):
+            source_nodes = graph_stores.nodes_store.get_nodes(
+                filters=MetadataFilters(
+                    filters=[
+                        MetadataFilter(
+                            key="chunk_id",
+                            operator=FilterOperator.IN,
+                            value=community.metadata["sources"],
+                        ),
+                    ]
+                )
+            )
+
+            node_ids = [n.node_id for n in source_nodes]
+            article_ids = list(set([n.metadata["doc_id"] for n in source_nodes]))
+            source_countries = list(
+                set([n.metadata["source_country"].upper() for n in source_nodes])
+            )
+            podcast = await podcast_flow.run(
+                community=community,
+                node_ids=node_ids,
+                article_ids=article_ids,
+                source_countries=source_countries,
+            )
+
+            stmt = (
+                pg_insert(PodcastSchema)
+                .values(**podcast._to_schema())
+                .on_conflict_do_nothing(index_elements=["id"])
+            )
+
+            async with database_session() as session:
+                await session.execute(stmt)
+                await session.commit()

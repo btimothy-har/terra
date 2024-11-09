@@ -6,6 +6,14 @@ networks:
   services_net_redis:
     external: true
 
+volumes:
+  podcast_audio:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PODCAST_AUDIO_DIR}
+      o: bind
+
 services:
   app:
     container_name: terra_app
@@ -22,6 +30,8 @@ services:
       - api
     networks:
       - internal
+    volumes:
+      - podcast_audio:/etc/terra/podcast_audio
   
   api:
     container_name: terra_api
@@ -36,6 +46,8 @@ services:
       - internal
       - services_net_postgres
       - services_net_redis
+    volumes:
+      - podcast_audio:/etc/terra/podcast_audio
     extends:
       file: ./services.${ENV}.yaml
       service: api

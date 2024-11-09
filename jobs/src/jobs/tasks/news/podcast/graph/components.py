@@ -1,3 +1,5 @@
+from datetime import UTC
+from datetime import datetime
 from typing import Literal
 
 import ell
@@ -12,6 +14,8 @@ from fargs.components.graph import SUMMARIZE_NODE_MESSAGE
 from fargs.components.graph import SUMMARIZE_NODE_PROMPT
 from fargs.components.relationships import RELATIONSHIP_EXTRACTION_MESSAGE
 from fargs.components.relationships import RelationshipOutput
+
+from .prompts import COMMUNITY_REPORT
 
 
 class TerraEntityExtractor(EntityExtractor):
@@ -73,9 +77,17 @@ class TerraClaimsExtractor(ClaimsExtractor):
 
 
 class TerraCommunitySummarizer(CommunitySummarizer):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.prompt = COMMUNITY_REPORT.format(
+            output_schema=CommunityReport.model_json_schema(),
+            date=datetime.now(UTC).strftime("%-d %B %Y"),
+        )
+
     def _construct_function(self):
         @ell.complex(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             temperature=0,
             response_format=CommunityReport,
         )

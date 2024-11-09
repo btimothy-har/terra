@@ -32,11 +32,12 @@ graph_engine = Fargs(
         "docstore_strategy": DocstoreStrategy.UPSERTS_AND_DELETE,
     },
     summarization_llm_model={
-        "model": "gpt-4o",
+        "model": "gpt-4o-mini",
         "temperature": 0,
     },
     excluded_embed_metadata_keys=[
         "doc_id",
+        "chunk_id",
         "entities",
         "relationships",
         "claims",
@@ -46,7 +47,13 @@ graph_engine = Fargs(
         "publish_date",
         "sentiment",
     ],
-    excluded_llm_metadata_keys=["doc_id", "entities", "relationships", "claims"],
+    excluded_llm_metadata_keys=[
+        "doc_id",
+        "chunk_id",
+        "entities",
+        "relationships",
+        "claims",
+    ],
     entity_types=EntityTypes,
     claim_types=ClaimTypes,
 )

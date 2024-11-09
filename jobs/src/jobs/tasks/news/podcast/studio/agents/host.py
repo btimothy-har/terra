@@ -1,3 +1,4 @@
+import asyncio
 from datetime import UTC
 from datetime import datetime
 
@@ -5,18 +6,19 @@ import ell
 
 from ..events import StudioState
 from .base import BaseStudioAgent
+from .base import invoke_llm
 from .prompts import HOST_PROMPT
 from .tools import AgentToolResponse
 from .tools import end_expert_interview
 from .tools import end_podcast
 from .tools import invite_expert
-from .tools import search_context
 from .tools import speak_in_podcast
 
 
 class HostAgent(BaseStudioAgent):
     def _build_agent(self):
-        base_tools = [search_context, end_podcast, speak_in_podcast]
+        context_tool = self.build_context_tool()
+        base_tools = [context_tool, end_podcast, speak_in_podcast]
 
         if self.state.expert:
             base_tools.append(end_expert_interview)
@@ -25,33 +27,47 @@ class HostAgent(BaseStudioAgent):
 
         @ell.complex(
             model="gpt-4o-mini",
-            temperature=1,
             tools=base_tools,
+            exempt_from_tracking=True,
+            temperature=1,
             tool_choice="required",
         )
         def host_agent(**kwargs):
             return [
                 ell.system(
                     HOST_PROMPT.format(
-                        date=datetime.now(UTC).strftime("%-d %B %Y"),
-                        podcast_topic=self.state.community.metadata["title"],
-                        topic_description=self.state.community.text,
+                        date=kwargs.get(
+                            "date", datetime.now(UTC).strftime("%-d %B %Y")
+                        ),
+                        podcast_topic=kwargs.get("podcast_topic"),
+                        topic_description=kwargs.get("brief"),
                     )
                 ),
-                ell.user(f"The podcast so far: {self.state.conversation}"),
+                ell.user(f"The podcast so far: {kwargs.get('transcript', '')}"),
             ] + kwargs.get("tool_messages", [])
 
         return host_agent
 
-    def _run_agent(self, **kwargs) -> StudioState:
+    async def _run_agent(self, **kwargs) -> StudioState:
         step_active = True
         agent = self._build_agent()
         tool_messages = []
 
         while step_active:
-            host_response = agent(tool_messages=tool_messages, **kwargs)
+            args = {
+                "date": datetime.now(UTC).strftime("%-d %B %Y"),
+                "podcast_topic": self.state.community.metadata["title"],
+                "brief": self.state.brief,
+                "transcript": self.state.conversation_text,
+                "tool_messages": tool_messages,
+            }
+            host_response = await invoke_llm(agent, **args)
+            host_response = host_response[0]
+            tool_messages = []
 
-            tool_responses = host_response.call_tools_and_collect_as_message()
+            tool_responses = await asyncio.to_thread(
+                host_response.call_tools_and_collect_as_message
+            )
             tool_messages = [host_response, tool_responses]
 
             for r in tool_responses.content:

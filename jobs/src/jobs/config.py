@@ -4,6 +4,7 @@ import os
 import ell
 import requests
 from ell.stores.sql import PostgresStore
+from openai import AsyncOpenAI
 from openai import OpenAI
 
 from jobs.database import cache_client
@@ -25,6 +26,14 @@ openrouter_extra_body = {
 }
 
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+async_openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+pplx_client = OpenAI(
+    api_key=os.getenv("PPLX_API_KEY"), base_url="https://api.perplexity.ai"
+)
+async_pplx_client = AsyncOpenAI(
+    api_key=os.getenv("PPLX_API_KEY"), base_url="https://api.perplexity.ai"
+)
 
 
 def _get_openrouter_models():

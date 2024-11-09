@@ -87,7 +87,7 @@ ell-ai==0.0.14
     #   fargs
 email-validator==2.2.0
     # via fastapi
-fargs @ git+https://github.com/btimothy-har/fargs.git@b212f56408250a406e417d6b4c84bd771eb6904a
+fargs @ git+https://github.com/btimothy-har/fargs.git@fd84462b013380420a317d7de74272ab650ca5b8
     # via -r jobs/requirements.in
 fastapi==0.111.1
     # via ell-ai
@@ -136,7 +136,7 @@ httpx==0.27.2
     #   groq
     #   llama-index-core
     #   openai
-huggingface-hub==0.26.1
+huggingface-hub==0.26.2
     # via
     #   tokenizers
     #   transformers
@@ -153,7 +153,7 @@ jinja2==3.1.4
     # via
     #   fastapi
     #   torch
-jiter==0.6.1
+jiter==0.7.0
     # via
     #   anthropic
     #   openai
@@ -165,7 +165,7 @@ joblib==1.4.2
     #   scikit-learn
 kiwisolver==1.4.7
     # via matplotlib
-llama-index-core==0.11.19
+llama-index-core==0.11.22
     # via
     #   -r jobs/requirements.in
     #   fargs
@@ -209,7 +209,7 @@ markdown-it-py==3.0.0
     # via rich
 markupsafe==3.0.2
     # via jinja2
-marshmallow==3.23.0
+marshmallow==3.23.1
     # via dataclasses-json
 matplotlib==3.9.2
     # via
@@ -227,7 +227,7 @@ mypy-extensions==1.0.0
     # via
     #   black
     #   typing-inspect
-neo4j==5.25.0
+neo4j==5.26.0
     # via llama-index-graph-stores-neo4j
 nest-asyncio==1.6.0
     # via llama-index-core
@@ -265,12 +265,12 @@ numpy==1.26.4
     #   statsmodels
     #   transformers
     #   umap-learn
-openai==1.52.2
+openai==1.54.3
     # via
     #   ell-ai
     #   llama-index-embeddings-openai
     #   llama-index-llms-openai
-packaging==24.1
+packaging==24.2
     # via
     #   black
     #   huggingface-hub
@@ -295,7 +295,7 @@ pillow==10.4.0
     #   matplotlib
 platformdirs==4.3.6
     # via black
-pot==0.9.4
+pot==0.9.5
     # via graspologic
 propcache==0.2.0
     # via yarl
@@ -317,6 +317,8 @@ pydantic==2.9.2
     #   sqlmodel
 pydantic-core==2.23.4
     # via pydantic
+pydub==0.25.1
+    # via -r jobs/requirements.in
 pygments==2.18.0
     # via rich
 pynndescent==0.5.13
@@ -329,7 +331,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-dotenv==1.0.1
     # via uvicorn
-python-multipart==0.0.12
+python-multipart==0.0.17
     # via fastapi
 pytz==2024.2
     # via
@@ -341,9 +343,9 @@ pyyaml==6.0.2
     #   llama-index-core
     #   transformers
     #   uvicorn
-redis==5.1.1
+redis==5.2.0
     # via -r jobs/requirements.in
-regex==2024.9.11
+regex==2024.11.6
     # via
     #   nltk
     #   tiktoken
@@ -365,7 +367,7 @@ retry2==0.9.5
     # via
     #   -r jobs/requirements.in
     #   fargs
-rich==13.9.3
+rich==13.9.4
     # via typer
 safetensors==0.4.5
     # via transformers
@@ -387,7 +389,7 @@ scipy==1.12.0
     #   umap-learn
 seaborn==0.13.2
     # via graspologic
-setuptools==75.2.0
+setuptools==75.3.0
     # via torch
 shellingham==1.5.4
     # via typer
@@ -427,7 +429,7 @@ tiktoken==0.8.0
     # via
     #   fargs
     #   llama-index-core
-tokenizers==0.20.1
+tokenizers==0.20.3
     # via
     #   anthropic
     #   transformers
@@ -435,7 +437,7 @@ torch==2.4.1
     # via
     #   -r jobs/requirements.in
     #   fargs
-tqdm==4.66.5
+tqdm==4.67.0
     # via
     #   huggingface-hub
     #   llama-index-core
@@ -443,9 +445,9 @@ tqdm==4.66.5
     #   openai
     #   transformers
     #   umap-learn
-transformers==4.45.2
+transformers==4.46.2
     # via llama-index-llms-openai-like
-typer==0.12.5
+typer==0.13.0
     # via fastapi-cli
 typing-extensions==4.12.2
     # via
@@ -469,7 +471,7 @@ typing-inspect==0.9.0
     #   llama-index-core
 tzdata==2024.2
     # via pandas
-umap-learn==0.5.6
+umap-learn==0.5.7
     # via graspologic
 urllib3==2.2.3
     # via requests
@@ -482,12 +484,12 @@ uvloop==0.21.0
     # via uvicorn
 watchfiles==0.24.0
     # via uvicorn
-websockets==13.1
+websockets==14.0
     # via uvicorn
 wrapt==1.16.0
     # via
     #   deprecated
     #   llama-index-core
     #   smart-open
-yarl==1.16.0
+yarl==1.17.1
     # via aiohttp

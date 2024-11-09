@@ -3,6 +3,7 @@ docker build -t terra_jobs:latest .
 docker run \
   --rm \
   --name terra_jobs_$(date +%s) \
+  -v "$(pwd)/.artifacts:/src/artifacts" \
   -e ELL_DB=ell_studio \
   -e FARGS_LLM_TOKEN_LIMIT=1000000 \
   -e POSTGRES_DB=terra \
@@ -12,6 +13,7 @@ docker run \
   -e NEWS_API_KEY=${NEWS_API_KEY} \
   -e OPENROUTER_API_KEY=${OPENROUTER_API_KEY} \
   -e OPENAI_API_KEY=${OPENAI_API_KEY} \
+  -e PPLX_API_KEY=${PPLX_API_KEY} \
   --network services_net_postgres \
   --network services_net_redis \
   --network services_net_neo4j \
