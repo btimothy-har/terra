@@ -137,4 +137,3 @@ class NewsPodcastPipeline(BaseAsyncPipeline):
 
                 except Exception as e:
                     raise PodcastCreateError(f"Failed to create podcast: {e}") from e
-                return
