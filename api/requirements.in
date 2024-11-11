@@ -17,3 +17,5 @@ llama-index-core~=0.11.14
 llama-index-embeddings-openai
 llama-index-storage-docstore-postgres
 llama-index-vector-stores-postgres
+pydub~=0.25.1
+aiofiles~=24.1.0

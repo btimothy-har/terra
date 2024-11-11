@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from api.routers import podcasts_router
 from api.routers import sessions_router
 from api.routers import threads_router
 
@@ -21,3 +22,4 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(threads_router)
 app.include_router(sessions_router)
+app.include_router(podcasts_router)

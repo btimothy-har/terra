@@ -1,5 +1,7 @@
 import os
 
+ENV = os.getenv("ENV", "dev")
+
 POSTGRES_URL = (
     f"{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres:5432/terra"
 )

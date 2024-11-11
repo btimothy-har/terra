@@ -1,8 +1,11 @@
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
 from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import BYTEA
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
@@ -62,3 +65,18 @@ class MessageSchema(Base):
     content = Column(BYTEA, nullable=False)
     timestamp = Column(TIMESTAMP(timezone=True), nullable=False)
     model = Column(String)
+
+
+class PodcastSchema(Base):
+    __tablename__ = "podcasts"
+    __table_args__ = {"schema": "news"}
+
+    episode_num = Column(Integer, primary_key=True, autoincrement=True)
+    episode_id = Column(String, nullable=False, unique=True)
+    date = Column(TIMESTAMP(timezone=True), nullable=False)
+    title = Column(String, nullable=False)
+    summary = Column(String, nullable=False)
+    geos = Column(ARRAY(String), nullable=False)
+    tags = Column(ARRAY(String), nullable=False)
+    transcript = Column(JSONB, nullable=False)
+    articles = Column(ARRAY(String), nullable=False)

@@ -1,8 +1,11 @@
 import asyncio
 import logging
 import os
+
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai import OpenAIEmbeddings
+from openai import AsyncOpenAI
+from openai import OpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -10,6 +13,9 @@ from sqlalchemy.orm import sessionmaker
 import api.config as config
 
 logger = logging.getLogger("uvicorn.error")
+
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+async_openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 text_embed = OpenAIEmbeddings(
     model=config.EMBED_MODEL,
