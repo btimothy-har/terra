@@ -14,7 +14,7 @@ SCOPES = [
 ]
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_resource(ttl=3600, show_spinner=False)
 def get_user_info(session_id: str, _credentials: Credentials) -> User:
     if not _credentials.valid:
         _credentials.refresh(Request())
@@ -29,7 +29,7 @@ def get_user_info(session_id: str, _credentials: Credentials) -> User:
     return user
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_resource(ttl=60, show_spinner=False)
 def get_credentials(auth_code: str) -> Credentials:
     flow = st.session_state.google_auth
     flow.fetch_token(code=auth_code)

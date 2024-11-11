@@ -1,30 +1,6 @@
 import streamlit as st
-from models.message import ThreadMessage
-from models.thread import ConversationThread
-from streamlit.delta_generator import DeltaGenerator
-
-
-def dynamic_toast(message: str, key: str):
-    st.toast(f"{message} `{st.session_state.get(key, "")}`")
-
-
-def get_clean_render(key: str) -> DeltaGenerator:
-    render_slots = st.session_state.render_slots = st.session_state.get(
-        "render_slots", dict()
-    )
-
-    slot_in_use = render_slots[key] = render_slots.get(key, "a")
-
-    if slot_in_use == "a":
-        slot_in_use = st.session_state.render_slots[key] = "b"
-    else:
-        slot_in_use = st.session_state.render_slots[key] = "a"
-
-    slot = {
-        "a": st.empty(),
-        "b": st.empty(),
-    }[slot_in_use]
-    return slot.container()
+from models import ConversationThread
+from models import ThreadMessage
 
 
 def refresh_user_conversations() -> dict:

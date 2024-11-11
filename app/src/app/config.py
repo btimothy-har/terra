@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+ENV = os.getenv("ENV", "dev")
+
 DEFAULT_MODEL = "google/gemini-flash-1.5"
 DEFAULT_TEMP = 0.2
 MAX_TOKEN_VALUES = [512, 1024, 2048, 4096]

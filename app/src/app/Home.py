@@ -19,10 +19,10 @@ from dialogs.sel_thread import open_thread
 from models import ContextMessage
 from models import Session
 from models import ThreadMessage
-from utils import dynamic_toast
-from utils import get_clean_render
-from utils import refresh_user_conversations
-from utils import set_active_conversation
+from utils.chat import refresh_user_conversations
+from utils.chat import set_active_conversation
+from utils.main import dynamic_toast
+from utils.main import get_clean_render
 
 
 def invoke_graph():
@@ -50,6 +50,12 @@ st.set_page_config(
     initial_sidebar_state="auto",
     # menu_items=None
 )
+
+pg = st.navigation(
+    pages=[st.Page("pages/podcasts.py", title="Podcasts", icon=":coffee:")]
+)
+
+pg.run()
 
 if not st.session_state.get("session", None):
     cookie = st.context.cookies.get(config.SESSION_COOKIE)
