@@ -135,6 +135,6 @@ class PodcastTagsAgent(BaseStudioAgent):
         response = response[0]
         self.state.metadata["title"] = response.parsed.title
         self.state.metadata["summary"] = response.parsed.summary
-        self.state.metadata["tags"] += response.parsed.tags
+        self.state.metadata["tags"] = response.parsed.tags
 
         return self.state

@@ -4,7 +4,6 @@ from llama_index.core.workflow import StopEvent
 from llama_index.core.workflow import Workflow
 from llama_index.core.workflow import step
 
-from ...models import PodcastEpisode
 from .agents import CoHostAgent
 from .agents import ExpertAgent
 from .agents import HostAgent
@@ -23,7 +22,7 @@ class PodcastStudioFlow(Workflow):
         state = StudioState(
             community=ev.community,
             metadata={
-                "tags": ev.source_countries,
+                "geos": ev.source_countries,
                 "node_ids": ev.node_ids,
                 "article_ids": ev.article_ids,
             },
@@ -79,11 +78,12 @@ class PodcastStudioFlow(Workflow):
         agent = PodcastTagsAgent(state=state)
         new_state = await agent.invoke()
 
-        podcast = PodcastEpisode(
-            title=new_state.metadata["title"],
-            summary=new_state.metadata["summary"],
-            tags=new_state.metadata["tags"],
-            transcript=new_state.conversation,
-            articles=new_state.metadata["article_ids"],
-        )
+        podcast = {
+            "title": new_state.metadata["title"],
+            "summary": new_state.metadata["summary"],
+            "geos": new_state.metadata["geos"],
+            "tags": new_state.metadata["tags"],
+            "transcript": new_state.conversation,
+            "articles": new_state.metadata["article_ids"],
+        }
         return StopEvent(result=podcast)

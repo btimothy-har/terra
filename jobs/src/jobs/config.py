@@ -10,6 +10,7 @@ from openai import OpenAI
 from jobs.database import cache_client
 
 ENV = os.getenv("ENV", "dev")
+API_ENDPOINT = "http://api:8000"
 
 openrouter_client = OpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY"),
