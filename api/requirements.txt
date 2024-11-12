@@ -18,7 +18,7 @@ anyio==4.6.2.post1
     #   starlette
 asyncpg==0.29.0
     # via
-    #   -r api/requirements.in
+    #   -r requirements.in
     #   llama-index-vector-stores-postgres
 attrs==24.2.0
     # via aiohttp
@@ -36,7 +36,7 @@ click==8.1.7
     #   nltk
     #   uvicorn
 cryptography==43.0.1
-    # via -r api/requirements.in
+    # via -r requirements.in
 dataclasses-json==0.6.7
     # via
     #   langchain-community
@@ -48,7 +48,7 @@ dirtyjson==1.0.8
 distro==1.9.0
     # via openai
 fastapi==0.115.2
-    # via -r api/requirements.in
+    # via -r requirements.in
 frozenlist==1.4.1
     # via
     #   aiohttp
@@ -82,13 +82,13 @@ jsonpatch==1.33
     # via langchain-core
 jsonpointer==3.0.0
     # via jsonpatch
-langchain==0.2.16
+langchain==0.2.17
     # via
-    #   -r api/requirements.in
+    #   -r requirements.in
     #   langchain-community
-langchain-community==0.2.17
+langchain-community==0.2.19
     # via langchain-experimental
-langchain-core==0.2.41
+langchain-core==0.2.43
     # via
     #   langchain
     #   langchain-community
@@ -96,12 +96,12 @@ langchain-core==0.2.41
     #   langchain-openai
     #   langchain-text-splitters
 langchain-experimental==0.0.65
-    # via -r api/requirements.in
+    # via -r requirements.in
 langchain-openai==0.1.25
-    # via -r api/requirements.in
+    # via -r requirements.in
 langchain-text-splitters==0.2.4
     # via
-    #   -r api/requirements.in
+    #   -r requirements.in
     #   langchain
 langsmith==0.1.135
     # via
@@ -110,19 +110,19 @@ langsmith==0.1.135
     #   langchain-core
 llama-index-core==0.11.18
     # via
-    #   -r api/requirements.in
+    #   -r requirements.in
     #   llama-index-embeddings-openai
     #   llama-index-storage-docstore-postgres
     #   llama-index-storage-kvstore-postgres
     #   llama-index-vector-stores-postgres
 llama-index-embeddings-openai==0.2.5
-    # via -r api/requirements.in
+    # via -r requirements.in
 llama-index-storage-docstore-postgres==0.2.0
-    # via -r api/requirements.in
+    # via -r requirements.in
 llama-index-storage-kvstore-postgres==0.2.0
     # via llama-index-storage-docstore-postgres
 llama-index-vector-stores-postgres==0.2.6
-    # via -r api/requirements.in
+    # via -r requirements.in
 marshmallow==3.22.0
     # via dataclasses-json
 multidict==6.1.0
@@ -155,21 +155,21 @@ packaging==24.1
     #   marshmallow
 pgvector==0.2.5
     # via
-    #   -r api/requirements.in
+    #   -r requirements.in
     #   llama-index-vector-stores-postgres
 pillow==11.0.0
     # via llama-index-core
 propcache==0.2.0
     # via yarl
 psycopg2==2.9.9
-    # via -r api/requirements.in
+    # via -r requirements.in
 psycopg2-binary==2.9.9
     # via llama-index-vector-stores-postgres
 pycparser==2.22
     # via cffi
 pydantic==2.9.2
     # via
-    #   -r api/requirements.in
+    #   -r requirements.in
     #   fastapi
     #   langchain
     #   langchain-core
@@ -179,9 +179,9 @@ pydantic==2.9.2
 pydantic-core==2.23.4
     # via pydantic
 pyjwt==2.9.0
-    # via -r api/requirements.in
+    # via -r requirements.in
 python-multipart==0.0.12
-    # via -r api/requirements.in
+    # via -r requirements.in
 pyyaml==6.0.2
     # via
     #   langchain
@@ -189,7 +189,7 @@ pyyaml==6.0.2
     #   langchain-core
     #   llama-index-core
 redis==5.1.1
-    # via -r api/requirements.in
+    # via -r requirements.in
 regex==2024.9.11
     # via
     #   nltk
@@ -209,9 +209,9 @@ sniffio==1.3.1
     #   anyio
     #   httpx
     #   openai
-sqlalchemy==2.0.32
+sqlalchemy[asyncio]==2.0.32
     # via
-    #   -r api/requirements.in
+    #   -r requirements.in
     #   langchain
     #   langchain-community
     #   llama-index-core
@@ -250,7 +250,7 @@ typing-inspect==0.9.0
 urllib3==2.2.3
     # via requests
 uvicorn==0.32.0
-    # via -r api/requirements.in
+    # via -r requirements.in
 wrapt==1.16.0
     # via
     #   deprecated
